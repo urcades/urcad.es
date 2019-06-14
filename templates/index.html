@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <title>{% block title %}{{ config.title }}{% endblock title %}</title>
+    <meta name="description" content="No brand, quality interfaces.">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon16.png">
+    <link rel="mask-icon" href="/favicon.svg">
+
+    <style>
+      body {
+        font-size: 1.66em;
+        line-height: 1.4em;
+        margin: 3em;
+      }
+      @media screen and (max-width: 800px) {
+        body {
+          font-size: 1em;
+          margin: 6em 1.5em;
+        }
+      }
+      section {
+        margin-bottom: 3em;
+        /* border-bottom: 1px solid black; */
+      }
+      article {
+        max-width: 30em;
+      }
+      article img {
+        max-width: 30em;
+      }
+      iframe {
+        width: 100%;
+        height: 100vh; 
+      }
+      @media screen and (max-width: 30em) {
+        article {
+          max-width: 100%;
+        }
+        article img {
+          max-width: 100%;
+        }
+        iframe {
+          width: 100vw;
+        }
+      }
+      a {
+        color: goldenrod;
+        text-decoration: none;
+      }
+      sup {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: .5em;
+      }
+      .serif {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      .vimeo {
+        max-width: 30em;
+      }
+      
+    </style>
+  </head>
+  
+  <body>
+    {% block content %}
+    <section>
+      <p>É. Urcades</p>
+      <p><i>Long Interfaces</i></p>
+      <p><a href="mailto:edouard@urcad.es">édouard@urcad.es</a></p>
+    </section>
+
+    <section>
+      <p>About Me:</p>
+      <p>
+        I'm an optimistic interface designer interested in <br>
+        making <i>infrastructure</i> more easy, beautiful, and fun. <br>
+      </p>
+    </section>
+
+    <section>
+      <p>Recent Works:</p>
+      <p>
+        Previously, I've worked for <br>
+        <a href="https://www.ibm.com/" target="_blank">IBM</a>, <a href="https://www.tumblr.com/" target="_blank">Tumblr</a>, <a href="https://samara.com/" target="_blank">Samara</a>, and others. <br>
+        Prior to working with software, <br>
+        I was an industrial designer. <br> 
+        This is important. <br>
+      </p>
+      <p>
+        <a href="share/cv.pdf" target="_blank">CV.pdf</a> (summary), <br>
+        <a href="https://airtable.com/shrvD3lkC9BJv8tN4" target="_blank">Database</a> (comprehensive), <br>
+        <a href="https://www.are.na/edouard-urcades/sketching" target="_blank">Sketching</a> (gestural), <br>
+        <a href="/teaching">Education/Facilitation</a>
+      </p>
+    </section>
+
+    <section>
+      <p>Ongoing Personal Research:</p>
+      <p>
+        <a href="https://www.are.na/new-computer-working-group" target="_blank"><i>New</i> Computation</a>, <a href="https://www.are.na/edouard-urcades/dwelling" target="_blank">Contemporary Dwelling</a>, <br>
+        <a href="https://www.are.na/edouard-urcades/environmentalism" target="_blank">Climate Adaptation</a>, <a href="https://www.are.na/edouard-urcades/new-american-interface" target="_blank">Political Software</a>,<br>
+        <a href="https://www.are.na/edouard-urcades/maybe-clothing" target="_blank"><i>Maybe</i> clothing</a>, <a href="https://www.are.na/edouard-urcades/infrastructure-thinking" target="_blank"><i>New</i> Infrastructure</a>,<br>
+        <a href="https://www.are.na/edouard-urcades/products-systems" target="_blank">Technological diffusion</a>, <a href="https://www.are.na/edouard-urcades/define-human" target="_blank"><i>New</i> Bodies,</a> etc.
+      </p>
+    </section>
+
+    <section>
+      <p>Case Studies:</p>
+      <ol>
+          {% set section = get_section(path="works/_index.md") %}
+          {% for post in section.pages %}
+            <li><a href="{{ post.permalink }}">{{ post.title }}</a> <sup>WIP</sup> <i>{{ post.year }}</i></li>
+          {% endfor %}
+      </ol>
+    </section>
+
+    <section>
+      <p>Writing:</p>
+      <ol>
+      {% set section = get_section(path="writing/_index.md") %}
+      {% for post in section.pages %}
+        <li><a href="{{ post.permalink }}">{{ post.title }}</a> <i>{{ post.year }}</i></li>
+      {% endfor %}
+      </ol>
+    </section>
+
+    <section>
+      <p>Closing thoughts:</p>
+      <p>
+        More often than not, the most meaningful <br>
+        human activity boils down to “providing <br>
+        support structure for one another.” <br>
+        In turn, the most meaningful <br>
+        designed output is “infrastructure”... <br>
+      </p>
+    </section>
+    {% endblock content %}
+  </body>
+</html>

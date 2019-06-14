@@ -1,0 +1,107 @@
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+    
+        <url>
+            <loc>http://127.0.0.1:1111/</loc>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/teaching/</loc>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/teaching/oso/</loc>
+            
+                <lastmod>2018-03-21</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/works/</loc>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/works/foam/</loc>
+            
+                <lastmod>2017-11-29</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/works/ibm/</loc>
+            
+                <lastmod>2015-10-10</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/works/tumblr/</loc>
+            
+                <lastmod>2016-08-08</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/works/tumblr2/</loc>
+            
+                <lastmod>2017-11-11</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/</loc>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/knowledge-networks/</loc>
+            
+                <lastmod>2018-08-22</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/my-grandmothers-operating-system/</loc>
+            
+                <lastmod>2019-01-03</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/new-american-interfaces/</loc>
+            
+                <lastmod>2019-01-24</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/new-computers/</loc>
+            
+                <lastmod>2017-11-29</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/personal-computer-vending-machine/</loc>
+            
+                <lastmod>2017-10-20</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/reading-networks/</loc>
+            
+                <lastmod>2017-04-04</lastmod>
+            
+        </url>
+    
+        <url>
+            <loc>http://127.0.0.1:1111/writing/rfc001/</loc>
+            
+                <lastmod>2019-02-25</lastmod>
+            
+        </url>
+    
+</urlset>

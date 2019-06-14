@@ -1,0 +1,4 @@
+{% if imgsrc %}
+<img src="{{imgsrc}}">
+{% endif %}
+<small>Source: {% if srcsrc %} <a style="color: black;" href="{{srcsrc}}">{{body}}</a> {% else %} {{body}} {% endif %}</small>

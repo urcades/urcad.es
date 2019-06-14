@@ -1,0 +1,19 @@
+{% extends "index.html" %}
+
+{% block content %}
+  <section>
+    <p>{{ page.title }}</p>
+
+    {% if page.date %}
+      <p>{{ page.date | date(format="%d %B %Y") }}</p>
+    {% endif %}
+
+    <p style="padding-bottom: 6em;"><a href="/">Go back to index</a></p>
+
+    <article>
+      {{ page.content | safe }}
+    </article>
+    
+    <p><a href="/">Go back to index</a></p>
+  </section>
+{% endblock content %}
