@@ -24,7 +24,7 @@ These days, the mirrors we most often use to check our makeup or see if there’
 
 ![Someone shaving, looking into a small mirror](https://d2w9rnfcy7mm78.cloudfront.net/4282256/large_49d0ab9f5781491acfb255b3385e6daa.jpg?1557961297)
 
-What’s interesting about smart-devices-as-mirrors is that the eventual representation of the “image of the world” is explicitly and wholly a “model” of the world — a “model” meaning a “ human-constructed representation (abstraction) of something that exists in reality”. Physical mirrors are interesting because they have the ability to render reality and even warp it, but what they depict is “a physical reality” in the truest sense; The physical qualities of a mirror can be seen as akin to seeing the world through air, or seeing the world through water. While a human being can physically manipulate a physical mirror to alter the final reflection, the reflection in and of itself is a product of the physical world and unalterable in totality.
+What’s interesting about smart-devices-as-mirrors is that the eventual representation of the “image of the world” is explicitly and wholly a “model” of the world — a “model” meaning a “ human-constructed representation (abstraction) of something that exists in reality”. Physical mirrors are interesting because they have the ability to render reality and even warp it, but what they depict is “a physical reality” in the truest sense; The physical qualities of a mirror can be seen as seeing the world through air, or seeing the world through water. While a human being can physically manipulate a physical mirror to alter the final reflection, the reflection in and of itself is a product of the physical world and unalterable in totality.
 
 To a degree, film photography was an extension of this physical realization (rendering) of reality. At a certain point, what else is the capture of light on paper but a wholly physical process? While people intervened in the path of light’s travel with lenses and apertures and specifically-designed crystal-studded paper, what emerges as a process is less a constructed model of reality and more a continually warped representation of what actually exists in the world. Film and paper photography was a deeply labor-intensive art, full of cutting and cropping and poisoning and brushwork, all serving the act of rendering what was once a beam of light into an image-rendering of a particular summer day. Impressionism lives on in this sense.
 
@@ -56,7 +56,7 @@ The physical world is constructed from a vast number of standards that make thin
 
 For that matter, most digital interface designers will never consider how the buttons they specify on-screen are handled by TCP/IP or the thousands of heavy metal physical servers that populate buttons they specify and “style” once in CSS.
 
-When I paint, I take a simple object, daub it with something that makes a mark, and paint it on a surface. What I’ve just created is a format of art. The word “Hello” is a world unto itself when displayed on a webpage. The technology that made our digital-text “Hello” possible is vast beyond belief. Is the world a format?
+When I paint I take a handheld tool, daub it with a mark-making material, and apply it to surface. This set of actions embodies what's known as the format of "painting". The word “Hello” is a world unto its linguistic self when displayed on a webpage. Similarly, the technology that made our digital-text “Hello” possible is vast beyond belief. Is the world a format?
 
 New American Interfaces
 
