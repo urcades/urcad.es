@@ -13,6 +13,10 @@ template = "page.html"
 
 ![](1.png)
 
+_Contribution Context_
+
+Throughout 2016, Tumblr's product design team (our lead [Lydia](https://lydiawhite.info/), [Anna](https://www.annaniess.biz/), [Osebo](https://www.are.na/o-sebo), [Davina](https://davinakim.com/), [Matt](https://twitter.com/mttclftn), and I) spent a decent amount of our extra time working through new interpretations of what Tumblr could be, what new community structures could work within the product, new ways of viewing user content, and much more. Everyone listed proffered their own unique input and our collective work melded into a generally cohesive vision that would mutate throughout the year, changing as members of the team left, until only Matt and I were left. The following writing is a summarization of the tail-end of my own input around 2017, shortly before I left Tumblr, and describes some of the aspects of our vision I felt I contributed most of my attention towards.
+
 _Project Context_
 
 After Oath aquired Tumblr (via Yahoo) in June 2017, the general prioritization of product design work shifted to accomodate for the various backend systems that needed to be integrated between Oath and Yahoo/Tumblr. These systems included the inclusion of GDPR onboarding processes for all users, the addition of more pervasive advertising throughout the site, and the integration of “reporting and security” pipelines that all of Oath’s subsidary organizations used.
@@ -31,7 +35,7 @@ Our focus areas for new work involved most of the post creation interfaces, the 
 
 _Role_
 
-While the product design team at the time — [Matt Clifton](https://twitter.com/mttclftn), [Neil Voss](https://twitter.com/neilvoss) (Our design director), and myself — collaborated on most aspects of Tumblr 2 in an interwoven manner, we each focused on particular aspects of Tumblr's experience we had more radical ideas about.
+While the product design team that was left in early 2017 — [Matt Clifton](https://twitter.com/mttclftn), [Neil Voss](https://twitter.com/neilvoss) (Our design director), and myself — collaborated on most aspects of Tumblr 2 in an interwoven manner, we each focused on particular aspects of Tumblr's experience we had more radical ideas about. 
 
 In my work for Tumblr 2, I focused on the following functionalities:
 
