@@ -1,13 +1,8 @@
 +++
-title = "Works"
-description = "Archive of Educational Works, Workshops, and Exercises."
+title = "Work"
+description = "Case Studies and more"
 slug = "works"
-weight = 0
-draft = false
-aliases = []
 in_search_index = true
 template = "page.html"
 [taxonomies]
 +++
-
-More later

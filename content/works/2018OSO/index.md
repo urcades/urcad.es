@@ -1,11 +1,8 @@
 +++
 title = "Open Space Observatory"
-description = "Tumblr 2"
+description = "OSO"
 date = 2018-03-21
 slug = "oso"
-weight = 0
-draft = false
-aliases = []
 in_search_index = true
 template = "page.html"
 [taxonomies]
