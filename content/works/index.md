@@ -1,7 +1,7 @@
 +++
 title = "Work"
 description = "Case Studies and more"
-slug = "works"
+slug = "work"
 in_search_index = true
 template = "page.html"
 [taxonomies]

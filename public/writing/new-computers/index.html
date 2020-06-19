@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
-    <title>{% block title %}{{ config.title }}{% endblock title %}</title>
+    <title>É. Urcades</title>
     <meta name="description" content="É Urcades is an optimistic interface designer interested in 
     making infrastructure more easy, beautiful, and fun." />
 
@@ -105,79 +105,40 @@
   </head>
   
   <body class="night day">
-    {% block content %}
-    <section>
-      <p>É. Urcades</p>
-      <p><i>Long Interfaces</i></p>
-      <p><a href="mailto:edouard@urcad.es">édouard@urcad.es</a></p>
-    </section>
+    
+  <section>
+    <p>New Computers</p>
 
-    <section>
-      <p>About Me:</p>
-      <p>
-        I’m an optimistic interface designer <br>
-        interested in making <i>public infrastructure</i> <br>
-        more easy, beautiful, and fun.
-      </p>
-    </section>
+    
+      <p>29 November 2017</p>
+    
 
-    <section>
-      <p>Recent Works:</p>
-      <p>
-        Currently, I’m designing a <br>
-        new computer at <a href="https://www.urbit.org/" target="_blank">Tlon</a>. <br>
-        Previously, I’ve worked for <br>
-        <a href="https://www.ibm.com/" target="_blank">IBM</a>, <a href="https://www.tumblr.com/" target="_blank">Tumblr</a>, <a href="https://samara.com/" target="_blank">Samara</a>, <br>
-        and many others.<br>
-      </p>
-      <p>
-        <a href="share/cv.pdf" target="_blank">CV.pdf</a> (summary), <br>
-        <a href="https://www.notion.so/mornings/Public-Works-c01cb6e012d542778ad2c47059a658ac" target="_blank">Database</a> (comprehensive), <br>
-        <a href="https://www.are.na/edouard-urcades/sketching" target="_blank">Sketching</a> (gestural), <br>
-        <a href="/teaching">Education/Facilitation</a>
-      </p>
-    </section>
+    <p style="padding-bottom: 6em;"><a href="/">Go back to index</a></p>
 
-    <section>
-      <p>Ongoing Personal Research:</p>
-      <p>
-        <a href="https://www.are.na/new-computer-working-group" target="_blank"><i>New</i> Computation</a>, <a href="https://www.are.na/edouard-urcades/dwelling" target="_blank">Contemporary Dwelling</a>, <br>
-        <a href="https://www.are.na/edouard-urcades/environmentalism" target="_blank">Climate Adaptation</a>, <a href="https://www.are.na/edouard-urcades/new-american-interface" target="_blank">American Software</a>,<br>
-        <a href="https://www.are.na/edouard-urcades/maybe-clothing" target="_blank"><i>Maybe</i> clothing</a>, <a href="https://www.are.na/edouard-urcades/infrastructure-thinking" target="_blank"><i>New</i> Infrastructure</a>,<br>
-        <a href="https://www.are.na/edouard-urcades/products-systems" target="_blank">Technological diffusion</a>, <a href="https://www.are.na/edouard-urcades/define-human" target="_blank"><i>New</i> Bodies,</a> etc.
-      </p>
-    </section>
+    <article>
+      <p>Yeah, I think phones have failed us.</p>
+<p>Don’t @ me!</p>
+<p>In the last couple of months, a few on-going streams of research and personal interest began to intertwine and hyperlink amongst one another.</p>
+<p>Upon the utterance “New Computer”, it was clear where things were going.</p>
+<p>What makes something a computer? What is the act of computing?</p>
+<p>I think the best way to begin thinking along the lines of this subject is to consider why [random object in the room] is or is not a computer. I am starting to think more things are computers, and more types of computers should exist. I believe disentangling current notions of a computer and their representation in physical–digital space can be a key aspect of improving our relationship with technology and one another.</p>
+<p>There can, and should be computers for eating, arguing, animal-care, carpentry, and knowledge-work. New Computers should accomodate and amplify and extend human activities of all sorts — from fucking to childbirth to end-of-life rites. New Computers should be soft, intimate, friendly … or solid.</p>
+<p>It’s your choice!</p>
+<p>The form and feel of a New Computer should be liquid and wholly arbitrary, yet perfectly suited to the context at hand. An ideal New Computer will be representative and one with its human user, an extension of one’s will, mind, body, spirit.</p>
+<p>A New Computer should be brandless, nameless, formless.</p>
+<p>A brand–spanking New Computer should be a divergent experience most of the time, convergent only when a task requires focus.</p>
+<p>Hopefully, a New Computer doesn’t contain notifications as we know them now, but needing to know when a “meaningful event” occurs is important — I think we innately know what is important though. New Computers should understand this.</p>
+<p>A computer should be passed down from generation to generation, or shared amongst friends. Computers as “Wholly communal experiences set against time”.</p>
+<p>Like things passed on from generation to generation, a New Computer should have settings which allow it to become more fuzzy, undefined, and romantic as time passes.</p>
+<p>Every single New Computer should be conceived and understood as networked infrastructure. This is incredibly important. Devices in total isolation is a luddite notion these days, and networking as a given should be afforded for.</p>
+<p>Despite the previous statement, I really do think New Computers are Personal Computers, Personal Servers. Networked Infrastructure can exist for an individual too.</p>
+<p>These are just a few thoughts.</p>
+<p>We’re assembling a working group <a href="https://newcomputers.group/">here</a>.</p>
 
-    <!-- <section>
-      <p>Case Studies:</p>
-      <ol>
-          {% set section = get_section(path="works/_index.md") %}
-          {% for post in section.pages %}
-            <li><a href="{{ post.permalink }}">{{ post.title }}</a> <sup>WIP</sup> <i>{{ post.year }}</i></li>
-          {% endfor %}
-      </ol>
-    </section> -->
+    </article>
+    
+    <p><a href="/">Go back to index</a></p>
+  </section>
 
-    <section>
-      <p>Writing:</p>
-      <ol>
-      {% set section = get_section(path="writing/_index.md") %}
-      {% for post in section.pages %}
-        <li><a href="{{ post.permalink }}">{{ post.title }}</a> <i>{{ post.year }}</i></li>
-      {% endfor %}
-      </ol>
-    </section>
-
-    <section>
-      <p>Closing thoughts:</p>
-      <p>
-        More often than not, the most meaningful <br>
-        human activity boils down to providing <br>
-        support structure for one another. <br>
-        In turn, the most meaningful “designed”<br>
-        output is the infrastructural. <br>
-      </p>
-    </section>
-    {% endblock content %}
   </body>
 </html>

@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
-    <title>{% block title %}{{ config.title }}{% endblock title %}</title>
+    <title>É. Urcades</title>
     <meta name="description" content="É Urcades is an optimistic interface designer interested in 
     making infrastructure more easy, beautiful, and fun." />
 
@@ -105,79 +105,20 @@
   </head>
   
   <body class="night day">
-    {% block content %}
-    <section>
-      <p>É. Urcades</p>
-      <p><i>Long Interfaces</i></p>
-      <p><a href="mailto:edouard@urcad.es">édouard@urcad.es</a></p>
-    </section>
+    
+  <section>
+    <p>Work</p>
 
-    <section>
-      <p>About Me:</p>
-      <p>
-        I’m an optimistic interface designer <br>
-        interested in making <i>public infrastructure</i> <br>
-        more easy, beautiful, and fun.
-      </p>
-    </section>
+    
 
-    <section>
-      <p>Recent Works:</p>
-      <p>
-        Currently, I’m designing a <br>
-        new computer at <a href="https://www.urbit.org/" target="_blank">Tlon</a>. <br>
-        Previously, I’ve worked for <br>
-        <a href="https://www.ibm.com/" target="_blank">IBM</a>, <a href="https://www.tumblr.com/" target="_blank">Tumblr</a>, <a href="https://samara.com/" target="_blank">Samara</a>, <br>
-        and many others.<br>
-      </p>
-      <p>
-        <a href="share/cv.pdf" target="_blank">CV.pdf</a> (summary), <br>
-        <a href="https://www.notion.so/mornings/Public-Works-c01cb6e012d542778ad2c47059a658ac" target="_blank">Database</a> (comprehensive), <br>
-        <a href="https://www.are.na/edouard-urcades/sketching" target="_blank">Sketching</a> (gestural), <br>
-        <a href="/teaching">Education/Facilitation</a>
-      </p>
-    </section>
+    <p style="padding-bottom: 6em;"><a href="/">Go back to index</a></p>
 
-    <section>
-      <p>Ongoing Personal Research:</p>
-      <p>
-        <a href="https://www.are.na/new-computer-working-group" target="_blank"><i>New</i> Computation</a>, <a href="https://www.are.na/edouard-urcades/dwelling" target="_blank">Contemporary Dwelling</a>, <br>
-        <a href="https://www.are.na/edouard-urcades/environmentalism" target="_blank">Climate Adaptation</a>, <a href="https://www.are.na/edouard-urcades/new-american-interface" target="_blank">American Software</a>,<br>
-        <a href="https://www.are.na/edouard-urcades/maybe-clothing" target="_blank"><i>Maybe</i> clothing</a>, <a href="https://www.are.na/edouard-urcades/infrastructure-thinking" target="_blank"><i>New</i> Infrastructure</a>,<br>
-        <a href="https://www.are.na/edouard-urcades/products-systems" target="_blank">Technological diffusion</a>, <a href="https://www.are.na/edouard-urcades/define-human" target="_blank"><i>New</i> Bodies,</a> etc.
-      </p>
-    </section>
+    <article>
+      
+    </article>
+    
+    <p><a href="/">Go back to index</a></p>
+  </section>
 
-    <!-- <section>
-      <p>Case Studies:</p>
-      <ol>
-          {% set section = get_section(path="works/_index.md") %}
-          {% for post in section.pages %}
-            <li><a href="{{ post.permalink }}">{{ post.title }}</a> <sup>WIP</sup> <i>{{ post.year }}</i></li>
-          {% endfor %}
-      </ol>
-    </section> -->
-
-    <section>
-      <p>Writing:</p>
-      <ol>
-      {% set section = get_section(path="writing/_index.md") %}
-      {% for post in section.pages %}
-        <li><a href="{{ post.permalink }}">{{ post.title }}</a> <i>{{ post.year }}</i></li>
-      {% endfor %}
-      </ol>
-    </section>
-
-    <section>
-      <p>Closing thoughts:</p>
-      <p>
-        More often than not, the most meaningful <br>
-        human activity boils down to providing <br>
-        support structure for one another. <br>
-        In turn, the most meaningful “designed”<br>
-        output is the infrastructural. <br>
-      </p>
-    </section>
-    {% endblock content %}
   </body>
 </html>

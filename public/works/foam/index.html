@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
-    <title>{% block title %}{{ config.title }}{% endblock title %}</title>
+    <title>É. Urcades</title>
     <meta name="description" content="É Urcades is an optimistic interface designer interested in 
     making infrastructure more easy, beautiful, and fun." />
 
@@ -105,79 +105,34 @@
   </head>
   
   <body class="night day">
-    {% block content %}
-    <section>
-      <p>É. Urcades</p>
-      <p><i>Long Interfaces</i></p>
-      <p><a href="mailto:edouard@urcad.es">édouard@urcad.es</a></p>
-    </section>
+    
+  <section>
+    <p>From-scratch Crypto-mapping UX</p>
 
-    <section>
-      <p>About Me:</p>
-      <p>
-        I’m an optimistic interface designer <br>
-        interested in making <i>public infrastructure</i> <br>
-        more easy, beautiful, and fun.
-      </p>
-    </section>
+    
+      <p>29 November 2017</p>
+    
 
-    <section>
-      <p>Recent Works:</p>
-      <p>
-        Currently, I’m designing a <br>
-        new computer at <a href="https://www.urbit.org/" target="_blank">Tlon</a>. <br>
-        Previously, I’ve worked for <br>
-        <a href="https://www.ibm.com/" target="_blank">IBM</a>, <a href="https://www.tumblr.com/" target="_blank">Tumblr</a>, <a href="https://samara.com/" target="_blank">Samara</a>, <br>
-        and many others.<br>
-      </p>
-      <p>
-        <a href="share/cv.pdf" target="_blank">CV.pdf</a> (summary), <br>
-        <a href="https://www.notion.so/mornings/Public-Works-c01cb6e012d542778ad2c47059a658ac" target="_blank">Database</a> (comprehensive), <br>
-        <a href="https://www.are.na/edouard-urcades/sketching" target="_blank">Sketching</a> (gestural), <br>
-        <a href="/teaching">Education/Facilitation</a>
-      </p>
-    </section>
+    <p style="padding-bottom: 6em;"><a href="/">Go back to index</a></p>
 
-    <section>
-      <p>Ongoing Personal Research:</p>
-      <p>
-        <a href="https://www.are.na/new-computer-working-group" target="_blank"><i>New</i> Computation</a>, <a href="https://www.are.na/edouard-urcades/dwelling" target="_blank">Contemporary Dwelling</a>, <br>
-        <a href="https://www.are.na/edouard-urcades/environmentalism" target="_blank">Climate Adaptation</a>, <a href="https://www.are.na/edouard-urcades/new-american-interface" target="_blank">American Software</a>,<br>
-        <a href="https://www.are.na/edouard-urcades/maybe-clothing" target="_blank"><i>Maybe</i> clothing</a>, <a href="https://www.are.na/edouard-urcades/infrastructure-thinking" target="_blank"><i>New</i> Infrastructure</a>,<br>
-        <a href="https://www.are.na/edouard-urcades/products-systems" target="_blank">Technological diffusion</a>, <a href="https://www.are.na/edouard-urcades/define-human" target="_blank"><i>New</i> Bodies,</a> etc.
-      </p>
-    </section>
+    <article>
+      <p><em>Project Context</em></p>
+<p>I was contacted by FOAM’s CEO Ryan King to translate their <em>seed funding pitch deck</em> (specifically screenshots of a proto-interface in the deck) into an initial product that would ease <em>non-blockchain-aware</em> and <em>non-crypto-bro</em> individuals into new ways of thinking about urban space and land usage in general with respect to “value”.</p>
+<p>My initial reflex was to set up a system of constraints from which I could work, which required me to audit the materials given to me and determine the core of what FOAM was all about.</p>
+<p>Shown in the Figma embed below, I arranged the screenshots I was provided in a spatial manner (with expected actions flowing from left to right) and I strung them together using Figma's prototyping functionality. I was left with a <a href="https://www.figma.com/proto/WL9J2gCvV3mg6Uo6WV5Rq2IN/1.-UX-Audit?node-id=1432%3A363&amp;scaling=scale-down-width">rough sketch of an application</a> I could click through and take notes on.</p>
+<iframe style="border: none;" src="https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Ffile%2FWL9J2gCvV3mg6Uo6WV5Rq2IN%2F1.-UX-Sketching%3Fnode-id%3D1432%253A363" allowfullscreen></iframe>
+<p>I used this prototype and the notes I compiled as an artifact FOAM and I could rally around to communicate with one another what felt weird, neccessary, or unusable about the way the platform was initially communicated.</p>
+<p>We came to an agreement that a form-based interface wasn't compelling, and given the spatial nature of where crypto-value was being held with FOAM, it made sense to bring forth the richness of space through an interactive map — an interface primitive most people have normalized and know how to use.</p>
+<p>From this point, I began to develop high-level wireframes to structure the initial pass of the crypto map:</p>
+<iframe style="border: none;" src="https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Ffile%2FWL9J2gCvV3mg6Uo6WV5Rq2IN%2F1.-UX-Audit%3Fnode-id%3D0%253A1" allowfullscreen></iframe>
+<p>My initial designs involved incorporating the bare minimum of general affordances most other mapping applications offered — a search mechanism, a means of panning and zooming and centering the map, a means of representing Points of Interest on the map, etc.</p>
+<p><img src="https://urcad.es/works/foam/" alt="" /></p>
+<p>Where this work took an interesting turn was in the structuring of &quot;crypto interfacing&quot; that needed to co-inhabit the viewport; Where would this information live? Where did the blockchain need to be surfaced? <em>Does</em> a blockchain need to be surfaced at all? Ever?</p>
 
-    <!-- <section>
-      <p>Case Studies:</p>
-      <ol>
-          {% set section = get_section(path="works/_index.md") %}
-          {% for post in section.pages %}
-            <li><a href="{{ post.permalink }}">{{ post.title }}</a> <sup>WIP</sup> <i>{{ post.year }}</i></li>
-          {% endfor %}
-      </ol>
-    </section> -->
+    </article>
+    
+    <p><a href="/">Go back to index</a></p>
+  </section>
 
-    <section>
-      <p>Writing:</p>
-      <ol>
-      {% set section = get_section(path="writing/_index.md") %}
-      {% for post in section.pages %}
-        <li><a href="{{ post.permalink }}">{{ post.title }}</a> <i>{{ post.year }}</i></li>
-      {% endfor %}
-      </ol>
-    </section>
-
-    <section>
-      <p>Closing thoughts:</p>
-      <p>
-        More often than not, the most meaningful <br>
-        human activity boils down to providing <br>
-        support structure for one another. <br>
-        In turn, the most meaningful “designed”<br>
-        output is the infrastructural. <br>
-      </p>
-    </section>
-    {% endblock content %}
   </body>
 </html>
