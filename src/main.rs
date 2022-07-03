@@ -9,7 +9,7 @@ fn app(cx: Scope) -> Element {
         div {
             font_size: "1.256rem",
             padding: "1.128rem 2.512rem",
-            p {"E. Urcades"}
+            p {"É. Urcades"}
             p {"Tlon Corporation"}
             p {"ed@tlon.io"}
             p {

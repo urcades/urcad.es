@@ -934,7 +934,7 @@ function initSync(bytes) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('dioxus-test-baa2c6c9d7f05b61_bg.wasm', import.meta.url);
+        input = new URL('dioxus-test-4d02b29fc6f60b98_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 
