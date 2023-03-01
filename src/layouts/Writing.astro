@@ -1,0 +1,15 @@
+---
+import Base from "./Base.astro";
+const { frontmatter } = Astro.props;
+---
+<Base>
+	<p class="pt-4"><a href="/writing/" >Back to All Writing</a></p>
+	<h1 class="pt-4">{frontmatter.title}</h1>
+	<p class="pt-4">{frontmatter.pubDate.slice(0,10)}</p>
+    <article class="pt-4 prose prose-xl prose-a:no-underline leading-7 prose-a:text-gray-400 prose-p:text-black dark:text-stone-300">
+	    <slot/>
+    </article>
+	<p class="pt-6">*</p>
+	<p class="pt-4"><a href="/writing/">Back to All Writing</a></p>
+	<p><a href="https://urcades.substack.com/">Subscribe</a></p>
+</Base>

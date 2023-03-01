@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+const allPosts = await Astro.glob('../pages/posts/*.md');
+const pageTitle = 'Writing';
+---
+
+<Base>
+    <p class="italic pt-4">2023</p>
+    <ul class="pt-4">
+        {allPosts.map((post) => <li><a href={post.url}>{post.frontmatter.title}</a></li>)}
+    </ul>
+
+    <p class="italic pt-4">2022</p>
+    <ul class="pt-4">
+        {allPosts.map((post) => <li><a href={post.url}>{post.frontmatter.title}</a></li>)}
+    </ul>
+   
+    <p class="italic pt-4">2019</p>
+    <ul class="pt-4">
+        {allPosts.map((post) => <li><a href={post.url}>{post.frontmatter.title}</a></li>)}
+    </ul>
+
+    <p class="italic pt-4">2018</p>
+    <ul class="pt-4">
+        {allPosts.map((post) => <li><a href={post.url}>{post.frontmatter.title}</a></li>)}
+    </ul>
+
+    <p class="italic pt-4">2017</p>
+    <ul class="pt-4">
+        {allPosts.map((post) => <li><a href={post.url}>{post.frontmatter.title}</a></li>)}
+    </ul>
+</Base>
