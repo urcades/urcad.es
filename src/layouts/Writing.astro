@@ -6,7 +6,7 @@ const { frontmatter } = Astro.props;
 	<p class="pt-4"><a href="/writing/" >Back to All Writing</a></p>
 	<h1 class="pt-4">{frontmatter.title}</h1>
 	<p class="pt-4">{frontmatter.pubDate.slice(0,10)}</p>
-    <article class="pt-4 prose prose-xl prose-a:no-underline leading-7 prose-a:text-gray-400 prose-p:text-black dark:text-stone-300">
+    <article class="pt-4 prose prose-xl prose-stone dark:prose-invert prose-a:no-underline leading-7">
 	    <slot/>
     </article>
 	<p class="pt-6">*</p>
