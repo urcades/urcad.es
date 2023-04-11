@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-const allPosts = await Astro.glob('../pages/posts/*.md');
+const allPosts = await Astro.glob('../pages/writing/*.md');
 const pageTitle = 'Writing';
 
 function groupPostsByYear(posts) {
