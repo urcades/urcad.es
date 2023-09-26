@@ -1,0 +1,21 @@
+---
+const { name } = Astro.props;
+import E from "./E.astro";
+import O from "./O.astro";
+---
+
+<div class="avatar-container">
+  <img 
+    class="w-6 h-6 mr-3" 
+    src={`../${name === 'E' ? 'E.astro' : name === 'O' ? 'O.astro' : 'default'}`}
+    alt={`${name}'s avatar`} 
+/>
+  <span>{name}</span>
+</div>
+
+<style>
+  .avatar-container {
+    display: flex;
+    align-items: center;
+  }
+</style>

@@ -1,0 +1,12 @@
+---
+const { name } = Astro.props;
+---
+
+<section class="flex items-center">
+  <img 
+    class="w-6 h-6 mr-3" 
+    src={`../${name}.svg`} 
+    alt={`${name}'s avatar`} 
+  />
+  <span>{name}</span>
+</section>
