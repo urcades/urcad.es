@@ -4,7 +4,9 @@ title: 'September 26'
 pubDate: 2023-09-26
 description: Description goes here
 ---
-import Avatar from '../../components/Avatar.astro';
+import E from '../../components/E.astro';
+import O from '../../components/O.astro';
+
 
 I've been following through a "Foundations of Computing" curriculum facilitated by some folks at [Fractal University](https://fractalnyc.com/university). My hope has been to gain a better understanding of some of the lower-level architectural underpinnings of the medium I spend a lot of time designing around (computers) and why the computer I'm working on (urbit) is meaningfully differentiated from how most others are constructed.
 
@@ -12,10 +14,15 @@ The core of the coursework revolves around [nand2tetris](https://www.nand2tetris
 
 Overall, I've been having a fun time learning about binary logic and arithmetic. As I work with the concepts 
 
-##### Binary Addition
+\*
 
-<Avatar name="E"/> How does binary addition work?
-<Avatar name="O"/> Binary addition works similarly to decimal addition but uses base-2 numbers. Here's the breakdown:
+Binary Addition
+
+<E/> 
+How does binary addition work?
+
+<O/> 
+Binary addition works similarly to decimal addition but uses base-2 numbers. Here's the breakdown:
 
 ```
 0+0=0
@@ -47,8 +54,11 @@ Example: Let's add 1011 and 1101:
 1       (carry-over         )
 ```
 
-<Avatar name="E"></Avatar> why does 1 + 1 = 10 in binary addition?
-<Avatar name="O"></Avatar> In binary, each position represents a power of 2, much like each position in a decimal number represents a power of 10. When you add 1 + 1 in binary, you need to carry over to the next position because you've exceeded the highest value for a single bit, which is 1.
+<E/> 
+Why does 1 + 1 = 10 in binary addition?
+
+<O/> 
+In binary, each position represents a power of 2, much like each position in a decimal number represents a power of 10. When you add 1 + 1 in binary, you need to carry over to the next position because you've exceeded the highest value for a single bit, which is 1.
 
 Here's how it works:
 
@@ -58,14 +68,18 @@ In binary, 2 is represented as 10.
 
 So, 1 + 1 in binary rolls over to, just like 9 + 1 rolls over to 10 in decimal.
 
-<Avatar name="E"></Avatar> What's 0 + 0 in binary addition?
+<E/> 
+What's 0 + 0 in binary addition?
 
-<Avatar name="O"></Avatar> In binary addition, 0 + 0 = 0.
+<O/> 
+In binary addition, 0 + 0 = 0.
 
 This is straightforward because you're essentially adding the smallest element in the base-2 number system to itself, resulting in the same value. No carry-over is needed.
 
-<Avatar name="E"></Avatar> what's 1 + 0 in binary addition?
+<E/> 
+what's 1 + 0 in binary addition?
 
-<Avatar name="O"></Avatar> In binary addition, 1 + 0 = 1.
+<O/> 
+In binary addition, 1 + 0 = 1.
 
 Just like in decimal, adding zero to any number leaves the number unchanged. No carry-over is needed.

@@ -4,7 +4,8 @@ title: 'August 20'
 pubDate: 2023-08-20
 description: A few miscellaneous conversations
 ---
-import Avatar from '../../components/Avatar.astro';
+import E from '../../components/E.astro';
+import O from '../../components/O.astro';
 
 August Conversations
 
@@ -45,10 +46,10 @@ When you’re near someone with ease, it’s like being in the presence of an an
 
 IV
 
-<Avatar name="E"></Avatar>
+<E/>
 Do you know what Object Capture for iOS is?
 
-<Avatar name="O"></Avatar>
+<O/>
 Yes, as of my last training data in September 2021, Apple had announced "Object Capture" as a part of their RealityKit 2 framework during WWDC 2021. It's a tool designed to allow developers to create high-quality, photorealistic 3D models of real-world objects using just an iPhone, iPad, or DSLR. These 3D models can then be used in apps, games, and AR experiences.
 
 Here's a basic overview of how Object Capture works:
@@ -63,10 +64,10 @@ The idea is to make the creation of 3D content more accessible to developers and
 
 It's worth noting that while the capturing and previewing can be done on iOS devices, the actual processing (as of 2021) required a Mac.
 
-<Avatar name="E"></Avatar>
+<E/>
 Let's say that I want to use Object Capture to scan objects in the environment and process them, but not preview them. Are these capabilities decoupled?
 
-<Avatar name="O"></Avatar>
+<O/>
 Yes, the capabilities provided by Apple's Object Capture are decoupled. This means you can use the different components of the workflow separately, based on your needs. Here's a breakdown:
 
 Capture: You can use any compatible device, such as an iPhone, iPad, or DSLR, to capture photos of an object from various angles. You don't have to immediately process these photos with the Object Capture API. You can store them for later processing or even use them for other purposes.
@@ -77,7 +78,7 @@ Preview (or Use): If you choose to preview the resulting 3D model, you can use t
 
 So, if your primary interest is in scanning objects and processing them without previewing, you can definitely do that. You'd capture the photos and then process them to obtain 3D models, which you can store, share, or use in any other way you see fit.
 
-<Avatar name="E"></Avatar>
+<E/>
 Ok, think carefully about this speculative app idea I have:
 
 I would like to use Object Capture to scan objects with an apple device, and then conceptually "attach" chat interfaces to the scanned object. 
@@ -86,7 +87,7 @@ For example, let's imagine that I want to allow people to use an object like a u
 
 Do you have a sense of whether this is possible? Feel free to ask me questions so I can clarify my thinking here to you.
 
-<Avatar name="O"></Avatar>
+<O/>
 Your idea is intriguing. Essentially, you're aiming to use real-world objects as access points or "portals" to unique chat forums. Here's how I understand it:
 
 A user scans an object, like a unique plant, using Object Capture.
@@ -111,7 +112,7 @@ From a technical standpoint, creating such an app is feasible, especially with t
 
 
 
-<Avatar name="E"></Avatar>
+<E/>
 I can answer your questions above:
 
 1. I plan on not differentiating between objects meaningfully. This means that if someone named Alice scans a common object that another user Bob has scanned first, Alice should be able to "portal" into the original chat created by Bob, which might have originated from another object Alice doesn't have access to. This is interesting to me because it means that common objects around the world can become forums, in a sense. Instead of browsing the web for Q&A or facts about a product, which is inherently a context removed from the product, people can discuss a product by using the product itself.
@@ -124,7 +125,7 @@ I can answer your questions above:
 
 Do you have any further responses to my own responses to you? Do you have any other novel ideas that I may have sparked with my own answers? Anything else we could think about here?
 
-<Avatar name="O"></Avatar>
+<O/>
 Your clarifications provide a strong foundation for this speculative app idea, and I'm excited to delve deeper into its potential and challenges. Here are my thoughts based on your responses:
 
 Dynamic Object Forums: The idea of using common objects as forums is intriguing. This turns everyday items into shared experiences. A coffee mug, a specific book, or even a type of toy could become shared discussion points around the world. It decentralizes the idea of forums from websites to the real world, turning the tangible into the intangible.
@@ -165,7 +166,7 @@ Privacy Considerations: Ensure there are strict privacy controls, especially whe
 
 Your app idea is genuinely innovative and has the potential to bridge the gap between the physical and digital worlds in a way that enhances social connections, learning, and shared experiences. With the right execution and attention to user experience, it could be a game-changer in the AR and social networking space.
 
-<Avatar name="E"></Avatar>
+<E/>
 Given our discussion, do you have an idea for how to prototype an iphone app using swiftUI that uses Object Capture in the way we've imagined? Could you provide sample code to help me get started?
 
 An ideal prototype app could somehow perform the following:
@@ -177,7 +178,7 @@ An ideal prototype app could somehow perform the following:
 5. Other people using the app should be able to view the data structured in step 4. by scanning the same object, or another similar/equivalent object
 6. All users who've scanned an object probably need another page to view a history of all objects they've scanned, so they can revisit objects
 
-<Avatar name="O"></Avatar>
+<O/>
 Absolutely! Let's break down the steps needed to prototype this app:
 
 Step 1: Setup
@@ -251,12 +252,12 @@ Note: This is a high-level overview, and the actual implementation can get quite
 
 Also, as this is a prototype, there are many aspects (like error handling, UI/UX improvements, performance optimizations, etc.) that aren't addressed but would be crucial for a production app.
 
-<Avatar name="E"></Avatar>
+<E/>
 OK I have one last question for now: How might I allow users who've scanned objects using this app to associate AI characters with objects?
 
 An example here is that I might want to breathe digital life into ordinary objects using this app. I could potentially scan an object like a mug, and select an option to grant it "sentience" through something like ChatGPT-4. Of course, this isn't real sentience, but it would be interesting to use the object model data to provide context to the LLM so that it could "assume" the character of the object it's now associated with. Does this seem feasible, or interesting?
 
-<Avatar name="O"></Avatar>
+<O/>
 Your idea is both feasible and deeply interesting. It's essentially blending Augmented Reality (AR) with conversational AI to create a unique and interactive experience. Here's a conceptual overview of how you might achieve this:
 
 Object Identification: After scanning and recognizing an object (like a mug), the app should allow users to associate an AI character with it. This can be achieved by saving a reference to the object, perhaps its 3D fingerprint or some unique identifier, along with the AI character's details.
@@ -282,14 +283,14 @@ Privacy Concerns: Ensure that users are aware of what data is being sent to the 
 Realism vs. Uncanny Valley: Striking the right balance between a realistic AI character and one that feels unnatural or eerie can be a challenge. Test and iterate based on user feedback.
 In summary, your idea takes object scanning and AR to a whole new level by imbuing inanimate objects with "life" and personality. With advancements in AI and AR, creating such an experience is becoming increasingly feasible. The potential applications, from education to entertainment, are vast and captivating.
 
-<Avatar name="E"></Avatar>
+<E/>
 If you were to pitch this idea to an investor, how might you very capture the essence of the idea we've explored here?
 
 If it helps, I'm starting to think that this could be an excellent answer to the future of localized collective knowledge stored in objects. It could be a new way to think about entertainment or embedding playful interactions into everyday objects. It could allow people from across the world to bond over the experiences of otherwise commodity goods.
 
 Do you have any other ideas for how to pitch this idea?
 
-<Avatar name="O"></Avatar>
+<O/>
 Certainly! Crafting a compelling pitch requires clarity, brevity, and a sharp focus on the unique value proposition. Here's a potential pitch for your idea:
 
 [Opening with a Relatable Scenario]
@@ -324,10 +325,10 @@ Monetization Strategy: Investors will be keen to understand how you plan to mone
 
 Remember, the goal of the pitch is to ignite interest and curiosity. You want investors to ask questions, to want to learn more, and to see the potential of your vision.
 
-<Avatar name="E"></Avatar>
+<E/>
 It's one thing to imagine consumer applications of this sort of app/software, but can you imagine ways this type of technology could be used for commercial or B2B applications?
 
-<Avatar name="O"></Avatar>
+<O/>
 Absolutely! The fusion of object scanning, AR, and AI has significant potential in the commercial and B2B sectors. Here are some potential applications:
 
 Supply Chain & Inventory Management:
@@ -392,10 +393,10 @@ AI-driven insights can suggest optimal harvest times, detect diseases, or recomm
 
 In essence, any sector that involves physical objects (which is virtually all of them) can benefit from this convergence of technologies. The key is to identify pain points in each industry that can be addressed by interactive, AI-driven object recognition and engagement.
 
-<Avatar name="E"></Avatar>
+<E/>
 If you were to recommend a small founding team to work on an app like this, what roles do you think the team would need?
 
-<Avatar name="O"></Avatar>
+<O/>
 Creating an app that merges AR, object scanning, and AI is a complex task requiring expertise in various domains. For a small founding team, each member would ideally wear multiple hats, but here's a recommended list of essential roles:
 
 Technical Co-founder/CTO:
@@ -453,10 +454,10 @@ Skills: Experience in startup operations, knowledge of finance and legal aspects
 
 Given it's a startup, many of these roles can be combined based on the team members' skills. For instance, the Technical Co-founder might also take on Backend Development, or the Product Manager could handle Business Development initially. As the startup grows, roles can become more specialized. The key is to have a core team with complementary skills that cover the critical aspects of the product and business.
 
-<Avatar name="E"></Avatar>
+<E/>
 Let's imagine that in a few years, Apple releases an AR/VR headset capable of really high quality immersive mixed reality experiences, does this change anything about the idea we've come up with in this discussion?
 
-<Avatar name="O"></Avatar>
+<O/>
 Absolutely! The introduction of a high-quality AR/VR headset by Apple (or any other major player) would amplify the potential of your idea and open up new avenues for its application. Here's how this could impact and evolve the concept:
 
 Enhanced Immersion: With a dedicated AR/VR headset, the experience becomes more immersive. Objects wouldn't just "speak" to users through text; they could have fully animated digital avatars, producing a much richer interaction.
