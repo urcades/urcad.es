@@ -1,6 +1,6 @@
 ---
 import Base from "./Base.astro";
-const pageTitle = "É. Urcades • " + Astro.props.frontmatter.title;
+const pageTitle = Astro.props.frontmatter.title;
 const { frontmatter } = Astro.props;
 ---
 <Base pageTitle={pageTitle}>
