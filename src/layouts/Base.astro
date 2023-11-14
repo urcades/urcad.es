@@ -5,12 +5,32 @@ const pageTitle = 'É. Urcades';
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="mask-icon" href="/favicon.svg" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+		<link rel="shortcut icon" type="image/png" href="/favicon.svg"/>
 		<link rel="apple-touch-icon" href="/appicon.png" />
+		<link rel="mask-icon" href="/favicon.svg" />
+		
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta name="generator" content={Astro.generator} />
+		
+		<!-- Primary Meta Tags -->
 		<title>{pageTitle}</title>
+		<meta name="title" 					content="Édouard Urcades">
+		<meta name="description" 			content="Designer, Professional">
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" 			content="website">
+		<meta property="og:url" 			content="https://urcad.es/">
+		<meta property="og:title" 			content="Édouard Urcades">
+		<meta property="og:description" 	content="Designer, Professional">
+		<meta property="og:image" 			content="og.png">
+
+		<!-- Twitter cards -->
+		<meta name="twitter:site"    		content="@yokelisms">
+		<meta name="twitter:title"   		content="Édouard Urcades">
+		<meta name="twitter:description" 	content="Designer, Professional">   
+		<meta name="twitter:card"  			content="summary_large_image">
+		<meta name="twitter:image" 			content="og.png">
 	</head>
 	<body class="p-4 lg:p-12 text-xl antialiased dark:bg-neutral-900 dark:text-white">
 		<p><a href="/">É. Urcades</a></p>
@@ -22,6 +42,4 @@ const pageTitle = 'É. Urcades';
     body {
         font-family: serif;
     }
-
-	
 </style>
