@@ -11,5 +11,8 @@ import mdx from "@astrojs/mdx";
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [tailwind(), prefetch(), mdx()]
+  integrations: [tailwind(), prefetch(), mdx()],
+  prefetch: {
+    prefetchAll: true
+  }
 });

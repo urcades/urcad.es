@@ -1,0 +1,127 @@
+---
+title: 'September 26'
+pubDate: 2023-09-26
+description: A brief update on what I'm learning at Fractal University
+---
+import E from '../../components/E.astro';
+import O from '../../components/O.astro';
+
+Hasty notes/homework for a class I'm taking.
+
+I generally consider myself pretty well-versed in the history and composition of computers. I have a great sense of why we've found ourselves with the latest iPhone as the peak representation of "the personal computer". Despite this, it’s been nagging me for a while that I don’t have much practical knowledge of how computers actually operate at a low level. 
+
+As someone in the middle of juggling learning a few programming languages (compiled and interpreted both! Garbage-collected and manually-managed both!), I’m well aware that computers are broadly structured as massive tables/lists/trees and our act of “programming” computers results in "data" moving from one place to another, but I never took the time to really get down to the nitty-gritty of Boolean logic as a practice, and how the Boolean algebra successively stacks simple logical expressions into modest conceptual machines, which themselves combine to form grander machines, which themselves are eventually etched into hardware, upon which your run of the mill venture-backed SaaS software (itself expressed via NAND somewhere) runs.
+
+So, after hearing about a group of people setting out to learn about this stuff together, in-person, I figured it was a good time to learn all of this stuff.
+
+In a nutshell: I’ve been following through a “Foundations of Computing” curriculum facilitated by some folks at [Fractal University](https://fractalnyc.com/university). My hope has been to gain a better understanding of some of the lower-level architectural underpinnings of the medium I spend a lot of time designing in/around/on (computers) and why the computer I’m working on (urbit) is meaningfully differentiated from how most others are constructed. I generally think it’s a good practice to be self-aware, and better yet to be environment-aware — aware of the material underpinnings of where you happen to be, where your mind happens to wander, what you spend lots of time thinking about, etc.
+
+The core of the coursework revolves around our group taking the [nand2tetris](https://www.nand2tetris.org) journey, which itself is an “open” coursework designed by Noam Nisan and Shimon Schocken. The facilitator(s) of our group at Fractal have prepared additional material/references that contextualize this core framework.
+
+Shoutout to [Andrew Rose](https://twitter.com/__drewface)!
+
+Together, the materials arranged before us are designed to help us get a concrete sense of how computers work at a low level, leading up to us building a simple computer.
+
+~3 weeks in, I’ve been having a fun time learning about binary logic and arithmetic. I can appreciate the beauty of a NAND gate. I’m working on wrapping my head around the constituent parts of an ALU, and I’m still trying to get the hang of calculating binary numbers, translating binary arithmetic into logical formulations/gates, and determining how bits move around as a result.
+
+Shoutout to [nandgame](https://nandgame.com)! 
+
+Nandgame has been a core tool/medium in the early weeks of this course. It’s basically a game split out into levels which each require you to construct an element of a computer, starting off at the lowest level (designing XOR gates, for example). Interestingly, I found that the initial levels were quite difficult, eased up as I realized how initial abstractions could resolve into structures like “adding” or “selecting”. As I’m progressing past laying out the concept of “selecting” or “branching” logic, I’m finding that the game is getting difficult again.
+
+What I’ve gained/learned so far: A visceral sense of how much complexity you can wring out of two bits of information. 
+
+Like I said, I’m deeply familiar with how computers generally came to be, what their predecessors were, and that information can be represented as 1s and 0s — this implicit knowledge of the reality of how computation works is a much different type of knowledge than constructing lower-level logic and feeling how bit manipulation plays out at a low level.
+
+It’s cool to embody, and it’ll be cool to see how what I’m building now resolves into something I can realize a game with. Maybe after this I’ll see what other mediums I can build an ALU within. Minecraft? Factorio? Monome?
+
+As for computers themselves, and what they are:
+
+My oft-repeated expression that "[computers are flowers](https://x.com/yokelisms/status/1327021455868047364)" serves as an exhortation, a mantra, and a key for unlocking the realization that computing is a medium that has yet to find its bounds. An example I frequently express to people is that
+
+“Ceramics is a medium/practice that has no bounds: You can fashion coins, bricks/buildings, toys, vessels, and G4 continuity space ship surfacing via Ceramics”
+
+etc. 
+
+To me, when people constrain “Computers” or “Computation” to mean “phone”, or “laptop”, or “data centre”, or “arduino”, or “image processing”, I find myself thinking
+
+“No, consider the malleability of clay”
+
+Despite the concrete nature of what I’m learning, this course is serving as a tempering to my sentiments, so far.
+
+On/Off, Light/Dark, Life/Death, One/Zero, everything in between. I suppose I define a "computer" as the exploration space between the hard edges of existence.
+
+That's all for today, more later.
+
+\*
+
+(Below's a preview of an experiment in referencing LLM-assisted learning in the context of this course — I'm going to be experimenting with including notes/misc. sketches along with blog prose)
+
+\*
+
+Binary Addition
+
+<E/> 
+How does binary addition work?
+
+<O/> 
+Binary addition works similarly to decimal addition but uses base-2 numbers. Here's the breakdown:
+
+```
+0+0=0
+0+1=1
+1+0=1
+1+1=10 (similar to carrying over in decimal)
+```
+
+Example: Let's add 1011 and 1101:
+
+1. Align the numbers:
+
+```
+ 1011
++1101
+-----
+```
+
+2. Add bit-by-bit, starting from the rightmost bit.
+
+```
+ 1011
++1101
+-----
+   00   (1+1   = 10, carry 1)
+  10    (1+0+1 = 10, carry 1)
+ 10     (1+1+0 = 10, carry 1)
+10      (1+0+1 = 10, carry 1)
+1       (carry-over         )
+```
+
+<E/> 
+Why does 1 + 1 = 10 in binary addition?
+
+<O/> 
+In binary, each position represents a power of 2, much like each position in a decimal number represents a power of 10. When you add 1 + 1 in binary, you need to carry over to the next position because you've exceeded the highest value for a single bit, which is 1.
+
+Here's how it works:
+
+1 + 1 = 2 in decimal.
+
+In binary, 2 is represented as 10.
+
+So, 1 + 1 in binary rolls over to, just like 9 + 1 rolls over to 10 in decimal.
+
+<E/> 
+What's 0 + 0 in binary addition?
+
+<O/> 
+In binary addition, 0 + 0 = 0.
+
+This is straightforward because you're essentially adding the smallest element in the base-2 number system to itself, resulting in the same value. No carry-over is needed.
+
+<E/> 
+what's 1 + 0 in binary addition?
+
+<O/> 
+In binary addition, 1 + 0 = 1.
+
+Just like in decimal, adding zero to any number leaves the number unchanged. No carry-over is needed.

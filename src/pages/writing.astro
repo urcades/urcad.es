@@ -1,27 +1,42 @@
 ---
+import { getCollection } from "astro:content";
 import Base from '../layouts/Base.astro';
-const allPosts = await Astro.glob('../pages/writing/*.md*');
-const pageTitle = 'Writing';
+const allPosts = await getCollection("writing");
 
-function groupPostsByYear(posts) {
-  const postsByYear = {};
+interface BlogPost {
+  id: string;
+  slug: string;
+  body: string;
+  collection: string;
+  data: {
+    title: string;
+    pubDate: Date;
+    description: string;
+  };
+  render: () => Promise<{
+    remarkPluginFrontmatter: Record<string, unknown>;
+  }>;
+}
+
+function groupPostsByYear(posts: BlogPost[]): Record<string, BlogPost[]> {
+  const postsByYear: Record<string, BlogPost[]> = {};
 
   posts.forEach((post) => {
-    const year = post.frontmatter.pubDate.slice(0, 4);
+    const year = post.data.pubDate.getFullYear().toString(); // Convert Date to string
 
     if (!postsByYear[year]) {
       postsByYear[year] = [];
     }
 
     postsByYear[year].push(post);
-    postsByYear[year].sort((a, b) => b.frontmatter.pubDate.localeCompare(a.frontmatter.pubDate)); // Sort posts within each year in descending order
+    postsByYear[year].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
   });
 
   return postsByYear;
 }
 
 const groupedPosts = groupPostsByYear(allPosts);
-const sortedYears = Object.keys(groupedPosts).sort((a, b) => b - a); // Sort years in descending order
+const sortedYears = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a)); // Sort years in descending order
 ---
 
 <Base>
@@ -30,7 +45,11 @@ const sortedYears = Object.keys(groupedPosts).sort((a, b) => b - a); // Sort yea
       <p class="italic pt-4">{year}</p>
       <ul class="pt-4">
         {groupedPosts[year].map((post) => (
-          <li><a href={post.url} title={post.frontmatter.pubDate}>{post.frontmatter.title}</a></li>
+          <li>
+            <a href={`/writing/${post.slug}/`} title={post.data.pubDate.toISOString()}>
+              {post.data.title}
+            </a>
+          </li>
         ))}
       </ul>
     </>
