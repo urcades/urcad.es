@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Base from '../layouts/Base.astro';
+const pageTitle = "É. Urcades • Ongoing Writing";
 const allPosts = await getCollection("writing");
 
 interface BlogPost {
@@ -39,7 +40,7 @@ const groupedPosts = groupPostsByYear(allPosts);
 const sortedYears = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a)); // Sort years in descending order
 ---
 
-<Base>
+<Base pageTitle={pageTitle}>
   {sortedYears.map((year) => (
     <>
       <p class="italic pt-4">{year}</p>

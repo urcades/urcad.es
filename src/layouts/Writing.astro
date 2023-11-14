@@ -1,8 +1,9 @@
 ---
 import Base from "./Base.astro";
+const pageTitle = "É. Urcades • " + Astro.props.frontmatter.title;
 const { frontmatter } = Astro.props;
 ---
-<Base>
+<Base pageTitle={pageTitle}>
 	<p class="pt-4"><a href="/writing/" >Back to All Writing</a></p>
 	<h1 class="pt-4 italic">{frontmatter.title}</h1>
 	<!-- <p class="pt-4">{frontmatter.pubDate.slice(0,10)}</p> -->
