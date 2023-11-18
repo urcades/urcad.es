@@ -1,12 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
+import Flower from '../components/Flower.astro';
+import Box from '../components/Box.astro';
+import Hammer from '../components/Hammer.astro';
+import Smile from '../components/Smile.astro';
+import Wind from '../components/Wind.astro';
 const pageTitle = 'É. Urcades: About Me';
 ---
 
 <Base pageTitle={pageTitle}>
 	<p class="pt-4">
-		I design beautiful, sturdy,<br>
-		graceful, useful, and truly personal<br>
+		I design beautiful <Flower/>, sturdy <Hammer/>,<br>
+		graceful <Wind/>, useful <Box/>, and truly personal <Smile/><br>
 		new mediums for computation.
 	</p>
 	<p class="pt-4">
@@ -21,7 +26,6 @@ const pageTitle = 'É. Urcades: About Me';
 	</p>
 	<p class="pt-4">I know what the future holds.</p>
 	<p class="pt-6">*</p>
-	<p class="pt-4">Reach out:</p>
 	<p class="pt-4 italic">Email: <a href="mailto:ed@tlon.io">ed@tlon.io</a></p>
 	<p class="pt-4 italic">X: <a href="https://x.com/yokelisms" target="_blank">@yokelisms</a></p>
 	<p class="pt-4 italic">Github: <a href="https://github.com/urcades" target="_blank">@urcades</a></p>
