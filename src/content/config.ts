@@ -7,7 +7,9 @@ const writingCollection = defineCollection({
     schema: z.object({
       title: z.string(),
       pubDate: z.date(),
-      description: z.string()
+      description: z.string(),
+      foregroundColor: z.string().optional(),
+      backgroundColor: z.string().optional(),
     })
 });
 
