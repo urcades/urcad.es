@@ -3,6 +3,7 @@ import Base from "./Base.astro";
 const pageTitle = Astro.props.frontmatter.title;
 const { frontmatter } = Astro.props;
 ---
+
 <Base pageTitle={pageTitle}>
 	<p class="pt-4"><a href="/writing/" >Back to All Writing</a></p>
 	<h1 class="pt-4 italic">{frontmatter.title}</h1>
