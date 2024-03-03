@@ -1,8 +1,9 @@
 ---
-import { getCollection } from "astro:content";
 import Base from '../layouts/Base.astro';
-const pageTitle = "É. Urcades: Ongoing Writing";
+import { getCollection } from "astro:content";
 const allPosts = await getCollection("writing");
+
+const pageTitle = "É. Urcades: Ongoing Writing";
 
 interface BlogPost {
   id: string;

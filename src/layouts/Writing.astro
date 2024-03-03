@@ -1,10 +1,14 @@
 ---
 import Base from "./Base.astro";
 const pageTitle = Astro.props.frontmatter.title;
+const txtColor = Astro.props.frontmatter.foregroundColor;
+const bgColor = Astro.props.frontmatter.backgroundColor;
+const txtColorDark = Astro.props.frontmatter.foregroundColorDark;
+const bgColorDark = Astro.props.frontmatter.backgroundColorDark;
 const { frontmatter } = Astro.props;
 ---
 
-<Base pageTitle={pageTitle}>
+<Base pageTitle={pageTitle} bgColor={bgColor} txtColor={txtColor} bgColorDark={bgColorDark} txtColorDark={txtColorDark}>
 	<p class="pt-4"><a href="/writing/" >Back to All Writing</a></p>
 	<h1 class="pt-4 italic">{frontmatter.title}</h1>
     <article class="pt-56 prose prose-xl dark:prose-invert prose-a:decoration-1 prose-a:underline-offset-[3px] prose-li:-ml-1.5 leading-7 text-pretty">

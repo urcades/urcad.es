@@ -9,7 +9,9 @@ const writingCollection = defineCollection({
       pubDate: z.date(),
       description: z.string(),
       foregroundColor: z.string().optional(),
+      foregroundColorDark: z.string().optional(),
       backgroundColor: z.string().optional(),
+      backgroundColorDark: z.string().optional(),
     })
 });
 
