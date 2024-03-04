@@ -36,26 +36,26 @@ const { pageTitle, txtColor, bgColor, txtColorDark, bgColorDark } = Astro.props;
 
 		<!-- Special case blog post styling -->
 		<style is:global define:vars={{ txtColor, bgColor, txtColorDark, bgColorDark }}>
-			html, body {
+			html > body {
 				--fallback-bg-color: #ffffff; /* Default light background color */
 				--fallback-txt-color: #1A1818; /* Default light text color */
 				background-color: var(--bgColor, var(--fallback-bg-color));
 				color: var(--txtColor, var(--fallback-txt-color));
 			}
 		
-			article, p, a, h1 {
+			* {
 				color: var(--txtColor, var(--fallback-txt-color));
 			}
 		
 			@media (prefers-color-scheme: dark) {
-				html, body {
+				html > body {
 					--fallback-bg-color-dark: #1A1818; /* Default dark background color */
 					--fallback-txt-color-dark: #ffffff; /* Default dark text color */
 					background-color: var(--bgColorDark, var(--fallback-bg-color-dark));
 					color: var(--txtColorDark, var(--fallback-txt-color-dark));
 				}
 		
-				article, p, a, h1 {
+				* {
 					color: var(--txtColorDark, var(--fallback-txt-color-dark));
 				}
 			}
