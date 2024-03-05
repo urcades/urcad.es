@@ -24,15 +24,15 @@ I recently made a minor, mostly personal breakthrough on my personal website tod
 
 For those unaware, my website is built using a web framework called "Astro". I find this framework appealing because it's simple, it doesn't get in the way of me, and it's basically just django/jekyll but with javascript as the templating/scripting language. This is neat because I basically assemble this thing like I do any ordinary simple site: using html, a bit of css/tailwind styling, and some javascript to loop over things and promote reusability. 
 
-The breakthrough I speak of is a relatively simple system of variables and javascript imports to make optional per-post foreground/background color customization really trivial from the authoring perspective. This capability is important to me for obscure reasons I'm not going to explain in depth, but it has to do with casting text into very particular timbres. Color's one way to do this, but I'd be the first to claim that color barely exists as a meaningful medium for design purposes. So, take it or leave it.
+The breakthrough I speak of is a relatively simple daisy chain of variables and javascript imports to make optional per-post foreground/background color customization really trivial from the authoring perspective. This capability is important to me for obscure reasons I'm not going to explain in depth, but it has to do with casting text into very particular timbres. Color's one way to do this, but I'd be the first to claim that color barely exists as a meaningful medium for design purposes. So, take it or leave it.
 
 If you check out [the source of this post](https://github.com/urcades/urcad.es/tree/main/src/content/writing), which is written in markdown (Technically, in .mdx), you'll get a sense for how simple my intervention is. Basically, posts will always look great/beautiful in the monochromatic base I've established for most of my site. When the mood hits, I can add four optional fields to my post's front matter to set particular color fields/moods for a post. I think it's great.
 
-Fields for my posts are established by a data model defined in a config file in a content directory in the source files of my website. This config file describes a javascript object that comprises of fields of a variety of types, which correspond to the fields I can use for my blog posts.
+Fields for my posts are established by a data model defined in a config file in a content directory in the source files of my website. This config file describes a javascript object comprised of fields of a variety of types which correspond to the fields I can use for my blog posts: title, date, description, slugs, timbre colors, whatever.
 
 Finally, colors included in my blog post's front matter are percolated upwards to the base template that describes the overall shape of my site.
 
-(Author's note: While writing this in a dark mode context, I realized the links looked terrible and spend 20 minutes fiddling with the styling to get it feeling better. There's still a bit of mediation I need to do between how my front matter colors are applied to things like links and code blocks and the like, which tailwind has taken over via its typography plugin. It might be time to get rid of it since I don't really use it "correctly".)
+(Author's note: While writing this in a dark mode context, I realized the links looked terrible and spent 20 minutes fiddling with the styling to get it feeling better. There's still a bit of mediation I need to do between how my front matter colors are applied to things like links and code blocks and the like, which tailwind has taken over via its typography plugin. It might be time to get rid of it since I don't really use it "correctly".)
 
 *Aside*
 
@@ -48,9 +48,11 @@ Anyways,
 
 For anyone's who's bothered to stay aware of my public communications over the years, you've probably heard the term "flower computer" come up once or twice.
 
-It's a bit of an inside joke, but it's a relatively serious idea involving new ways of applying computation to the world in potentially interesting or novel ways. It's an idea that's easily 5+ years in the making, and stars seem to be aligning in recent times for making it relevant/real.
+It's a bit of an inside joke, but it's a relatively serious idea involving new ways of applying computation to the world in potentially interesting or novel ways. It's an idea that's easily 5+ years in the making, and stars seem to be aligning in recent times for making it relevant/real. 
 
-I don't think it's neccesarily a perfect magnet for capital investment yet, but I am interested in obctaining moderate funding to spend more time cultivating the idea, establishing stronger technical roots, making it realer, making it valuable, etc.
+It's neither an AI thing, or a crypto thing — It's not a pivot of interest to the latest hot thing. Flower computers are based on ideas that no one has taken to their final conclusion. Flower computers are a simple idea that no one has built properly. It's a meditation on images and cameras. It's a recipe for turning any object in the world into a general purpose computer. It might lead towards new modes of human perception. We'll see.
+
+I don't think it's neccesarily a perfect magnet for capital investment yet, but I am interested in obctaining modest funding to spend more time cultivating the idea, establishing stronger technical roots, making it realer, making it valuable, etc.
 
 If you happen to be reading this and have leads, or want to talk about flower computers, just send me an email or DM me wherever I'm at.
 
