@@ -11,7 +11,7 @@ const { frontmatter } = Astro.props;
 <Base pageTitle={pageTitle} bgColor={bgColor} txtColor={txtColor} bgColorDark={bgColorDark} txtColorDark={txtColorDark}>
 	<p class="pt-4"><a href="/writing/" >Back to All Writing</a></p>
 	<h1 class="pt-4 italic">{frontmatter.title}</h1>
-    <article class="pt-56 prose prose-xl dark:prose-invert prose-a:decoration-1 prose-a:underline-offset-[3px] prose-li:-ml-1.5 leading-7 text-pretty">
+    <article class="pt-56 prose dark:prose-invert prose-xl prose-a:opacity-60 prose-a:mix-blend-luminosity dark:prose-a:opacity-55 dark:prose-a:mix-blend-color-dodge prose-a:decoration-1 prose-a:underline-offset-[3px] prose-li:-ml-1.5 leading-7 text-pretty">
 	    <slot/>
     </article>
 	<p class="pt-6">*</p>
