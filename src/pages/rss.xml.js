@@ -12,6 +12,7 @@ export async function GET(context) {
             pubDate: post.data.pubDate,
             description: post.data.description,
             customData: post.data.customData,
+            body: post.data.body,
             link: `/writing/${post.slug}/`,
         })),
     });
