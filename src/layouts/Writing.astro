@@ -15,6 +15,10 @@ const { frontmatter } = Astro.props;
 	    <slot/>
     </article>
 	<p class="pt-6">*</p>
+	<p class="pt-4">Title: {frontmatter.title}</p>
+	<p class="pt-4">Description: {frontmatter.description}</p>
+	<p class="pt-4">Published: {frontmatter.pubDate}</p>
+	<p class="pt-6">*</p>
 	<p class="pt-4"><a href="/writing/">Back to All Writing</a></p>
 	<p><a href="https://urcades.substack.com/">Subscribe</a></p>
 	<p><a href="/rss.xml">RSS</a></p>
