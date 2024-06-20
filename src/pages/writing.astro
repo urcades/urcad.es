@@ -44,8 +44,8 @@ const sortedYears = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(
 <Base pageTitle={pageTitle}>
   {sortedYears.map((year) => (
     <>
-      <p class="italic pt-4">{year}</p>
-      <ul class="pt-4">
+      <p>{year}</p>
+      <ul>
         {groupedPosts[year].map((post) => (
           <li>
             <a href={`/writing/${post.slug}/`} title={post.data.pubDate.toISOString()}>

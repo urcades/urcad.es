@@ -43,10 +43,6 @@ const { pageTitle, txtColor, bgColor, txtColorDark, bgColorDark } = Astro.props;
 				color: var(--txtColor, var(--fallback-txt-color));
 			}
 		
-			* {
-				color: var(--txtColor, var(--fallback-txt-color));
-			}
-		
 			@media (prefers-color-scheme: dark) {
 				html > body {
 					--fallback-bg-color-dark: #1A1818; /* Default dark background color */
@@ -59,9 +55,14 @@ const { pageTitle, txtColor, bgColor, txtColorDark, bgColorDark } = Astro.props;
 					color: var(--txtColorDark, var(--fallback-txt-color-dark));
 				}
 			}
+
+			html {
+				font-family: 'Times New Roman', Times, serif;
+				margin: 1em;
+			}
 		</style>
 	</head>
-	<body class="p-4 lg:p-12 text-xl antialiased font-serif">
+	<body>
 		<p><a href="/">É. Urcades</a></p>
 		<slot/>
 	</body>

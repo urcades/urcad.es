@@ -11,11 +11,11 @@ const { imageUrl, title, category, url, size = '1' } = Astro.props;
 ---
 
 <div class=`flex flex-col gap-6 md:gap-2 col-span-${size}`>
-  <img class="dark:opacity-80" src={imageUrl} alt={title} />
-  <div class="flex flex-col md:flex-row gap-3">
-    <p class="">{title}</p>
-    <p class="italic">{category}</p>
+  <img src={imageUrl} alt={title} />
+  <div>
+    <p>{title}</p>
+    <p>{category}</p>
     {url && <a href={url}>♨︎</a>}
   </div>
-  <div class="flex-grow"></div>
+  <div></div>
 </div>
