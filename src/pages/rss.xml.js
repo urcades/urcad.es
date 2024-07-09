@@ -13,7 +13,7 @@ export async function GET(context) {
         // Replace custom Image tags with standard img tags
         const imgTagRegex = /<Image\s+src={([^}]+)}\s+alt="([^"]+)"\s*\/>/g;
         const processedContent = content.replace(imgTagRegex, (match, src, alt) => {
-            return `<img src=${src} alt="${alt}" />`;
+            return `Image: ${alt}`;
         });
 
         // Remove import statements
