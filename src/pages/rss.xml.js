@@ -5,21 +5,33 @@ import MarkdownIt from 'markdown-it';
 
 const parser = new MarkdownIt();
 
+// Function to preprocess markdown content
+function preprocessMarkdown(content) {
+    // Extract import statements and create a mapping
+    const importRegex = /import\s+(\w+)\s+from\s+"([^"]+)";/g;
+    const imports = {};
+    let match;
+    while ((match = importRegex.exec(content)) !== null) {
+        imports[match[1]] = match[2];
+    }
+
+    // Replace import statements with an empty string
+    content = content.replace(importRegex, '');
+
+    // Replace custom Image tags with standard img tags
+    const imgTagRegex = /<Image\s+src={(\w+)}\s+([^>]*)\/>/g;
+    content = content.replace(imgTagRegex, (match, src, attributes) => {
+        if (imports[src]) {
+            return `<img src="${imports[src]}" ${attributes} />`;
+        }
+        return match; // Return the original match if the src is not found in imports
+    });
+
+    return content;
+}
+
 export async function GET(context) {
     const blog = await getCollection('writing');
-
-    // Function to preprocess markdown content
-    function preprocessMarkdown(content) {
-        // Replace custom Image tags with standard img tags
-        const imgTagRegex = /<Image\s+src={([^}]+)}\s+alt="([^"]+)"\s*\/>/g;
-        const processedContent = content.replace(imgTagRegex, (match, src, alt) => {
-            return `<img src=${src} alt="${alt}" />`;
-        });
-
-        // Remove import statements
-        const importRegex = /import\s[^;]*;/g;
-        return processedContent.replace(importRegex, '');
-    }
 
     return rss({
         title: 'É. Urcades',
