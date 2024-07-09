@@ -18,15 +18,17 @@ function preprocessMarkdown(content) {
     // Remove import statements
     content = content.replace(importRegex, '');
 
-    // Replace custom Image tags with text
+    // Replace custom Image tags with standard img tags
     const imgTagRegex = /<Image\s+([^>]+)\/>/g;
     content = content.replace(imgTagRegex, (match, attributes) => {
+        const srcMatch = attributes.match(/src={(\w+)}/);
         const altMatch = attributes.match(/alt="([^"]*)"/);
-        if (altMatch) {
+        if (srcMatch && altMatch) {
+            const src = imports[srcMatch[1]];
             const alt = altMatch[1];
-            return `Image: ${alt}\n`;
+            return `<p>Image: ${alt}</p>`;
         }
-        return '';
+        return match; // Return the original match if src or alt is not found
     });
 
     return content;
@@ -48,8 +50,7 @@ export async function GET(context) {
                 customData: post.data.customData,
                 link: `/writing/${post.slug}/`,
                 content: sanitizeHtml(parser.render(processedBody), {
-                    allowedTags: [],
-                    transformTags: {},
+                    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
                 }),
                 ...post.data,
             };
