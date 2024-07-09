@@ -21,7 +21,18 @@ export async function GET(context) {
             content: sanitizeHtml(parser.render(post.body), {
                 allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
                 transformTags: {
-                    'Image': () => ({ tagName: '', text: '' }) // Remove Image components
+                    'Image': (tagName, attribs) => {
+                        if (attribs.src && attribs.alt) {
+                            return {
+                                tagName: 'img',
+                                attribs: {
+                                    src: attribs.src,
+                                    alt: attribs.alt
+                                }
+                            };
+                        }
+                        return { tagName: '', text: '' };
+                    }
                 },
                 exclusiveFilter: (frame) => {
                     // Remove specific strings by filtering their content
