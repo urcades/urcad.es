@@ -1,0 +1,72 @@
+---
+import Base from "./Base.astro";
+const pageTitle = Astro.props.frontmatter.title;
+const txtColor = Astro.props.frontmatter.foregroundColor;
+const bgColor = Astro.props.frontmatter.backgroundColor;
+const txtColorDark = Astro.props.frontmatter.foregroundColorDark;
+const bgColorDark = Astro.props.frontmatter.backgroundColorDark;
+const { frontmatter } = Astro.props;
+---
+
+<style is:global>
+	h1 {
+		max-width: 22ch;
+	}
+	article {
+		max-width: 55ch;
+		text-wrap: pretty;
+	}
+
+	blockquote {
+		font-style: italic;
+		border-left: 1px solid var(--txtColor, var(--fallback-txt-color));
+		padding-left: 1em;
+		margin-left: 0;
+	}
+
+	img {
+		display: inline-block;
+		max-width: 100%;
+		height: auto;
+		padding-bottom: 1em;
+	}
+
+	img:last-of-type {
+		padding-bottom: 0;
+	}
+
+	pre {
+		background-color: #ededed;
+		padding: 1em;
+		overflow-x: auto;
+		border-radius: .33em;
+	}
+	/* Inset sibling <pre> elements under a list item 1em */
+	ol ~ pre {
+		margin-left: 1em;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		pre {
+			background-color: #333333;
+		}
+	}
+</style>
+
+<Base pageTitle={pageTitle} bgColor={bgColor} txtColor={txtColor} bgColorDark={bgColorDark} txtColorDark={txtColorDark}>
+	<p><a href="/writing/" >Back to All Writing</a></p>
+	<h1>{frontmatter.title}</h1>
+    <article>
+	    <slot/>
+    </article>
+	<!-- <p>~</p> -->
+	<!-- <p contenteditable="true" style="color: gray">Ask me about this post...</p> -->
+	<p>~</p>
+	<p>Title: {frontmatter.title}</p>
+	<p>Description: {frontmatter.description}</p>
+	<p>Published: {frontmatter.pubDate}</p>
+	<p>~</p>
+	<p><a href="/writing/">Back to All Writing</a></p>
+	<p><a href="https://urcades.substack.com/">Subscribe</a></p>
+	<p><a href="/rss.xml">RSS</a></p>
+</Base>

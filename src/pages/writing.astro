@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from "astro:content";
+const allPosts = await getCollection("writing");
+
+const pageTitle = "É. Urcades: Ongoing Writing";
+
+interface BlogPost {
+  id: string;
+  slug: string;
+  body: string;
+  collection: string;
+  data: {
+    title: string;
+    pubDate: Date;
+    description: string;
+  };
+  render: () => Promise<{
+    remarkPluginFrontmatter: Record<string, unknown>;
+  }>;
+}
+
+function groupPostsByYear(posts: BlogPost[]): Record<string, BlogPost[]> {
+  const postsByYear: Record<string, BlogPost[]> = {};
+
+  posts.forEach((post) => {
+    const year = post.data.pubDate.getFullYear().toString(); // Convert Date to string
+
+    if (!postsByYear[year]) {
+      postsByYear[year] = [];
+    }
+
+    postsByYear[year].push(post);
+    postsByYear[year].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+  });
+
+  return postsByYear;
+}
+
+const groupedPosts = groupPostsByYear(allPosts);
+const sortedYears = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a)); // Sort years in descending order
+---
+
+<style>
+  li {
+    list-style: circle;
+  }
+</style>
+
+<Base pageTitle={pageTitle}>
+  {sortedYears.map((year) => (
+    <>
+      <em>{year}</em>
+      <ul>
+        {groupedPosts[year].map((post) => (
+          <li>
+            <a href={`/writing/${post.slug}/`} title={post.data.pubDate.toISOString()}>
+              {post.data.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </>
+  ))}
+  <br>
+  <p><a href="https://urcades.substack.com/">Subscribe</a></p>
+	<p><a href="/rss.xml">RSS</a></p>
+</Base>

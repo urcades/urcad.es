@@ -1,0 +1,92 @@
+---
+interface Props {
+  imageUrl: string;
+  title: string;
+  category: string;
+  url?: string;
+  size?: string;
+}
+
+const { imageUrl, title, category, url, size = '1' } = Astro.props;
+---
+
+<style>
+  .sketch {
+    width: 100%;
+    margin-bottom: 1em;
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .sketch-info {
+    margin-top: 0.5em;
+  }
+
+  em, a {
+    text-decoration: none;
+  }
+
+  @media (min-width: 800px) {
+    .sketch {
+      width: calc(50% - 1em);
+    }
+    .sketch[data-size="2"],
+    .sketch[data-size="3"] {
+      width: calc(100% - 1em);
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .sketch {
+      width: calc(33.333% - 1em);
+    }
+    .sketch[data-size="2"] {
+      width: calc(66.666% - 1em);
+    }
+    .sketch[data-size="3"] {
+      width: calc(100% - 1em);
+    }
+  }
+
+  @media (min-width: 2222px) {
+    .sketch {
+      width: calc(25% - 1em);
+    }
+    .sketch[data-size="2"] {
+      width: calc(50% - 1em);
+    }
+    .sketch[data-size="3"] {
+      width: calc(75% - 1em);
+    }
+  }
+</style>
+
+<div class="sketch" data-size={size}>
+  <img src={imageUrl} alt={title} />
+  <div class="sketch-info">
+    <p>{title}</p>
+    <em>{category}</em>
+    {url && <a href={url}>♨︎</a>}
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const img = document.querySelector('img');
+    const link = document.querySelector('a');
+
+    if (img && link) {
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', () => {
+        if (link.href) {
+          window.open(link.href, '_blank');
+        }
+      });
+    }
+  });
+</script>
