@@ -74,19 +74,3 @@ const { imageUrl, title, category, url, size = '1' } = Astro.props;
   </div>
 
 </div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const img = document.querySelector('img');
-    const link = document.querySelector('a');
-
-    if (img && link) {
-      img.style.cursor = 'pointer';
-      img.addEventListener('click', () => {
-        if (link.href) {
-          window.open(link.href, '_blank');
-        }
-      });
-    }
-  });
-</script>
