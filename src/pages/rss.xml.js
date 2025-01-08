@@ -20,7 +20,7 @@ export async function GET(context) {
       }),
       // Compute RSS link from post `slug`
       // This example assumes all posts are rendered as `/writing/[slug]` routes
-      link: `/writing/${post.slug}/`,
+      link: `/writing/${post.id}/`,
     })),
   });
 }

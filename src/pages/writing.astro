@@ -34,7 +34,18 @@ function groupPostsByYear(posts: BlogPost[]): Record<string, BlogPost[]> {
   );
 }
 
-const groupedPosts = groupPostsByYear(allPosts);
+type CollectionEntry = {
+  id: string;
+  body?: string;
+  collection: string;
+  data: {
+    title: string;
+    pubDate: Date;
+    description: string;
+  };
+};
+
+const groupedPosts = groupPostsByYear(allPosts as BlogPost[]);
 const sortedYears = Object.keys(groupedPosts).sort(
   (a, b) => Number(b) - Number(a)
 );
