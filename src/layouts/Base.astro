@@ -3,90 +3,96 @@ const { pageTitle, txtColor, bgColor, txtColorDark, bgColorDark } = Astro.props;
 ---
 
 <html lang="en">
-	<head>
-		<!-- Core Meta -->
-		<meta charset="utf-8" />
-		<meta name="viewport" 				content="width=device-width, initial-scale=1.0">
-		<meta name="generator" 				content={Astro.generator} />
-		<meta name="title" 					content="Édouard Urcades">
-		<meta name="description" 			content="Designer, Professional">
-		<title>{pageTitle}</title>
+  <head>
+    <!-- Core Meta -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="title" content="Édouard Urcades" />
+    <meta name="description" content="Designer, Professional" />
+    <title>{pageTitle}</title>
 
-		<!-- Basic Favicon and PWA/bookmark Info -->
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
-		<link rel="shortcut icon" type="image/png" href="/favicon.svg"/>
-		<link rel="apple-touch-icon" href="/appicon.png" />
-		<link rel="mask-icon" href="/favicon.svg" color="#000000">
-		<link rel="preload" as="font" type="font/ttf" href="/ABCDiatypeVariable.ttf" crossorigin="anonymous">
+    <!-- Basic Favicon and PWA/bookmark Info -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" type="image/png" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/appicon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#000000" />
+    <link
+      rel="preload"
+      as="font"
+      type="font/ttf"
+      href="/diatype.ttf"
+      crossorigin="anonymous"
+    />
 
-		<!-- Open Graph / Facebook -->
-		<meta property="og:type" 			content="website">
-		<meta property="og:url" 			content="https://urcad.es/">
-		<meta property="og:title" 			content="Édouard Urcades">
-		<meta property="og:description" 	content="Designer, Professional">
-		<meta property="og:image" 			content="https://www.urcad.es/og.png">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://urcad.es/" />
+    <meta property="og:title" content="Édouard Urcades" />
+    <meta property="og:description" content="Designer, Professional" />
+    <meta property="og:image" content="https://www.urcad.es/og.png" />
 
-		<!-- Twitter cards -->
-		<meta name="twitter:site"    		content="@neogeomancer">
-		<meta property="twitter:domain"		content="urcad.es">
-		<meta property="twitter:url" 		content="https://www.urcad.es">
-		<meta name="twitter:title"   		content="Édouard Urcades">
-		<meta name="twitter:description" 	content="Designer, Professional">
-		<meta name="twitter:card"  			content="summary_large_image">
-		<meta name="twitter:image" 			content="https://www.urcad.es/og.png">
+    <!-- Twitter cards -->
+    <meta name="twitter:site" content="@neogeomancer" />
+    <meta property="twitter:domain" content="urcad.es" />
+    <meta property="twitter:url" content="https://www.urcad.es" />
+    <meta name="twitter:title" content="Édouard Urcades" />
+    <meta name="twitter:description" content="Designer, Professional" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://www.urcad.es/og.png" />
 
-		<!-- Special case blog post styling -->
-		<style
-			is:global
-			define:vars={{ txtColor, bgColor, txtColorDark, bgColorDark }}
-		>
-			* {
-				--fallback-bg-color: #ffffff; /* Default light background color */
-				--fallback-txt-color: #1A1818; /* Default light text color */
-				color: var(--txtColor, var(--fallback-txt-color));
-			}
+    <!-- Special case blog post styling -->
+    <style
+      is:global
+      define:vars={{ txtColor, bgColor, txtColorDark, bgColorDark }}
+    >
+      * {
+        --fallback-bg-color: #ffffff; /* Default light background color */
+        --fallback-txt-color: #1a1818; /* Default light text color */
+        color: var(--txtColor, var(--fallback-txt-color));
+      }
 
-			html {
-				margin: 1.11em;
-			}
+      html {
+        margin: 1.11em;
+      }
 
-			body {
-				font-family: 'Times New Roman', Times, serif;
-				font-size: 1.23em;
-				-webkit-font-smoothing: antialiased;
-				background-color: var(--bgColor, var(--fallback-bg-color));
-				color: var(--txtColor, var(--fallback-txt-color));
-				/* font-family: 'ABCDiatypeVariable', sans-serif; */
-				/* font-weight: 333; */
-			}
+      body {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 1.23em;
+        -webkit-font-smoothing: antialiased;
+        background-color: var(--bgColor, var(--fallback-bg-color));
+        color: var(--txtColor, var(--fallback-txt-color));
+        /* font-family: 'ABCDiatypeVariable', sans-serif; */
+        /* font-weight: 333; */
+      }
 
-			a {
-				text-decoration: none;
-			}
+      a {
+        text-decoration: none;
+      }
 
-			@media screen and (min-width: 555px) {
-				html {
-					margin: 2em 2.55em;
-					padding-bottom: 2em;
-				}
-			}
+      @media screen and (min-width: 555px) {
+        html {
+          margin: 2em 2.55em;
+          padding-bottom: 2em;
+        }
+      }
 
-			@media (prefers-color-scheme: dark) {
-				* {
-					--fallback-bg-color-dark: #1A1818; /* Default dark background color */
-					--fallback-txt-color-dark: #ffffff; /* Default dark text color */
-					color: var(--txtColorDark, var(--fallback-txt-color-dark));
-				}
+      @media (prefers-color-scheme: dark) {
+        * {
+          --fallback-bg-color-dark: #1a1818; /* Default dark background color */
+          --fallback-txt-color-dark: #ffffff; /* Default dark text color */
+          color: var(--txtColorDark, var(--fallback-txt-color-dark));
+        }
 
-				body {
-					background-color: var(--bgColorDark, var(--fallback-bg-color-dark));
-					color: var(--txtColorDark, var(--fallback-txt-color-dark));
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<p><a href="/">É. Urcades</a></p>
-		<slot/>
-	</body>
+        body {
+          background-color: var(--bgColorDark, var(--fallback-bg-color-dark));
+          color: var(--txtColorDark, var(--fallback-txt-color-dark));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <p><a href="/">É. Urcades</a></p>
+    <slot />
+  </body>
 </html>
