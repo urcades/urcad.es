@@ -22,7 +22,4 @@ jobs:
         run: npm install
 
       - name: Build site
-        run: npm run build # Ensure this matches your Astro build command
-
-      - name: Deploy
-        run: npm run deploy # Adjust this if you have a specific deploy command or use a service like Vercel/Netlify
+        run: npm run build # This is optional if you just want to ensure the build works locally
