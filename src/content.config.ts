@@ -1,11 +1,12 @@
 // Import utilities from `astro:content`
-import { z, defineCollection } from "astro:content";
+import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 const drafts = defineCollection({});
 
 // Define a `type` and `schema` for each collection
 const writingCollection = defineCollection({
-  type: "content",
+  loader: glob({ pattern: '**/[^_]*.{md,mdx}', base: './src/content/writing' }),
   schema: z.object({
     title: z.string(),
     pubDate: z.date(),

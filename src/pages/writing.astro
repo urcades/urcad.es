@@ -1,5 +1,5 @@
 ---
-import Base from '../layouts/Base.astro';
+import Base from "../layouts/Base.astro";
 import { getCollection } from "astro:content";
 const allPosts = await getCollection("writing");
 
@@ -7,7 +7,6 @@ const pageTitle = "É. Urcades: Ongoing Writing";
 
 interface BlogPost {
   id: string;
-  slug: string;
   body: string;
   collection: string;
   data: {
@@ -21,24 +20,24 @@ interface BlogPost {
 }
 
 function groupPostsByYear(posts: BlogPost[]): Record<string, BlogPost[]> {
-  const postsByYear: Record<string, BlogPost[]> = {};
-
-  posts.forEach((post) => {
-    const year = post.data.pubDate.getFullYear().toString(); // Convert Date to string
-
-    if (!postsByYear[year]) {
-      postsByYear[year] = [];
-    }
-
-    postsByYear[year].push(post);
-    postsByYear[year].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-  });
-
-  return postsByYear;
+  return posts.reduce(
+    (acc, post) => {
+      const year = post.data.pubDate.getFullYear().toString();
+      acc[year] = acc[year] || [];
+      acc[year].push(post);
+      acc[year].sort(
+        (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+      );
+      return acc;
+    },
+    {} as Record<string, BlogPost[]>
+  );
 }
 
 const groupedPosts = groupPostsByYear(allPosts);
-const sortedYears = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a)); // Sort years in descending order
+const sortedYears = Object.keys(groupedPosts).sort(
+  (a, b) => Number(b) - Number(a)
+);
 ---
 
 <style>
@@ -48,21 +47,26 @@ const sortedYears = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(
 </style>
 
 <Base pageTitle={pageTitle}>
-  {sortedYears.map((year) => (
-    <>
-      <em>{year}</em>
-      <ul>
-        {groupedPosts[year].map((post) => (
-          <li>
-            <a href={`/writing/${post.slug}/`} title={post.data.pubDate.toISOString()}>
-              {post.data.title}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </>
-  ))}
-  <br>
+  {
+    sortedYears.map((year) => (
+      <>
+        <em>{year}</em>
+        <ul>
+          {groupedPosts[year]?.map((post) => (
+            <li>
+              <a
+                href={`/writing/${post.id}/`}
+                title={post.data.pubDate.toISOString()}
+              >
+                {post.data.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </>
+    ))
+  }
+  <br />
   <p><a href="https://urcades.substack.com/">Subscribe</a></p>
-	<p><a href="/rss.xml">RSS</a></p>
+  <p><a href="/rss.xml">RSS</a></p>
 </Base>
