@@ -1,51 +1,45 @@
 ---
 import Base from "../layouts/Base.astro";
-import { getCollection } from "astro:content";
-const allPosts = await getCollection("writing");
+import { getCollection, type CollectionEntry } from "astro:content";
 
+type PostEntry = CollectionEntry<"writing"> | CollectionEntry<"drafts">;
+
+const writingPosts = await getCollection("writing");
 const pageTitle = "É. Urcades: Ongoing Writing";
 
-interface BlogPost {
-  id: string;
-  body: string;
-  collection: string;
-  data: {
-    title: string;
-    pubDate: Date;
-    description: string;
-  };
-  render: () => Promise<{
-    remarkPluginFrontmatter: Record<string, unknown>;
-  }>;
+// In development mode, include drafts alongside published posts
+let allPosts: PostEntry[] = writingPosts;
+if (import.meta.env.DEV) {
+  const draftPosts = await getCollection("drafts");
+  allPosts = [...writingPosts, ...draftPosts];
 }
 
-function groupPostsByYear(posts: BlogPost[]): Record<string, BlogPost[]> {
-  return posts.reduce(
+function groupPostsByYear(posts: PostEntry[]): Record<string, PostEntry[]> {
+  const grouped = posts.reduce(
     (acc, post) => {
       const year = post.data.pubDate.getFullYear().toString();
       acc[year] = acc[year] || [];
       acc[year].push(post);
-      acc[year].sort(
-        (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
-      );
       return acc;
     },
-    {} as Record<string, BlogPost[]>
+    {} as Record<string, PostEntry[]>
   );
+
+  // Sort each year's posts once after grouping (O(n + klog(k)) instead of O(n²log(n)))
+  Object.values(grouped).forEach((yearPosts) => {
+    yearPosts.sort(
+      (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+    );
+  });
+
+  return grouped;
 }
 
-type CollectionEntry = {
-  id: string;
-  body?: string;
-  collection: string;
-  data: {
-    title: string;
-    pubDate: Date;
-    description: string;
-  };
-};
+function isDraft(post: PostEntry): boolean {
+  return post.collection === "drafts";
+}
 
-const groupedPosts = groupPostsByYear(allPosts as BlogPost[]);
+const groupedPosts = groupPostsByYear(allPosts);
 const sortedYears = Object.keys(groupedPosts).sort(
   (a, b) => Number(b) - Number(a)
 );
@@ -66,9 +60,10 @@ const sortedYears = Object.keys(groupedPosts).sort(
           {groupedPosts[year]?.map((post) => (
             <li>
               <a
-                href={`/writing/${post.id}/`}
+                href={`/${post.collection}/${post.id}/`}
                 title={post.data.pubDate.toISOString()}
               >
+                {isDraft(post) && "[DRAFT] "}
                 {post.data.title}
               </a>
             </li>

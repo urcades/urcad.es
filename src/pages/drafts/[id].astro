@@ -1,0 +1,25 @@
+---
+import { getCollection, render } from "astro:content";
+import MarkdownPostLayout from "../../layouts/Writing.astro";
+
+export async function getStaticPaths() {
+  // Only generate draft routes in development mode
+  if (!import.meta.env.DEV) {
+    return [];
+  }
+  
+  const draftEntries = await getCollection("drafts");
+  return draftEntries.map((entry) => ({
+    params: { id: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<MarkdownPostLayout frontmatter={entry.data}>
+  <Content />
+</MarkdownPostLayout>
+

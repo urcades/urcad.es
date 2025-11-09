@@ -2,24 +2,30 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-const drafts = defineCollection({});
+// Shared schema for both writing and drafts collections
+const postSchema = z.object({
+  title: z.string(),
+  pubDate: z.date(),
+  description: z.string(),
+  foregroundColor: z.string().optional(),
+  foregroundColorDark: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  backgroundColorDark: z.string().optional(),
+});
 
 // Define a `type` and `schema` for each collection
 const writingCollection = defineCollection({
   loader: glob({ pattern: '**/[^_]*.{md,mdx}', base: './src/content/writing' }),
-  schema: z.object({
-    title: z.string(),
-    pubDate: z.date(),
-    description: z.string(),
-    foregroundColor: z.string().optional(),
-    foregroundColorDark: z.string().optional(),
-    backgroundColor: z.string().optional(),
-    backgroundColorDark: z.string().optional(),
-  }),
+  schema: postSchema,
+});
+
+const draftsCollection = defineCollection({
+  loader: glob({ pattern: '**/[^_]*.{md,mdx}', base: './src/content/drafts' }),
+  schema: postSchema,
 });
 
 // Export a single `collections` object to register your collection(s)
 export const collections = {
   writing: writingCollection,
-  drafts, // Potentially fix this later with a 'real' implementation of drafts
+  drafts: draftsCollection,
 };
