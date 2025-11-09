@@ -6,13 +6,13 @@ const pageTitle = "É. Urcades: Work";
 
 <style>
   .sketches {
+    /* Use container queries for more responsive layout */
+    container-type: inline-size;
     display: flex;
     flex-wrap: wrap;
     gap: 1em;
-  }
 
-  @media (min-width: 768px) {
-    .sketches {
+    @media (min-width: 768px) {
       justify-content: flex-start;
     }
   }

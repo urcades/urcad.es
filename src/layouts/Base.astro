@@ -46,48 +46,89 @@ const { pageTitle, txtColor, bgColor, txtColorDark, bgColorDark } = Astro.props;
       is:global
       define:vars={{ txtColor, bgColor, txtColorDark, bgColorDark }}
     >
-      * {
-        --fallback-bg-color: #ffffff; /* Default light background color */
-        --fallback-txt-color: #1a1818; /* Default light text color */
-        color: var(--txtColor, var(--fallback-txt-color));
+      :root {
+        color-scheme: light dark;
+        --fallback-bg-color: #ffffff;
+        --fallback-txt-color: #1a1818;
+        --fallback-bg-color-dark: #1a1818;
+        --fallback-txt-color-dark: #ffffff;
+        --breakpoint-sm: 555px;
+        --breakpoint-md: 768px;
+        --breakpoint-lg: 1000px;
+        --breakpoint-xl: 2222px;
+      }
+
+      /* Use light-dark() for modern color scheme handling */
+      @supports (color: light-dark(white, black)) {
+        * {
+          color: var(
+            --txtColor,
+            light-dark(
+              var(--fallback-txt-color),
+              var(--fallback-txt-color-dark)
+            )
+          );
+        }
+
+        body {
+          background-color: var(
+            --bgColor,
+            light-dark(var(--fallback-bg-color), var(--fallback-bg-color-dark))
+          );
+          color: var(
+            --txtColor,
+            light-dark(
+              var(--fallback-txt-color),
+              var(--fallback-txt-color-dark)
+            )
+          );
+        }
+      }
+
+      /* Fallback for browsers without light-dark() support */
+      @supports not (color: light-dark(white, black)) {
+        * {
+          color: var(--txtColor, var(--fallback-txt-color));
+
+          @media (prefers-color-scheme: dark) {
+            color: var(--txtColorDark, var(--fallback-txt-color-dark));
+          }
+        }
+
+        body {
+          background-color: var(--bgColor, var(--fallback-bg-color));
+          color: var(--txtColor, var(--fallback-txt-color));
+
+          @media (prefers-color-scheme: dark) {
+            background-color: var(--bgColorDark, var(--fallback-bg-color-dark));
+            color: var(--txtColorDark, var(--fallback-txt-color-dark));
+          }
+        }
       }
 
       html {
         margin: 1.11em;
+
+        @media screen and (min-width: 555px) {
+          margin: 2em 2.55em;
+          padding-block-end: 2em;
+        }
       }
 
       body {
         font-family: "Times New Roman", Times, serif;
         font-size: 1.23em;
         -webkit-font-smoothing: antialiased;
-        background-color: var(--bgColor, var(--fallback-bg-color));
-        color: var(--txtColor, var(--fallback-txt-color));
-        /* font-family: 'ABCDiatypeVariable', sans-serif; */
-        /* font-weight: 333; */
       }
 
-      a {
+      :is(a, button) {
         text-decoration: none;
+        cursor: pointer;
       }
 
-      @media screen and (min-width: 555px) {
-        html {
-          margin: 2em 2.55em;
-          padding-bottom: 2em;
-        }
-      }
-
-      @media (prefers-color-scheme: dark) {
-        * {
-          --fallback-bg-color-dark: #1a1818; /* Default dark background color */
-          --fallback-txt-color-dark: #ffffff; /* Default dark text color */
-          color: var(--txtColorDark, var(--fallback-txt-color-dark));
-        }
-
-        body {
-          background-color: var(--bgColorDark, var(--fallback-bg-color-dark));
-          color: var(--txtColorDark, var(--fallback-txt-color-dark));
-        }
+      /* Modern text wrapping */
+      :is(h1, h2, h3, h4, h5, h6) {
+        text-wrap: balance;
       }
     </style>
   </head>

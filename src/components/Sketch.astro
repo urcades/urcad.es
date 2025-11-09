@@ -7,13 +7,86 @@ interface Props {
   size?: string;
 }
 
-const { imageUrl, title, category, url, size = '1' } = Astro.props;
+const { imageUrl, title, category, url, size = "1" } = Astro.props;
 ---
 
 <style>
   .sketch {
-    width: 100%;
-    margin-bottom: 1em;
+    --sketch-width-base: 100%;
+    width: var(--sketch-width-base);
+    margin-block-end: 1em;
+
+    /* Use container queries where supported */
+    @supports (container-type: inline-size) {
+      @container (min-width: 800px) {
+        --sketch-width-base: calc(50% - 1em);
+
+        &[data-size="2"],
+        &[data-size="3"] {
+          --sketch-width-base: calc(100% - 1em);
+        }
+      }
+
+      @container (min-width: 1000px) {
+        --sketch-width-base: calc(33.333% - 1em);
+
+        &[data-size="2"] {
+          --sketch-width-base: calc(66.666% - 1em);
+        }
+
+        &[data-size="3"] {
+          --sketch-width-base: calc(100% - 1em);
+        }
+      }
+
+      @container (min-width: 2222px) {
+        --sketch-width-base: calc(25% - 1em);
+
+        &[data-size="2"] {
+          --sketch-width-base: calc(50% - 1em);
+        }
+
+        &[data-size="3"] {
+          --sketch-width-base: calc(75% - 1em);
+        }
+      }
+    }
+
+    /* Fallback to media queries for older browsers */
+    @supports not (container-type: inline-size) {
+      @media (min-width: 800px) {
+        --sketch-width-base: calc(50% - 1em);
+
+        &[data-size="2"],
+        &[data-size="3"] {
+          --sketch-width-base: calc(100% - 1em);
+        }
+      }
+
+      @media (min-width: 1000px) {
+        --sketch-width-base: calc(33.333% - 1em);
+
+        &[data-size="2"] {
+          --sketch-width-base: calc(66.666% - 1em);
+        }
+
+        &[data-size="3"] {
+          --sketch-width-base: calc(100% - 1em);
+        }
+      }
+
+      @media (min-width: 2222px) {
+        --sketch-width-base: calc(25% - 1em);
+
+        &[data-size="2"] {
+          --sketch-width-base: calc(50% - 1em);
+        }
+
+        &[data-size="3"] {
+          --sketch-width-base: calc(75% - 1em);
+        }
+      }
+    }
   }
 
   img {
@@ -23,45 +96,7 @@ const { imageUrl, title, category, url, size = '1' } = Astro.props;
   }
 
   .sketch-info {
-    margin-top: 0.5em;
-  }
-
-  em, a {
-    text-decoration: none;
-  }
-
-  @media (min-width: 800px) {
-    .sketch {
-      width: calc(50% - 1em);
-    }
-    .sketch[data-size="2"],
-    .sketch[data-size="3"] {
-      width: calc(100% - 1em);
-    }
-  }
-
-  @media (min-width: 1000px) {
-    .sketch {
-      width: calc(33.333% - 1em);
-    }
-    .sketch[data-size="2"] {
-      width: calc(66.666% - 1em);
-    }
-    .sketch[data-size="3"] {
-      width: calc(100% - 1em);
-    }
-  }
-
-  @media (min-width: 2222px) {
-    .sketch {
-      width: calc(25% - 1em);
-    }
-    .sketch[data-size="2"] {
-      width: calc(50% - 1em);
-    }
-    .sketch[data-size="3"] {
-      width: calc(75% - 1em);
-    }
+    margin-block-start: 0.5em;
   }
 </style>
 
@@ -72,5 +107,4 @@ const { imageUrl, title, category, url, size = '1' } = Astro.props;
     <em>{category}</em>
     {url && <a href={url}>♨︎</a>}
   </div>
-
 </div>

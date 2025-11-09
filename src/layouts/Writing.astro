@@ -12,46 +12,82 @@ const { frontmatter } = Astro.props;
   h1 {
     max-width: 22ch;
   }
+
   article {
     max-width: 55ch;
     text-wrap: pretty;
+
+    /* Remove padding from last image using :has() */
+    @supports selector(:has(*)) {
+      &:has(img:last-child) img:last-child {
+        padding-block-end: 0;
+      }
+    }
   }
 
   blockquote {
     font-style: italic;
-    border-left: 1px solid var(--txtColor, var(--fallback-txt-color));
-    padding-left: 1em;
-    margin-left: 0;
+    padding-inline-start: 1em;
+    margin-inline-start: 0;
+
+    /* Use light-dark() for border color */
+    @supports (color: light-dark(white, black)) {
+      border-inline-start: 1px solid
+        light-dark(
+          var(--txtColor, var(--fallback-txt-color)),
+          var(--txtColorDark, var(--fallback-txt-color-dark))
+        );
+    }
+
+    /* Fallback for browsers without light-dark() */
+    @supports not (color: light-dark(white, black)) {
+      border-inline-start: 1px solid var(--txtColor, var(--fallback-txt-color));
+
+      @media (prefers-color-scheme: dark) {
+        border-inline-start-color: var(
+          --txtColorDark,
+          var(--fallback-txt-color-dark)
+        );
+      }
+    }
   }
 
   img {
     display: inline-block;
     max-width: 100%;
     height: auto;
-    padding-bottom: 1em;
-  }
+    padding-block-end: 1em;
 
-  img:last-of-type {
-    padding-bottom: 0;
+    /* Fallback for browsers without :has() support */
+    @supports not selector(:has(*)) {
+      &:last-of-type {
+        padding-block-end: 0;
+      }
+    }
   }
 
   pre {
-    background-color: #ededed;
     padding: 1em;
     overflow-x: auto;
     border-radius: 0.33em;
-  }
-  ol ~ pre {
-    margin-left: 1em;
+
+    /* Use light-dark() for pre background */
+    @supports (color: light-dark(white, black)) {
+      background-color: light-dark(#ededed, #333333);
+    }
+
+    /* Fallback for browsers without light-dark() */
+    @supports not (color: light-dark(white, black)) {
+      background-color: #ededed;
+
+      @media (prefers-color-scheme: dark) {
+        background-color: #333333;
+      }
+    }
   }
 
-  @media (prefers-color-scheme: dark) {
-    pre {
-      background-color: #333333;
-    }
-    blockquote {
-      border-left: 1px solid var(--txtColorDark, var(--fallback-txt-color-dark));
-    }
+  ol ~ pre {
+    margin-inline-start: 1em;
   }
 </style>
 
