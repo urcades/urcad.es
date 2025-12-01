@@ -3,12 +3,142 @@ import Base from "../layouts/Base.astro";
 ---
 
 <Base>
-  <p>404</p>
-  <audio controls autoplay>
-    <source
-      src="https://oleaceae.saga-owl.ts.net/sound/404.mp3"
-      type="audio/mpeg"
-    />
-    Your browser does not support the audio element.
-  </audio>
+  <p>404 <button id="bgm-toggle">Play BGM</button></p>
 </Base>
+
+<style>
+  #bgm-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  class WindSynth {
+    private ctx: AudioContext | null = null;
+    private masterGain: GainNode | null = null;
+    private noiseSource: AudioBufferSourceNode | null = null;
+    private filters: BiquadFilterNode[] = [];
+    private lfoGains: GainNode[] = [];
+    private isPlaying = false;
+
+    async start() {
+      if (this.isPlaying) return;
+
+      this.ctx = new AudioContext();
+      const ctx = this.ctx;
+
+      // Create noise buffer (2 seconds of white noise)
+      const bufferSize = ctx.sampleRate * 2;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      // Noise source (looping)
+      this.noiseSource = ctx.createBufferSource();
+      this.noiseSource.buffer = noiseBuffer;
+      this.noiseSource.loop = true;
+
+      // Master gain for overall volume
+      this.masterGain = ctx.createGain();
+      this.masterGain.gain.value = 0;
+      this.masterGain.connect(ctx.destination);
+
+      // Create multiple filtered layers for rich wind texture
+      const layers = [
+        { freq: 200, q: 0.5, gain: 0.3, lfoFreq: 0.07 },
+        { freq: 500, q: 0.8, gain: 0.2, lfoFreq: 0.13 },
+        { freq: 1200, q: 1.2, gain: 0.15, lfoFreq: 0.19 },
+        { freq: 3000, q: 1.5, gain: 0.08, lfoFreq: 0.11 },
+      ];
+
+      layers.forEach((layer) => {
+        // Bandpass filter
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = layer.freq;
+        filter.Q.value = layer.q;
+        this.filters.push(filter);
+
+        // Layer gain (modulated by LFO)
+        const layerGain = ctx.createGain();
+        layerGain.gain.value = layer.gain;
+        this.lfoGains.push(layerGain);
+
+        // LFO for gentle gusting
+        const lfo = ctx.createOscillator();
+        lfo.type = "sine";
+        lfo.frequency.value = layer.lfoFreq;
+
+        const lfoDepth = ctx.createGain();
+        lfoDepth.gain.value = layer.gain * 0.5;
+
+        lfo.connect(lfoDepth);
+        lfoDepth.connect(layerGain.gain);
+        lfo.start();
+
+        // Also modulate filter frequency for movement
+        const filterLfo = ctx.createOscillator();
+        filterLfo.type = "sine";
+        filterLfo.frequency.value = layer.lfoFreq * 0.7;
+
+        const filterLfoDepth = ctx.createGain();
+        filterLfoDepth.gain.value = layer.freq * 0.3;
+
+        filterLfo.connect(filterLfoDepth);
+        filterLfoDepth.connect(filter.frequency);
+        filterLfo.start();
+
+        // Connect chain
+        this.noiseSource!.connect(filter);
+        filter.connect(layerGain);
+        layerGain.connect(this.masterGain!);
+      });
+
+      // Start and fade in
+      this.noiseSource.start();
+      this.masterGain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 2);
+      this.isPlaying = true;
+    }
+
+    stop() {
+      if (!this.isPlaying || !this.ctx || !this.masterGain) return;
+
+      const ctx = this.ctx;
+      this.masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+
+      setTimeout(() => {
+        this.noiseSource?.stop();
+        this.ctx?.close();
+        this.ctx = null;
+        this.noiseSource = null;
+        this.filters = [];
+        this.lfoGains = [];
+        this.isPlaying = false;
+      }, 1100);
+    }
+
+    toggle() {
+      if (this.isPlaying) {
+        this.stop();
+        return false;
+      } else {
+        this.start();
+        return true;
+      }
+    }
+  }
+
+  const wind = new WindSynth();
+  const button = document.getElementById("bgm-toggle")!;
+
+  button.addEventListener("click", () => {
+    const playing = wind.toggle();
+    button.textContent = playing ? "Pause BGM" : "Play BGM";
+  });
+</script>
