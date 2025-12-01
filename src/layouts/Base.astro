@@ -61,26 +61,20 @@ const { pageTitle, txtColor, bgColor, txtColorDark, bgColorDark } = Astro.props;
       /* Use light-dark() for modern color scheme handling */
       @supports (color: light-dark(white, black)) {
         * {
-          color: var(
-            --txtColor,
-            light-dark(
-              var(--fallback-txt-color),
-              var(--fallback-txt-color-dark)
-            )
+          color: light-dark(
+            var(--txtColor, var(--fallback-txt-color)),
+            var(--txtColorDark, var(--fallback-txt-color-dark))
           );
         }
 
         body {
-          background-color: var(
-            --bgColor,
-            light-dark(var(--fallback-bg-color), var(--fallback-bg-color-dark))
+          background-color: light-dark(
+            var(--bgColor, var(--fallback-bg-color)),
+            var(--bgColorDark, var(--fallback-bg-color-dark))
           );
-          color: var(
-            --txtColor,
-            light-dark(
-              var(--fallback-txt-color),
-              var(--fallback-txt-color-dark)
-            )
+          color: light-dark(
+            var(--txtColor, var(--fallback-txt-color)),
+            var(--txtColorDark, var(--fallback-txt-color-dark))
           );
         }
       }
