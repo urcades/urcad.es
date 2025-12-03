@@ -6,7 +6,7 @@ compatibility_date = "2024-12-01"
 # R2 bucket binding for media storage
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
-bucket_name = "urcades-media"
+bucket_name = "urcades"
 
 # Environment variables (set via wrangler secret)
 # Run these commands to set secrets:

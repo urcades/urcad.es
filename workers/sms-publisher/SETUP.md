@@ -19,7 +19,7 @@ Your Phone → SMS → Twilio → Cloudflare Worker → GitHub → Auto-deploy
 ## Step 1: Cloudflare R2 Setup
 
 1. Go to Cloudflare Dashboard → R2
-2. Create a bucket named `urcades-media`
+2. Create a bucket named `urcades`
 3. Set up a custom domain for the bucket:
    - Add custom domain: `media.urcad.es`
    - This allows public access to uploaded media
@@ -112,7 +112,7 @@ If you use a different bucket name, update `wrangler.toml`:
 ```toml
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
-bucket_name = "your-bucket-name"
+bucket_name = "urcades"
 ```
 
 ## Sending Media
