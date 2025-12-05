@@ -1,168 +1,152 @@
-# SMS Publisher Setup Guide
+# Telegram Blog Publisher Setup Guide
 
-This worker allows you to publish blog posts by texting a phone number.
+Publish blog posts by messaging a Telegram bot. Supports text, images, and videos.
 
 ## Architecture
 
 ```
-Your Phone → SMS → Twilio → Cloudflare Worker → GitHub → Auto-deploy
-                                    ↓
-                              Cloudflare R2 (media)
+Telegram App → Your Bot → Cloudflare Worker → GitHub → Auto-deploy
+                                ↓
+                          Cloudflare R2 (media)
 ```
 
-## Prerequisites
+## Setup (5 minutes)
 
-- Cloudflare account with Workers enabled
-- Twilio account
-- GitHub Personal Access Token
+### Step 1: Create a Telegram Bot
 
-## Step 1: Cloudflare R2 Setup
+1. Open Telegram and message [@BotFather](https://t.me/BotFather)
+2. Send `/newbot`
+3. Choose a name (e.g., "My Blog Publisher")
+4. Choose a username (must end in `bot`, e.g., `urcades_blog_bot`)
+5. Copy the **bot token** (looks like `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
-1. Go to Cloudflare Dashboard → R2
-2. Create a bucket named `urcades`
-3. Set up a custom domain for the bucket:
-   - Add custom domain: `media.urcad.es`
-   - This allows public access to uploaded media
+### Step 2: Get Your Telegram User ID
 
-## Step 2: Twilio Setup
+1. Message [@userinfobot](https://t.me/userinfobot) on Telegram
+2. It will reply with your user ID (a number like `123456789`)
+3. Save this - you'll need it for the whitelist
 
-1. Create a Twilio account at https://www.twilio.com
-2. Buy a phone number with SMS/MMS capability (~$1.15/month)
-3. Note your:
-   - **Account SID** (found on dashboard)
-   - **Auth Token** (found on dashboard, click to reveal)
-   - **Phone Number** (the number you purchased)
-
-## Step 3: GitHub Token
-
-1. Go to GitHub → Settings → Developer Settings → Personal Access Tokens → Fine-grained tokens
-2. Create a new token with:
-   - Repository access: `urcades/urcad.es`
-   - Permissions: Contents (Read and Write)
-3. Copy the token (you won't see it again)
-
-## Step 4: Deploy the Worker
+### Step 3: Deploy the Worker
 
 ```bash
 cd workers/sms-publisher
-
-# Install dependencies
 npm install
 
-# Login to Cloudflare (if not already)
-npx wrangler login
-
-# Set secrets
+# Set your secrets
 npx wrangler secret put GITHUB_TOKEN
-# Paste your GitHub token when prompted
+# Paste your GitHub PAT
 
-npx wrangler secret put TWILIO_AUTH_TOKEN
-# Paste your Twilio Auth Token when prompted
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+# Paste your bot token from BotFather
+
+npx wrangler secret put WHITELISTED_USERS
+# Paste your Telegram user ID (from step 2)
 
 # Deploy
 npm run deploy
 ```
 
-The worker will be deployed to: `https://sms-publisher.<your-subdomain>.workers.dev`
+Note the worker URL (e.g., `https://sms-publisher.your-subdomain.workers.dev`)
 
-## Step 5: Configure Twilio Webhook
+### Step 4: Connect Bot to Worker
 
-1. Go to Twilio Console → Phone Numbers → Manage → Active Numbers
-2. Click on your phone number
-3. Scroll to "Messaging Configuration"
-4. Under "A message comes in":
-   - Webhook URL: `https://sms-publisher.<your-subdomain>.workers.dev/sms`
-   - Method: HTTP POST
-5. Save
-
-## Step 6: Test It!
-
-Send a text message to your Twilio number:
+Set the webhook by opening this URL in your browser (replace the values):
 
 ```
-Hello world! This is my first stream post.
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://sms-publisher.<YOUR_SUBDOMAIN>.workers.dev
 ```
 
-You should receive a reply: `Post published! ID: 241203-143022`
+You should see: `{"ok":true,"result":true,"description":"Webhook was set"}`
 
-Check your GitHub repo - a new file should appear in `src/content/writing/`.
+### Step 5: Test It!
+
+1. Open Telegram and find your bot (search for the username you chose)
+2. Send a message: `Hello world! My first stream post.`
+3. You should get a reply: `Published! Post ID: 241205-143022`
+4. Check your GitHub repo - a new file appears in `src/content/writing/`
+
+## Usage
+
+### Text Posts
+Just send a message:
+```
+This is a quick thought I wanted to share.
+```
+
+### Posts with Images
+Send a photo with a caption:
+```
+[attach photo]
+Check out this sunset!
+```
+
+### Posts with Video
+Send a video with a caption:
+```
+[attach video]
+Quick demo of the new feature
+```
 
 ## Configuration
 
-### Whitelisted Numbers
+### Adding More Whitelisted Users
 
-Edit `wrangler.toml` to add/remove whitelisted phone numbers:
-
-```toml
-[vars]
-WHITELISTED_NUMBERS = "5206099095,1234567890"
-```
-
-Or set as a secret for extra security:
+Update the secret with comma-separated user IDs:
 ```bash
-npx wrangler secret put WHITELISTED_NUMBERS
+npx wrangler secret put WHITELISTED_USERS
+# Enter: 123456789,987654321
 ```
 
-Messages from non-whitelisted numbers are saved as drafts in `src/content/drafts/`.
+Non-whitelisted users' messages go to drafts.
 
-### Custom R2 Bucket Name
+### Custom Media Domain
 
-If you use a different bucket name, update `wrangler.toml`:
+The worker uploads media to R2 and references it via `https://media.urcad.es/`.
 
-```toml
-[[r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "urcades"
-```
-
-## Sending Media
-
-The worker supports up to 4 media attachments per message:
-- Images (jpg, png, gif, webp)
-- Videos (mp4, mov, webm)
-
-Media is automatically:
-1. Downloaded from Twilio
-2. Uploaded to R2
-3. Embedded in the markdown post
+To set this up:
+1. Go to Cloudflare Dashboard → R2 → `urcades` bucket
+2. Settings → Custom Domains → Add `media.urcad.es`
 
 ## Costs
 
-| Service | Monthly Cost |
-|---------|--------------|
-| Twilio Phone Number | ~$1.15 |
-| Twilio SMS (incoming) | $0.0079/msg |
-| Twilio MMS (incoming) | $0.02/msg |
-| Cloudflare Workers | Free (100k req/day) |
-| Cloudflare R2 | Free (up to 10GB) |
-
-**Estimated total: $3-5/month** for typical personal use.
+| Service | Cost |
+|---------|------|
+| Telegram Bot | **Free** |
+| Cloudflare Workers | **Free** (100k req/day) |
+| Cloudflare R2 | **Free** (up to 10GB) |
+| **Total** | **$0/month** |
 
 ## Troubleshooting
 
-### Posts not appearing
-- Check the Worker logs: `npm run tail`
-- Verify GitHub token has write permissions
-- Ensure the webhook URL is correct in Twilio
+### Bot not responding
+- Check worker logs: `npm run tail`
+- Verify webhook is set: `https://api.telegram.org/bot<TOKEN>/getWebhookInfo`
+- Make sure TELEGRAM_BOT_TOKEN secret is set correctly
+
+### Posts not appearing in GitHub
+- Verify GITHUB_TOKEN has write access to the repo
+- Check the worker logs for GitHub API errors
 
 ### Media not loading
-- Verify R2 bucket has public access via custom domain
-- Check that `media.urcad.es` DNS is configured
+- Ensure R2 bucket has a custom domain configured
+- Verify the media URL is accessible: `https://media.urcad.es/stream/...`
 
-### Wrong number
-- Verify your phone number is in `WHITELISTED_NUMBERS`
-- Phone numbers should be 10 digits (no country code, no dashes)
+### "Not whitelisted" message
+- Get your user ID from @userinfobot
+- Update WHITELISTED_USERS: `npx wrangler secret put WHITELISTED_USERS`
 
 ## Local Development
 
 ```bash
-# Start local dev server
+# Create .dev.vars from the example
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars with your values
+
+# Start local server
 npm run dev
 
-# Test with curl (simulating Twilio)
-curl -X POST http://localhost:8787/sms \
-  -d "From=+15206099095" \
-  -d "Body=Test post from local dev" \
-  -d "NumMedia=0" \
-  -d "MessageSid=TEST123"
+# In another terminal, test with curl:
+curl -X POST http://localhost:8787 \
+  -H "Content-Type: application/json" \
+  -d '{"message":{"from":{"id":123456789},"chat":{"id":123456789},"text":"Test post"}}'
 ```
