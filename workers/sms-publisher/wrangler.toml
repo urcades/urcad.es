@@ -1,0 +1,21 @@
+# SMS Publisher Worker Configuration
+name = "sms-publisher"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# R2 bucket binding for media storage
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "urcades"
+
+# Environment variables (set via wrangler secret)
+# Run these commands to set secrets:
+#   wrangler secret put GITHUB_TOKEN
+#   wrangler secret put GITHUB_REPO
+#   wrangler secret put TWILIO_AUTH_TOKEN
+#   wrangler secret put WHITELISTED_NUMBERS
+
+[vars]
+# Non-sensitive defaults (override with secrets for production)
+GITHUB_REPO = "urcades/urcad.es"
+WHITELISTED_NUMBERS = "5206099095"

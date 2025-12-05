@@ -11,6 +11,14 @@ const postSchema = z.object({
   foregroundColorDark: z.string().optional(),
   backgroundColor: z.string().optional(),
   backgroundColorDark: z.string().optional(),
+  // New fields for SMS-published stream posts
+  tags: z.array(z.string()).optional(),
+  media: z.array(z.object({
+    url: z.string(),
+    type: z.enum(['image', 'video']),
+    alt: z.string().optional(),
+  })).optional(),
+  source: z.enum(['sms', 'web', 'cli']).optional(),
 });
 
 // Define a `type` and `schema` for each collection

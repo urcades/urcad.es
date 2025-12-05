@@ -1,0 +1,5 @@
+# Copy this to .dev.vars and fill in your values
+# This file is used for local development with `npm run dev`
+
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

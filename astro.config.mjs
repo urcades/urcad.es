@@ -1,6 +1,9 @@
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
+  image: {
+    domains: ["media.urcad.es"],
+  },
   markdown: {
     syntaxHighlight: false,
   },
