@@ -1,6 +1,6 @@
 /**
  * Telegram Blog Publisher Cloudflare Worker
- * Receives messages from Telegram bot and publishes to the blog
+ * Receives messages from Telegram bot and publishes to a daily digest post
  */
 
 export interface Env {
@@ -66,19 +66,44 @@ interface TelegramDocument {
 interface MediaItem {
   url: string;
   type: 'image' | 'video';
-  alt?: string;
 }
 
-// Generate a post ID based on current timestamp
-function generatePostId(): string {
+interface GitHubFile {
+  content: string;
+  sha: string;
+}
+
+// Generate a daily post ID (YYMMDD format)
+function getDailyPostId(): string {
   const now = new Date();
   const yy = now.getFullYear().toString().slice(-2);
   const mm = (now.getMonth() + 1).toString().padStart(2, '0');
   const dd = now.getDate().toString().padStart(2, '0');
-  const hh = now.getHours().toString().padStart(2, '0');
-  const min = now.getMinutes().toString().padStart(2, '0');
-  const ss = now.getSeconds().toString().padStart(2, '0');
-  return `${yy}${mm}${dd}-${hh}${min}${ss}`;
+  return `${yy}${mm}${dd}`;
+}
+
+// Generate a unique ID for media files (includes timestamp)
+function getMediaId(): string {
+  const now = new Date();
+  return `${getDailyPostId()}-${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+}
+
+// Format current time as "10:32 AM"
+function getFormattedTime(): string {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}
+
+// Format date as "December 5"
+function getFormattedDate(): string {
+  const now = new Date();
+  const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  return `${months[now.getMonth()]} ${now.getDate()}`;
 }
 
 // Check if user ID is whitelisted
@@ -90,7 +115,7 @@ function isWhitelisted(userId: number, whitelist: string): boolean {
 // Get file from Telegram and upload to R2
 async function downloadAndUploadMedia(
   fileId: string,
-  postId: string,
+  mediaId: string,
   index: number,
   mediaType: 'image' | 'video',
   env: Env
@@ -118,8 +143,8 @@ async function downloadAndUploadMedia(
 
     const fileBuffer = await fileResponse.arrayBuffer();
     const extension = fileInfo.result.file_path.split('.').pop() || (mediaType === 'video' ? 'mp4' : 'jpg');
-    const filename = `${postId}-${index}.${extension}`;
-    const r2Key = `stream/${postId}/${filename}`;
+    const filename = `${mediaId}-${index}.${extension}`;
+    const r2Key = `stream/${getDailyPostId()}/${filename}`;
 
     // Determine content type
     const contentType = mediaType === 'video'
@@ -144,16 +169,16 @@ async function downloadAndUploadMedia(
 // Process all media from a Telegram message
 async function processMedia(
   message: TelegramMessage,
-  postId: string,
   env: Env
 ): Promise<MediaItem[]> {
   const mediaItems: MediaItem[] = [];
+  const mediaId = getMediaId();
   let index = 0;
 
   // Handle photos (Telegram sends multiple sizes, we want the largest)
   if (message.photo && message.photo.length > 0) {
     const largestPhoto = message.photo[message.photo.length - 1];
-    const item = await downloadAndUploadMedia(largestPhoto.file_id, postId, index, 'image', env);
+    const item = await downloadAndUploadMedia(largestPhoto.file_id, mediaId, index, 'image', env);
     if (item) {
       mediaItems.push(item);
       index++;
@@ -162,7 +187,7 @@ async function processMedia(
 
   // Handle video
   if (message.video) {
-    const item = await downloadAndUploadMedia(message.video.file_id, postId, index, 'video', env);
+    const item = await downloadAndUploadMedia(message.video.file_id, mediaId, index, 'video', env);
     if (item) {
       mediaItems.push(item);
       index++;
@@ -173,10 +198,10 @@ async function processMedia(
   if (message.document) {
     const mimeType = message.document.mime_type || '';
     if (mimeType.startsWith('image/')) {
-      const item = await downloadAndUploadMedia(message.document.file_id, postId, index, 'image', env);
+      const item = await downloadAndUploadMedia(message.document.file_id, mediaId, index, 'image', env);
       if (item) mediaItems.push(item);
     } else if (mimeType.startsWith('video/')) {
-      const item = await downloadAndUploadMedia(message.document.file_id, postId, index, 'video', env);
+      const item = await downloadAndUploadMedia(message.document.file_id, mediaId, index, 'video', env);
       if (item) mediaItems.push(item);
     }
   }
@@ -184,69 +209,111 @@ async function processMedia(
   return mediaItems;
 }
 
-// Create markdown content for the post
-function createMarkdownContent(
-  body: string,
-  media: MediaItem[],
-  isDraft: boolean
-): string {
-  const now = new Date().toISOString();
-
-  // Generate title from first line or truncate body
-  const firstLine = body.split('\n')[0].trim();
-  const title = firstLine.length > 60
-    ? firstLine.substring(0, 57) + '...'
-    : firstLine || 'Stream Post';
-
-  // Build frontmatter
-  const frontmatterYaml = [
-    '---',
-    `title: "${title.replace(/"/g, '\\"')}"`,
-    `pubDate: ${now}`,
-    `description: "${(body.length > 160 ? body.substring(0, 157) + '...' : body).replace(/"/g, '\\"').replace(/\n/g, ' ')}"`,
-    `tags: ["stream"]`,
-    `source: "telegram"`,
-  ];
+// Create a new snippet entry with timestamp
+function createSnippet(text: string, media: MediaItem[]): string {
+  const time = getFormattedTime();
+  let snippet = `${time}\n\n${text}`;
 
   if (media.length > 0) {
-    frontmatterYaml.push('media:');
-    media.forEach(m => {
-      frontmatterYaml.push(`  - url: "${m.url}"`);
-      frontmatterYaml.push(`    type: "${m.type}"`);
-    });
-  }
-
-  frontmatterYaml.push('---');
-
-  // Build content body with media embeds
-  let content = body;
-
-  if (media.length > 0) {
-    content += '\n\n';
+    snippet += '\n\n';
     media.forEach(m => {
       if (m.type === 'video') {
-        content += `<video src="${m.url}" controls style="max-width: 100%;"></video>\n`;
+        snippet += `<video src="${m.url}" controls style="max-width: 100%;"></video>\n`;
       } else {
-        content += `![](${m.url})\n`;
+        snippet += `![](${m.url})\n`;
       }
     });
   }
 
-  return frontmatterYaml.join('\n') + '\n\n' + content;
+  return snippet.trim();
 }
 
-// Commit file to GitHub
-async function commitToGitHub(
-  content: string,
+// Create initial markdown content for a new daily post
+function createNewDailyPost(snippet: string): string {
+  const now = new Date().toISOString();
+  const title = getFormattedDate();
+
+  const frontmatter = `---
+title: "${title}"
+pubDate: ${now}
+description: "Daily stream - ${title}"
+tags: ["stream"]
+source: "telegram"
+---`;
+
+  return `${frontmatter}\n\n${snippet}`;
+}
+
+// Append to existing post content
+function appendToPost(existingContent: string, snippet: string): string {
+  return `${existingContent.trim()}\n\n~\n\n${snippet}`;
+}
+
+// Try to get existing file from GitHub
+async function getExistingFile(
   postId: string,
   isDraft: boolean,
   env: Env
-): Promise<boolean> {
+): Promise<GitHubFile | null> {
   const [owner, repo] = env.GITHUB_REPO.split('/');
   const collection = isDraft ? 'drafts' : 'writing';
   const path = `src/content/${collection}/${postId}.md`;
 
   try {
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${env.GITHUB_TOKEN}`,
+          'User-Agent': 'Telegram-Publisher-Worker',
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
+    );
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      console.error(`GitHub API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json() as { content: string; sha: string };
+    // Decode base64 content
+    const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+    return { content, sha: data.sha };
+  } catch (error) {
+    console.error('Error fetching file from GitHub:', error);
+    return null;
+  }
+}
+
+// Commit file to GitHub (create or update)
+async function commitToGitHub(
+  content: string,
+  postId: string,
+  isDraft: boolean,
+  sha: string | null,
+  env: Env
+): Promise<boolean> {
+  const [owner, repo] = env.GITHUB_REPO.split('/');
+  const collection = isDraft ? 'drafts' : 'writing';
+  const path = `src/content/${collection}/${postId}.md`;
+  const action = sha ? 'Update' : 'Create';
+
+  try {
+    const body: Record<string, string> = {
+      message: `${isDraft ? '[Draft] ' : ''}${action} daily stream: ${getFormattedDate()}`,
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch: 'main',
+    };
+
+    if (sha) {
+      body.sha = sha;
+    }
+
     const response = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
       {
@@ -257,11 +324,7 @@ async function commitToGitHub(
           'User-Agent': 'Telegram-Publisher-Worker',
           'Accept': 'application/vnd.github.v3+json',
         },
-        body: JSON.stringify({
-          message: `${isDraft ? '[Draft] ' : ''}Stream post via Telegram: ${postId}`,
-          content: btoa(unescape(encodeURIComponent(content))),
-          branch: 'main',
-        }),
+        body: JSON.stringify(body),
       }
     );
 
@@ -328,26 +391,42 @@ export default {
       const whitelisted = isWhitelisted(userId, env.WHITELISTED_USERS);
       const isDraft = !whitelisted;
 
-      // Generate post ID
-      const postId = generatePostId();
+      // Get daily post ID
+      const postId = getDailyPostId();
 
       // Process media
-      const media = await processMedia(message, postId, env);
+      const media = await processMedia(message, env);
 
-      // Create markdown content
-      const markdownContent = createMarkdownContent(messageText, media, isDraft);
+      // Create the snippet for this message
+      const snippet = createSnippet(messageText, media);
+
+      // Check if today's post already exists
+      const existingFile = await getExistingFile(postId, isDraft, env);
+
+      let finalContent: string;
+      let sha: string | null = null;
+
+      if (existingFile) {
+        // Append to existing post
+        finalContent = appendToPost(existingFile.content, snippet);
+        sha = existingFile.sha;
+      } else {
+        // Create new daily post
+        finalContent = createNewDailyPost(snippet);
+      }
 
       // Commit to GitHub
-      const success = await commitToGitHub(markdownContent, postId, isDraft, env);
+      const success = await commitToGitHub(finalContent, postId, isDraft, sha, env);
 
       // Send response to user
       if (success) {
+        const action = existingFile ? 'Added to' : 'Started';
         const status = isDraft
           ? `Saved as draft (user ${userId} not whitelisted)`
-          : 'Published!';
-        await sendTelegramMessage(chatId, `${status}\nPost ID: ${postId}`, env);
+          : `${action} ${getFormattedDate()}`;
+        await sendTelegramMessage(chatId, status, env);
       } else {
-        await sendTelegramMessage(chatId, 'Error publishing post. Please try again.', env);
+        await sendTelegramMessage(chatId, 'Error publishing. Please try again.', env);
       }
 
       return new Response('OK', { status: 200 });
