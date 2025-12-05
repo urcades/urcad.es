@@ -1,6 +1,6 @@
 /**
- * SMS Publisher Cloudflare Worker
- * Receives SMS/MMS from Twilio and publishes to the blog
+ * Telegram Blog Publisher Cloudflare Worker
+ * Receives messages from Telegram bot and publishes to the blog
  */
 
 export interface Env {
@@ -10,25 +10,57 @@ export interface Env {
   GITHUB_TOKEN: string;
   // GitHub repo in format "owner/repo"
   GITHUB_REPO: string;
-  // Twilio Auth Token for webhook validation
-  TWILIO_AUTH_TOKEN: string;
-  // Comma-separated list of whitelisted phone numbers
-  WHITELISTED_NUMBERS: string;
+  // Telegram Bot Token
+  TELEGRAM_BOT_TOKEN: string;
+  // Comma-separated list of whitelisted Telegram user IDs
+  WHITELISTED_USERS: string;
 }
 
-interface TwilioWebhookPayload {
-  From: string;
-  Body: string;
-  NumMedia: string;
-  MediaUrl0?: string;
-  MediaUrl1?: string;
-  MediaUrl2?: string;
-  MediaUrl3?: string;
-  MediaContentType0?: string;
-  MediaContentType1?: string;
-  MediaContentType2?: string;
-  MediaContentType3?: string;
-  MessageSid: string;
+interface TelegramUpdate {
+  message?: TelegramMessage;
+}
+
+interface TelegramMessage {
+  message_id: number;
+  from: {
+    id: number;
+    username?: string;
+  };
+  chat: {
+    id: number;
+  };
+  date: number;
+  text?: string;
+  caption?: string;
+  photo?: TelegramPhotoSize[];
+  video?: TelegramVideo;
+  document?: TelegramDocument;
+}
+
+interface TelegramPhotoSize {
+  file_id: string;
+  file_unique_id: string;
+  width: number;
+  height: number;
+  file_size?: number;
+}
+
+interface TelegramVideo {
+  file_id: string;
+  file_unique_id: string;
+  width: number;
+  height: number;
+  duration: number;
+  mime_type?: string;
+  file_size?: number;
+}
+
+interface TelegramDocument {
+  file_id: string;
+  file_unique_id: string;
+  file_name?: string;
+  mime_type?: string;
+  file_size?: number;
 }
 
 interface MediaItem {
@@ -49,65 +81,103 @@ function generatePostId(): string {
   return `${yy}${mm}${dd}-${hh}${min}${ss}`;
 }
 
-// Normalize phone number for comparison
-function normalizePhone(phone: string): string {
-  return phone.replace(/\D/g, '').slice(-10);
+// Check if user ID is whitelisted
+function isWhitelisted(userId: number, whitelist: string): boolean {
+  const whitelistedIds = whitelist.split(',').map(id => id.trim());
+  return whitelistedIds.includes(userId.toString());
 }
 
-// Check if phone number is whitelisted
-function isWhitelisted(from: string, whitelist: string): boolean {
-  const normalizedFrom = normalizePhone(from);
-  const whitelistedNumbers = whitelist.split(',').map(n => normalizePhone(n.trim()));
-  return whitelistedNumbers.includes(normalizedFrom);
+// Get file from Telegram and upload to R2
+async function downloadAndUploadMedia(
+  fileId: string,
+  postId: string,
+  index: number,
+  mediaType: 'image' | 'video',
+  env: Env
+): Promise<MediaItem | null> {
+  try {
+    // Get file path from Telegram
+    const fileInfoResponse = await fetch(
+      `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`
+    );
+    const fileInfo = await fileInfoResponse.json() as { ok: boolean; result?: { file_path: string } };
+
+    if (!fileInfo.ok || !fileInfo.result?.file_path) {
+      console.error('Failed to get file info from Telegram');
+      return null;
+    }
+
+    // Download file from Telegram
+    const fileUrl = `https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${fileInfo.result.file_path}`;
+    const fileResponse = await fetch(fileUrl);
+
+    if (!fileResponse.ok) {
+      console.error('Failed to download file from Telegram');
+      return null;
+    }
+
+    const fileBuffer = await fileResponse.arrayBuffer();
+    const extension = fileInfo.result.file_path.split('.').pop() || (mediaType === 'video' ? 'mp4' : 'jpg');
+    const filename = `${postId}-${index}.${extension}`;
+    const r2Key = `stream/${postId}/${filename}`;
+
+    // Determine content type
+    const contentType = mediaType === 'video'
+      ? `video/${extension}`
+      : `image/${extension === 'jpg' ? 'jpeg' : extension}`;
+
+    // Upload to R2
+    await env.MEDIA_BUCKET.put(r2Key, fileBuffer, {
+      httpMetadata: { contentType }
+    });
+
+    return {
+      url: `https://media.urcad.es/${r2Key}`,
+      type: mediaType,
+    };
+  } catch (error) {
+    console.error('Error processing media:', error);
+    return null;
+  }
 }
 
-// Determine media type from content type
-function getMediaType(contentType: string): 'image' | 'video' {
-  if (contentType.startsWith('video/')) return 'video';
-  return 'image';
-}
-
-// Download media from Twilio and upload to R2
+// Process all media from a Telegram message
 async function processMedia(
-  mediaUrls: { url: string; contentType: string }[],
+  message: TelegramMessage,
   postId: string,
   env: Env
 ): Promise<MediaItem[]> {
   const mediaItems: MediaItem[] = [];
+  let index = 0;
 
-  for (let i = 0; i < mediaUrls.length; i++) {
-    const { url, contentType } = mediaUrls[i];
+  // Handle photos (Telegram sends multiple sizes, we want the largest)
+  if (message.photo && message.photo.length > 0) {
+    const largestPhoto = message.photo[message.photo.length - 1];
+    const item = await downloadAndUploadMedia(largestPhoto.file_id, postId, index, 'image', env);
+    if (item) {
+      mediaItems.push(item);
+      index++;
+    }
+  }
 
-    try {
-      // Fetch media from Twilio (requires auth)
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${env.GITHUB_REPO.split('/')[0]}:${env.TWILIO_AUTH_TOKEN}`)
-        }
-      });
+  // Handle video
+  if (message.video) {
+    const item = await downloadAndUploadMedia(message.video.file_id, postId, index, 'video', env);
+    if (item) {
+      mediaItems.push(item);
+      index++;
+    }
+  }
 
-      if (!response.ok) {
-        console.error(`Failed to fetch media: ${response.status}`);
-        continue;
-      }
-
-      const mediaBuffer = await response.arrayBuffer();
-      const extension = contentType.split('/')[1]?.split(';')[0] || 'bin';
-      const filename = `${postId}-${i}.${extension}`;
-      const r2Key = `stream/${postId}/${filename}`;
-
-      // Upload to R2
-      await env.MEDIA_BUCKET.put(r2Key, mediaBuffer, {
-        httpMetadata: { contentType }
-      });
-
-      const mediaType = getMediaType(contentType);
-      mediaItems.push({
-        url: `https://media.urcad.es/${r2Key}`,
-        type: mediaType,
-      });
-    } catch (error) {
-      console.error(`Error processing media ${i}:`, error);
+  // Handle documents (images/videos sent as files)
+  if (message.document) {
+    const mimeType = message.document.mime_type || '';
+    if (mimeType.startsWith('image/')) {
+      const item = await downloadAndUploadMedia(message.document.file_id, postId, index, 'image', env);
+      if (item) mediaItems.push(item);
+    } else if (mimeType.startsWith('video/')) {
+      const item = await downloadAndUploadMedia(message.document.file_id, postId, index, 'video', env);
+      if (item) mediaItems.push(item);
     }
   }
 
@@ -118,8 +188,7 @@ async function processMedia(
 function createMarkdownContent(
   body: string,
   media: MediaItem[],
-  isDraft: boolean,
-  postId: string
+  isDraft: boolean
 ): string {
   const now = new Date().toISOString();
 
@@ -130,22 +199,13 @@ function createMarkdownContent(
     : firstLine || 'Stream Post';
 
   // Build frontmatter
-  const frontmatter = {
-    title,
-    pubDate: now,
-    description: body.length > 160 ? body.substring(0, 157) + '...' : body,
-    tags: ['stream'],
-    source: 'sms',
-    ...(media.length > 0 && { media }),
-  };
-
   const frontmatterYaml = [
     '---',
-    `title: "${frontmatter.title.replace(/"/g, '\\"')}"`,
-    `pubDate: ${frontmatter.pubDate}`,
-    `description: "${frontmatter.description.replace(/"/g, '\\"')}"`,
-    `tags: [${frontmatter.tags.map(t => `"${t}"`).join(', ')}]`,
-    `source: "${frontmatter.source}"`,
+    `title: "${title.replace(/"/g, '\\"')}"`,
+    `pubDate: ${now}`,
+    `description: "${(body.length > 160 ? body.substring(0, 157) + '...' : body).replace(/"/g, '\\"').replace(/\n/g, ' ')}"`,
+    `tags: ["stream"]`,
+    `source: "telegram"`,
   ];
 
   if (media.length > 0) {
@@ -187,7 +247,6 @@ async function commitToGitHub(
   const path = `src/content/${collection}/${postId}.md`;
 
   try {
-    // Create file via GitHub API
     const response = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
       {
@@ -195,11 +254,11 @@ async function commitToGitHub(
         headers: {
           'Authorization': `Bearer ${env.GITHUB_TOKEN}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'SMS-Publisher-Worker',
+          'User-Agent': 'Telegram-Publisher-Worker',
           'Accept': 'application/vnd.github.v3+json',
         },
         body: JSON.stringify({
-          message: `${isDraft ? '[Draft] ' : ''}Stream post via SMS: ${postId}`,
+          message: `${isDraft ? '[Draft] ' : ''}Stream post via Telegram: ${postId}`,
           content: btoa(unescape(encodeURIComponent(content))),
           branch: 'main',
         }),
@@ -219,86 +278,82 @@ async function commitToGitHub(
   }
 }
 
-// Generate TwiML response
-function twimlResponse(message: string): Response {
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Message>${message}</Message>
-</Response>`;
-
-  return new Response(twiml, {
-    headers: { 'Content-Type': 'application/xml' },
+// Send a message back to the user via Telegram
+async function sendTelegramMessage(chatId: number, text: string, env: Env): Promise<void> {
+  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text,
+    }),
   });
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    // Only accept POST requests to /sms
     const url = new URL(request.url);
 
+    // Health check endpoint
+    if (request.method === 'GET' && url.pathname === '/') {
+      return new Response('Telegram Blog Publisher is running!', { status: 200 });
+    }
+
+    // Only accept POST requests
     if (request.method !== 'POST') {
       return new Response('Method not allowed', { status: 405 });
     }
 
-    if (url.pathname !== '/sms' && url.pathname !== '/') {
-      return new Response('Not found', { status: 404 });
-    }
-
     try {
-      // Parse form data from Twilio
-      const formData = await request.formData();
-      const payload: TwilioWebhookPayload = {
-        From: formData.get('From') as string || '',
-        Body: formData.get('Body') as string || '',
-        NumMedia: formData.get('NumMedia') as string || '0',
-        MediaUrl0: formData.get('MediaUrl0') as string || undefined,
-        MediaUrl1: formData.get('MediaUrl1') as string || undefined,
-        MediaUrl2: formData.get('MediaUrl2') as string || undefined,
-        MediaUrl3: formData.get('MediaUrl3') as string || undefined,
-        MediaContentType0: formData.get('MediaContentType0') as string || undefined,
-        MediaContentType1: formData.get('MediaContentType1') as string || undefined,
-        MediaContentType2: formData.get('MediaContentType2') as string || undefined,
-        MediaContentType3: formData.get('MediaContentType3') as string || undefined,
-        MessageSid: formData.get('MessageSid') as string || '',
-      };
+      const update: TelegramUpdate = await request.json();
 
-      // Check if sender is whitelisted
-      const whitelisted = isWhitelisted(payload.From, env.WHITELISTED_NUMBERS);
+      // Only process messages
+      if (!update.message) {
+        return new Response('OK', { status: 200 });
+      }
+
+      const message = update.message;
+      const userId = message.from.id;
+      const chatId = message.chat.id;
+
+      // Get message text (either text or caption for media)
+      const messageText = message.text || message.caption || '';
+
+      // Ignore empty messages without media
+      if (!messageText && !message.photo && !message.video && !message.document) {
+        return new Response('OK', { status: 200 });
+      }
+
+      // Check if user is whitelisted
+      const whitelisted = isWhitelisted(userId, env.WHITELISTED_USERS);
       const isDraft = !whitelisted;
 
       // Generate post ID
       const postId = generatePostId();
 
-      // Collect media URLs
-      const numMedia = parseInt(payload.NumMedia, 10);
-      const mediaUrls: { url: string; contentType: string }[] = [];
-
-      for (let i = 0; i < numMedia && i < 4; i++) {
-        const mediaUrl = payload[`MediaUrl${i}` as keyof TwilioWebhookPayload] as string;
-        const contentType = payload[`MediaContentType${i}` as keyof TwilioWebhookPayload] as string;
-        if (mediaUrl && contentType) {
-          mediaUrls.push({ url: mediaUrl, contentType });
-        }
-      }
-
-      // Process media (upload to R2)
-      const media = await processMedia(mediaUrls, postId, env);
+      // Process media
+      const media = await processMedia(message, postId, env);
 
       // Create markdown content
-      const markdownContent = createMarkdownContent(payload.Body, media, isDraft, postId);
+      const markdownContent = createMarkdownContent(messageText, media, isDraft);
 
       // Commit to GitHub
       const success = await commitToGitHub(markdownContent, postId, isDraft, env);
 
+      // Send response to user
       if (success) {
-        const status = isDraft ? 'saved as draft' : 'published';
-        return twimlResponse(`Post ${status}! ID: ${postId}`);
+        const status = isDraft
+          ? `Saved as draft (user ${userId} not whitelisted)`
+          : 'Published!';
+        await sendTelegramMessage(chatId, `${status}\nPost ID: ${postId}`, env);
       } else {
-        return twimlResponse('Error publishing post. Please try again.');
+        await sendTelegramMessage(chatId, 'Error publishing post. Please try again.', env);
       }
+
+      return new Response('OK', { status: 200 });
     } catch (error) {
       console.error('Worker error:', error);
-      return twimlResponse('Something went wrong. Please try again.');
+      return new Response('Internal error', { status: 500 });
     }
   },
 };
