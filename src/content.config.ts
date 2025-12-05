@@ -18,7 +18,7 @@ const postSchema = z.object({
     type: z.enum(['image', 'video']),
     alt: z.string().optional(),
   })).optional(),
-  source: z.enum(['sms', 'web', 'cli']).optional(),
+  source: z.enum(['sms', 'web', 'cli', 'telegram']).optional(),
 });
 
 // Define a `type` and `schema` for each collection
