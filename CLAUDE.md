@@ -44,6 +44,11 @@ Both collections share the same schema defined in `src/content.config.ts`:
 
 Content is loaded using Astro's glob loader pattern, excluding files prefixed with underscore.
 
+Additional schema fields for stream posts (added for Telegram publishing):
+- `tags`: optional array of strings (e.g., `["stream"]`)
+- `media`: optional array of media objects with `url`, `type` ('image'|'video'), and optional `alt`
+- `source`: optional enum ('sms', 'web', 'cli', 'telegram') indicating how the post was created
+
 ### Layout System
 
 **Base Layout** (`src/layouts/Base.astro`):
@@ -98,6 +103,54 @@ Content is loaded using Astro's glob loader pattern, excluding files prefixed wi
 ### Assets
 
 `src/assets/` contains images organized by date-based directories (format: YYMMDD) referenced in blog posts using relative paths.
+
+### Telegram Blog Publisher (`workers/sms-publisher/`)
+
+A Cloudflare Worker that enables publishing blog posts via Telegram messages. Located in `workers/sms-publisher/`.
+
+**Architecture**:
+```
+Telegram App → Bot → Cloudflare Worker → GitHub API → Auto-deploy
+                            ↓
+                     Cloudflare R2 (media storage)
+```
+
+**How it works**:
+1. User sends a message (text, photo, or video) to the Telegram bot
+2. Worker receives the webhook, validates user against whitelist
+3. Media files are uploaded to R2 bucket (`urcades`) under `stream/YYMMDD/` path
+4. Content is committed to GitHub via API, creating/updating daily digest posts
+5. Site auto-deploys via existing Vercel workflow
+
+**Daily Digest Format**:
+- Posts are aggregated into daily files named `YYMMDD.md` (e.g., `251205.md`)
+- Each message entry includes timestamp (e.g., "7:13 AM") and content
+- Multiple entries in a day are separated by `~` on its own line
+- Frontmatter includes `tags: ["stream"]` and `source: "telegram"`
+- Media URLs point to `https://media.urcad.es/stream/YYMMDD/filename`
+
+**Worker Configuration** (`workers/sms-publisher/wrangler.toml`):
+- R2 bucket binding: `MEDIA_BUCKET` → `urcades`
+- Required secrets: `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `WHITELISTED_USERS`
+- Environment variable: `GITHUB_REPO`
+
+**Key Files**:
+- `workers/sms-publisher/src/index.ts`: Main worker logic
+- `workers/sms-publisher/SETUP.md`: Detailed setup instructions
+- `workers/sms-publisher/wrangler.toml`: Cloudflare configuration
+
+**Access Control**:
+- Whitelisted Telegram user IDs → posts go to `src/content/writing/`
+- Non-whitelisted users → posts go to `src/content/drafts/`
+
+**Worker Commands**:
+```bash
+cd workers/sms-publisher
+npm install
+npm run dev      # Local development
+npm run deploy   # Deploy to Cloudflare
+npm run tail     # View logs
+```
 
 ## TypeScript Configuration
 
