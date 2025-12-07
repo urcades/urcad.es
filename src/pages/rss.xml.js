@@ -14,12 +14,25 @@ export async function GET(context) {
   try {
     // Only fetch published writing, explicitly excluding drafts
     const blog = await getCollection("writing");
-    
+
+    // Get start of today (midnight) for filtering stream posts
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Filter posts: stream posts only appear after their day has passed
+    const filteredPosts = blog.filter((post) => {
+      const isStreamPost = post.data.tags?.includes("stream");
+      if (isStreamPost) {
+        return new Date(post.data.pubDate) < today;
+      }
+      return true;
+    });
+
     return rss({
       title: "É. Urcades",
       description: "Ongoing Writing",
       site: context.site,
-      items: blog.map((post) => {
+      items: filteredPosts.map((post) => {
         try {
           // Safely render markdown with error handling
           const renderedContent = post.body ? parser.render(post.body) : "";
