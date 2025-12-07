@@ -89,6 +89,44 @@ Quick demo of the new feature
 
 ## Configuration
 
+### Bluesky Cross-posting (Optional)
+
+Enable automatic cross-posting to Bluesky when you publish via Telegram.
+
+#### Step 1: Create a Bluesky App Password
+
+1. Log into [Bluesky](https://bsky.app)
+2. Go to **Settings** → **Privacy and Security** → **App Passwords**
+3. Click **Add App Password**
+4. Name it (e.g., "Blog Publisher")
+5. Copy the generated password (you won't see it again)
+
+#### Step 2: Add Bluesky Secrets
+
+```bash
+cd workers/sms-publisher
+
+npx wrangler secret put BLUESKY_HANDLE
+# Enter your handle (e.g., yourname.bsky.social)
+
+npx wrangler secret put BLUESKY_APP_PASSWORD
+# Paste the app password from step 1
+```
+
+#### How It Works
+
+- When you post via Telegram, it publishes to your blog AND Bluesky
+- Text is truncated to 300 characters with a link to the full post
+- Images are uploaded to Bluesky (max 4, videos are skipped)
+- Telegram will show "Added to December 7 + Bluesky" on success
+
+#### Limitations
+
+- Bluesky has a 300-character limit (text is auto-truncated)
+- Max 4 images per post, each under 1MB
+- Videos are not cross-posted (Bluesky doesn't support video uploads via API yet)
+- Only published posts are cross-posted (not drafts)
+
 ### Adding More Whitelisted Users
 
 Update the secret with comma-separated user IDs:

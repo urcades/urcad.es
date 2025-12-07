@@ -14,6 +14,9 @@ export interface Env {
   TELEGRAM_BOT_TOKEN: string;
   // Comma-separated list of whitelisted Telegram user IDs
   WHITELISTED_USERS: string;
+  // Bluesky credentials (optional - for cross-posting)
+  BLUESKY_HANDLE?: string;
+  BLUESKY_APP_PASSWORD?: string;
 }
 
 interface TelegramUpdate {
@@ -71,6 +74,46 @@ interface MediaItem {
 interface GitHubFile {
   content: string;
   sha: string;
+}
+
+// Bluesky API interfaces
+interface BlueskySession {
+  did: string;
+  handle: string;
+  accessJwt: string;
+  refreshJwt: string;
+}
+
+interface BlueskyBlob {
+  $type: 'blob';
+  ref: { $link: string };
+  mimeType: string;
+  size: number;
+}
+
+interface BlueskyImageEmbed {
+  $type: 'app.bsky.embed.images';
+  images: Array<{
+    image: BlueskyBlob;
+    alt: string;
+    aspectRatio?: { width: number; height: number };
+  }>;
+}
+
+interface BlueskyExternalEmbed {
+  $type: 'app.bsky.embed.external';
+  external: {
+    uri: string;
+    title: string;
+    description: string;
+  };
+}
+
+interface BlueskyPost {
+  $type: 'app.bsky.feed.post';
+  text: string;
+  createdAt: string;
+  embed?: BlueskyImageEmbed | BlueskyExternalEmbed;
 }
 
 // Generate a daily post ID (YYMMDD format)
@@ -353,6 +396,200 @@ async function sendTelegramMessage(chatId: number, text: string, env: Env): Prom
   });
 }
 
+// ============================================
+// Bluesky Cross-posting Functions
+// ============================================
+
+const BLUESKY_API = 'https://bsky.social/xrpc';
+const BLUESKY_CHAR_LIMIT = 300;
+
+// Check if Bluesky is configured
+function isBlueskyConfigured(env: Env): boolean {
+  return !!(env.BLUESKY_HANDLE && env.BLUESKY_APP_PASSWORD);
+}
+
+// Authenticate with Bluesky and get session tokens
+async function createBlueskySession(env: Env): Promise<BlueskySession | null> {
+  if (!isBlueskyConfigured(env)) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${BLUESKY_API}/com.atproto.server.createSession`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identifier: env.BLUESKY_HANDLE,
+        password: env.BLUESKY_APP_PASSWORD,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`Bluesky auth failed: ${response.status}`);
+      return null;
+    }
+
+    return await response.json() as BlueskySession;
+  } catch (error) {
+    console.error('Bluesky auth error:', error);
+    return null;
+  }
+}
+
+// Upload an image blob to Bluesky
+async function uploadBlueskyBlob(
+  imageUrl: string,
+  session: BlueskySession
+): Promise<BlueskyBlob | null> {
+  try {
+    // Fetch the image from R2 URL
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      console.error(`Failed to fetch image: ${imageUrl}`);
+      return null;
+    }
+
+    const imageData = await imageResponse.arrayBuffer();
+    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+    // Check size limit (1MB)
+    if (imageData.byteLength > 1000000) {
+      console.error('Image too large for Bluesky (>1MB)');
+      return null;
+    }
+
+    // Upload to Bluesky
+    const response = await fetch(`${BLUESKY_API}/com.atproto.repo.uploadBlob`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': contentType,
+        'Authorization': `Bearer ${session.accessJwt}`,
+      },
+      body: imageData,
+    });
+
+    if (!response.ok) {
+      console.error(`Bluesky blob upload failed: ${response.status}`);
+      return null;
+    }
+
+    const result = await response.json() as { blob: BlueskyBlob };
+    return result.blob;
+  } catch (error) {
+    console.error('Bluesky blob upload error:', error);
+    return null;
+  }
+}
+
+// Truncate text to fit Bluesky's character limit, adding link if needed
+function truncateForBluesky(text: string, postUrl: string): string {
+  // If text fits, just return it with the link
+  const suffix = `\n\n${postUrl}`;
+
+  if (text.length + suffix.length <= BLUESKY_CHAR_LIMIT) {
+    return text + suffix;
+  }
+
+  // Truncate text to fit with ellipsis and link
+  const maxTextLength = BLUESKY_CHAR_LIMIT - suffix.length - 3; // -3 for "..."
+  const truncated = text.slice(0, maxTextLength).trim();
+  return truncated + '...' + suffix;
+}
+
+// Get the URL for a stream post on the blog
+function getPostUrl(postId: string): string {
+  return `https://www.urcad.es/writing/${postId}`;
+}
+
+// Create a post on Bluesky
+async function postToBluesky(
+  text: string,
+  media: MediaItem[],
+  postId: string,
+  session: BlueskySession
+): Promise<boolean> {
+  try {
+    const postUrl = getPostUrl(postId);
+    const truncatedText = truncateForBluesky(text, postUrl);
+
+    // Build the post record
+    const record: BlueskyPost = {
+      $type: 'app.bsky.feed.post',
+      text: truncatedText,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Upload images and add as embed (max 4, skip videos)
+    const images = media.filter(m => m.type === 'image').slice(0, 4);
+    if (images.length > 0) {
+      const uploadedImages: Array<{ image: BlueskyBlob; alt: string }> = [];
+
+      for (const img of images) {
+        const blob = await uploadBlueskyBlob(img.url, session);
+        if (blob) {
+          uploadedImages.push({
+            image: blob,
+            alt: '', // Could be enhanced to include alt text
+          });
+        }
+      }
+
+      if (uploadedImages.length > 0) {
+        record.embed = {
+          $type: 'app.bsky.embed.images',
+          images: uploadedImages,
+        };
+      }
+    }
+
+    // Create the post
+    const response = await fetch(`${BLUESKY_API}/com.atproto.repo.createRecord`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.accessJwt}`,
+      },
+      body: JSON.stringify({
+        repo: session.did,
+        collection: 'app.bsky.feed.post',
+        record: record,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error(`Bluesky post failed: ${response.status} - ${error}`);
+      return false;
+    }
+
+    console.log('Successfully posted to Bluesky');
+    return true;
+  } catch (error) {
+    console.error('Bluesky post error:', error);
+    return false;
+  }
+}
+
+// Cross-post to Bluesky (called after successful GitHub commit)
+async function crossPostToBluesky(
+  text: string,
+  media: MediaItem[],
+  postId: string,
+  env: Env
+): Promise<boolean> {
+  if (!isBlueskyConfigured(env)) {
+    return false; // Silently skip if not configured
+  }
+
+  const session = await createBlueskySession(env);
+  if (!session) {
+    console.error('Failed to create Bluesky session');
+    return false;
+  }
+
+  return await postToBluesky(text, media, postId, session);
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -421,9 +658,20 @@ export default {
       // Send response to user
       if (success) {
         const action = existingFile ? 'Added to' : 'Started';
-        const status = isDraft
+        let status = isDraft
           ? `Saved as draft (user ${userId} not whitelisted)`
           : `${action} ${getFormattedDate()}`;
+
+        // Cross-post to Bluesky (only for published posts, not drafts)
+        if (!isDraft && isBlueskyConfigured(env)) {
+          const blueskySuccess = await crossPostToBluesky(messageText, media, postId, env);
+          if (blueskySuccess) {
+            status += ' + Bluesky';
+          } else {
+            status += ' (Bluesky failed)';
+          }
+        }
+
         await sendTelegramMessage(chatId, status, env);
       } else {
         await sendTelegramMessage(chatId, 'Error publishing. Please try again.', env);

@@ -13,6 +13,10 @@ bucket_name = "urcades"
 #   npx wrangler secret put GITHUB_TOKEN
 #   npx wrangler secret put TELEGRAM_BOT_TOKEN
 #   npx wrangler secret put WHITELISTED_USERS
+#
+# Optional: Bluesky cross-posting (see SETUP.md for details)
+#   npx wrangler secret put BLUESKY_HANDLE
+#   npx wrangler secret put BLUESKY_APP_PASSWORD
 
 [vars]
 GITHUB_REPO = "urcades/urcad.es"
