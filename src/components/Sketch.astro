@@ -5,9 +5,10 @@ interface Props {
   category: string;
   url?: string;
   size?: string;
+  caseStudyUrl?: string;
 }
 
-const { imageUrl, title, category, url, size = "1" } = Astro.props;
+const { imageUrl, title, category, url, size = "1", caseStudyUrl } = Astro.props;
 ---
 
 <style>
@@ -105,6 +106,7 @@ const { imageUrl, title, category, url, size = "1" } = Astro.props;
   <div class="sketch-info">
     <p>{title}</p>
     <em>{category}</em>
-    {url && <a href={url}>♨︎</a>}
+    {caseStudyUrl && <a href={caseStudyUrl}>※</a>}
+    {url && <a href={url} target="_blank" rel="noopener">♨︎</a>}
   </div>
 </div>

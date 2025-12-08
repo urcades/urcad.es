@@ -50,15 +50,19 @@ const years = Object.keys(workByYear)
       <>
         <h1>{year}</h1>
         <section class="sketches">
-          {workByYear[year].map((item) => (
-            <Sketch
-              imageUrl={item.data.imageUrl}
-              title={item.data.title}
-              category={item.data.category}
-              url={item.data.url}
-              size={item.data.size}
-            />
-          ))}
+          {workByYear[year].map((item) => {
+            const hasContent = item.body && item.body.trim().length > 0;
+            return (
+              <Sketch
+                imageUrl={item.data.imageUrl}
+                title={item.data.title}
+                category={item.data.category}
+                url={item.data.url}
+                size={item.data.size}
+                caseStudyUrl={hasContent ? `/work/${item.id}` : undefined}
+              />
+            );
+          })}
         </section>
       </>
     ))
