@@ -32,8 +32,26 @@ const draftsCollection = defineCollection({
   schema: postSchema,
 });
 
+// Schema for work/portfolio items
+const workSchema = z.object({
+  title: z.string(),
+  pubDate: z.date(),
+  imageUrl: z.string(),
+  category: z.string(),
+  tags: z.array(z.string()).optional(),
+  url: z.string().optional(),
+  size: z.enum(['1', '2', '3']).default('1'),
+  // For future case study content - the markdown body will be used
+});
+
+const workCollection = defineCollection({
+  loader: glob({ pattern: '**/[^_]*.{md,mdx}', base: './src/content/work' }),
+  schema: workSchema,
+});
+
 // Export a single `collections` object to register your collection(s)
 export const collections = {
   writing: writingCollection,
   drafts: draftsCollection,
+  work: workCollection,
 };
