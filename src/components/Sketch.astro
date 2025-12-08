@@ -8,7 +8,14 @@ interface Props {
   caseStudyUrl?: string;
 }
 
-const { imageUrl, title, category, url, size = "1", caseStudyUrl } = Astro.props;
+const {
+  imageUrl,
+  title,
+  category,
+  url,
+  size = "1",
+  caseStudyUrl,
+} = Astro.props;
 ---
 
 <style>
@@ -106,7 +113,13 @@ const { imageUrl, title, category, url, size = "1", caseStudyUrl } = Astro.props
   <div class="sketch-info">
     <p>{title}</p>
     <em>{category}</em>
-    {caseStudyUrl && <a href={caseStudyUrl}>※</a>}
-    {url && <a href={url} target="_blank" rel="noopener">♨︎</a>}
+    {caseStudyUrl && <a href={caseStudyUrl}>⌘</a>}
+    {
+      url && (
+        <a href={url} target="_blank" rel="noopener">
+          ♨︎
+        </a>
+      )
+    }
   </div>
 </div>

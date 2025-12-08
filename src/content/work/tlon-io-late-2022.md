@@ -6,3 +6,5 @@ category: "Website Design"
 url: "https://www.tlon.io"
 tags: ["web", "marketing"]
 ---
+
+The main thrust of this web work for Tlon was to build a "coming soon" page that was evocative, spoke to our values, etc.
