@@ -1,7 +1,31 @@
 ---
+import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import Sketch from "../components/Sketch.astro";
+
 const pageTitle = "É. Urcades: Work";
+
+// Get all work items, sorted by date descending (newest first)
+const allWork = await getCollection("work");
+const sortedWork = allWork.sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
+
+// Group by year
+const workByYear = sortedWork.reduce(
+  (acc, item) => {
+    const year = item.data.pubDate.getFullYear();
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(item);
+    return acc;
+  },
+  {} as Record<number, typeof sortedWork>
+);
+
+// Sort years descending
+const years = Object.keys(workByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
 ---
 
 <style>
@@ -20,234 +44,27 @@ const pageTitle = "É. Urcades: Work";
 
 <Base pageTitle={pageTitle}>
   <p>Samples of recent work, sketching, doodling</p>
-  <!-- <p><a href="/recent-work.pdf" target="_blank">PDF (15.1 MB)</a></p> -->
-  <!-- <p><a href="/cv.pdf" target="_blank">CV (1.1 MB)</a></p> -->
 
-  <h1>2024</h1>
-  <section class="sketches">
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/27471365/original_f01f6ecabe6dc320c1e0deba1ed7a1e3.jpg"
-      title="Dia"
-      category="Product Design"
-      url="https://www.floral.computer/"
-      size="2"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/27304470/original_518bf14f0482b3a140035eab66a7f74d.png"
-      title="Sticker"
-      category="Ephemera"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25878627/original_c732003ccfc2de6b8eb03c0683288b50.png"
-      title="Tlon.app"
-      category="Mobile App"
-      url="https://apps.apple.com/us/app/tlon-the-urbit-app/id6451392109"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/24107584/original_9b782bab4052b8da82d611f5289fdee2.jpg"
-      title="Tlon.app"
-      category="Mobile App"
-      url="https://apps.apple.com/us/app/tlon-the-urbit-app/id6451392109"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/19953187/original_0ad3ba41d8cb2c62c4a0854b2406a13c.png"
-      title='"Within Genetics" Cover Art'
-      category="Graphic Design"
-      url="https://flowerstructure.bandcamp.com/album/within-genetics"
-    />
-  </section>
-
-  <h1>2023</h1>
-  <section class="sketches">
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/21591503/original_f6c5ff66d77c88147089af2d1403d4a0.png"
-      title="Landscape Clock Widget (with Gavin Atkinson)"
-      category="Interface Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/24608106/original_43fed9dd5c47713462661bad480d0579.png"
-      title="Tlon Cards"
-      category="Ephemera"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25878687/original_42b750230476ea6bf3712534df2473a4.png"
-      title="Tlon App Icon Iterations (with Romina Malta)"
-      category="Corporate Brand"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855845/original_085338369c9fc441b00acac9db1caf1d.png"
-      title="Landscape Channel Types"
-      category="Interface Design"
-      size="3"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855844/original_10c37b278f1478396c4c33c3b98a5550.png"
-      title="Tenori Sans"
-      category="Typeface"
-      url="https://tenori.vercel.app/"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/28630395/original_8562fc53358869a6c221ebbe7b192357.jpg?1717817421?bc=0"
-      title="Hoon.hoon Source Code Reference"
-      category="Book"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/24635601/original_57162c58b68da9f4f414fed17d81c134.png"
-      title="T-Shirt"
-      category="Graphic Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/22742520/original_02450a23090e8daab1bd9ac2e2c45122.png"
-      title="Landscape Desktop Client"
-      category="Digital Product Design"
-      size="3"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/24543682/original_f1e04d63e62d19f1cd69984f49631c41.png"
-      title="Presentation Placard"
-      category="Ephemera"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/13308199/original_91b6ce211f21dab86912c5f159af8509.jpg"
-      title="Mobile App Icons"
-      category="Corporate Brand"
-      url=""
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/24653325/original_f0b08cc8af7292297ec05091324f5709.jpg"
-      title="Interfaces for Billboards"
-      category="Corporate Brand"
-      url=""
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/16050759/original_439cdecbabee10a312007ade2b6463b0.png"
-      title="Landscape App Grid"
-      category="Interface Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/21861756/original_257018b240386434bfef44255591a5bb.png"
-      title="Tlon.io (Mid 2023)"
-      category="Website Design"
-      url="https://www.tlon.io/"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/20909454/original_c6f94f852c238f482d59dee6957a8985.jpg"
-      title="Tlon.io (Early 2023)"
-      category="Website Design"
-      url="https://www.tlon.io/"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/16353380/original_0b34f8ceebe460adabcf3e2487f0ee71.png"
-      title="April Sans (Tlon Co. Custom Font/Logotype)"
-      category="Typeface"
-      size="3"
-    />
-  </section>
-
-  <h1>2022</h1>
-  <section class="sketches">
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/16794261/original_a6468761fcd26bb8b3b266b01ec62dc8.png"
-      title="Tlon TV Event Poster"
-      category="Graphic Design"
-      url="https://x.com/tlondesign/status/1534689064720338945"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/16530428/original_2fd98c0c78687ac7cad70bce6521cddb.png"
-      title="2E Logomark System (with Romina Malta)"
-      category="Corporate Brand"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/19904725/original_c7769a69c5cc18ee652e5f0e84882fb4.png"
-      title="Tlon.io (Late 2022) (with Mackenzie Davidson and Keaton Ventura)"
-      category="Website Design"
-      url="https://www.tlon.io"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25878686/original_5b6db849d2ebe000e12d3dd1b27c9fd7.png"
-      title="2E Logomark System (with Romina Malta)"
-      category="Corporate Brand"
-      size="2"
-    />
-  </section>
-
-  <h1>2021</h1>
-  <section class="sketches">
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25856488/original_737997d9c42fb45e5939e7db5e45dd4d.png"
-      title="Landscape, Mid 2021"
-      category="Digital Product Design"
-    />
-  </section>
-
-  <h1>2020</h1>
-  <section class="sketches">
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/7159724/original_2f966ffa6372edd4dd1c003cd8fa3b12.png?1588698384?bc=0"
-      title="Ebook Reader"
-      category="Interface Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855840/original_870bde60f723eeab363a62c39cf953ca.png"
-      title="Decept Logo/Logotype"
-      category="Graphic Design"
-      url="https://decept.org/about"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/7682724/original_229ab5e9465a839459c8667bf831f5ce.png"
-      title="Wind Urn"
-      category="Industrial Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/6714029/original_bf33179c6edd175699f73e9f5f7e271c.png"
-      title="OS 1 Widgets"
-      category="Interface Design"
-    />
-  </section>
-
-  <h1>2019</h1>
-  <section class="sketches">
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855843/original_2001420cf44d8b1ce7876f3e87effb69.png"
-      title="Fora Voting Interface"
-      category="Interface Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/4409164/original_f8f25696abed81d5d2dc58fe293b68db.png"
-      title="Stallwoman"
-      category="Graphic Design"
-    />
-  </section>
-
-  <h1>2018</h1>
-  <section class="sketches">
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855842/original_a526deec50c195f9c0c8e61527747168.png"
-      title="Pilot"
-      category="Mobile App"
-      size="2"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855841/original_16650164102c9358c2526d1b1b7915b2.png"
-      title="Reverse Prompt Interfaces (Pilot Prompts You)"
-      category="Interface Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/1667882/original_6cef6b841bd36ba436721eddc7fcdbba.png"
-      title='"Being a Body" Card Game (with Cal Capuozzo)'
-      category="Game Design"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855846/original_8edab005f82f8f927cf948dae60a299b.png"
-      title="Tumblr Post Editor"
-      category="Interface Design"
-      url="https://www.tumblr.com/"
-    />
-    <Sketch
-      imageUrl="https://d2w9rnfcy7mm78.cloudfront.net/25855847/original_53944f403a14cd0e7f881a255e851fc4.png"
-      title="Tumblr Timeline + Post Editor"
-      category="Interface Design"
-      url="https://www.tumblr.com/"
-    />
-  </section>
+  {
+    years.map((year) => (
+      <>
+        <h1>{year}</h1>
+        <section class="sketches">
+          {workByYear[year].map((item) => {
+            const hasContent = item.body && item.body.trim().length > 0;
+            return (
+              <Sketch
+                imageUrl={item.data.imageUrl}
+                title={item.data.title}
+                category={item.data.category}
+                url={item.data.url}
+                size={item.data.size}
+                caseStudyUrl={hasContent ? `/work/${item.id}` : undefined}
+              />
+            );
+          })}
+        </section>
+      </>
+    ))
+  }
 </Base>
