@@ -483,7 +483,12 @@ async function uploadBlueskyBlob(
 
 // Truncate text to fit Bluesky's character limit, adding link if needed
 function truncateForBluesky(text: string, postUrl: string): string {
-  // If text fits, just return it with the link
+  // If no text, just return the URL
+  if (!text.trim()) {
+    return postUrl;
+  }
+
+  // Add newline before URL only when there's text
   const suffix = `\n${postUrl}`;
 
   if (text.length + suffix.length <= BLUESKY_CHAR_LIMIT) {
