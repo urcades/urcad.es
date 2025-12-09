@@ -17,6 +17,11 @@ bucket_name = "urcades"
 # Optional: Bluesky cross-posting (see SETUP.md for details)
 #   npx wrangler secret put BLUESKY_HANDLE
 #   npx wrangler secret put BLUESKY_APP_PASSWORD
+#
+# Optional: Are.na cross-posting
+# Get your access token from https://dev.are.na/oauth/applications
+#   npx wrangler secret put ARENA_ACCESS_TOKEN
+#   npx wrangler secret put ARENA_CHANNEL_SLUG
 
 [vars]
 GITHUB_REPO = "urcades/urcad.es"

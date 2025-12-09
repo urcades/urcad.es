@@ -7,3 +7,5 @@ url: "https://www.floral.computer/"
 size: "2"
 tags: ["product", "software"]
 ---
+
+A sketch of an interface for viewing software attached to physical objects.

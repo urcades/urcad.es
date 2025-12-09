@@ -5,3 +5,5 @@ imageUrl: "https://d2w9rnfcy7mm78.cloudfront.net/7159724/original_2f966ffa6372ed
 category: "Interface Design"
 tags: ["interface", "reading"]
 ---
+
+A sketch of a social ebook reader.

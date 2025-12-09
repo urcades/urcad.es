@@ -17,6 +17,9 @@ export interface Env {
   // Bluesky credentials (optional - for cross-posting)
   BLUESKY_HANDLE?: string;
   BLUESKY_APP_PASSWORD?: string;
+  // Are.na credentials (optional - for cross-posting)
+  ARENA_ACCESS_TOKEN?: string;
+  ARENA_CHANNEL_SLUG?: string;
 }
 
 interface TelegramUpdate {
@@ -590,6 +593,111 @@ async function crossPostToBluesky(
   return await postToBluesky(text, media, postId, session);
 }
 
+// ============================================
+// Are.na Cross-posting Functions
+// ============================================
+
+const ARENA_API = 'https://api.are.na/v2';
+
+// Check if Are.na is configured
+function isArenaConfigured(env: Env): boolean {
+  return !!(env.ARENA_ACCESS_TOKEN && env.ARENA_CHANNEL_SLUG);
+}
+
+// Create a block in an Are.na channel
+async function createArenaBlock(
+  text: string,
+  media: MediaItem[],
+  postId: string,
+  env: Env
+): Promise<boolean> {
+  if (!isArenaConfigured(env)) {
+    return false; // Silently skip if not configured
+  }
+
+  try {
+    const postUrl = getPostUrl(postId);
+    const results: boolean[] = [];
+
+    // If there are images, create image blocks with the source URL
+    // Are.na will fetch and process the image
+    for (const item of media) {
+      if (item.type === 'image') {
+        const response = await fetch(
+          `${ARENA_API}/channels/${env.ARENA_CHANNEL_SLUG}/blocks`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
+            },
+            body: JSON.stringify({
+              source: item.url,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.text();
+          console.error(`Are.na image block failed: ${response.status} - ${error}`);
+          results.push(false);
+        } else {
+          console.log('Successfully created Are.na image block');
+          results.push(true);
+        }
+      }
+    }
+
+    // Create a text block with the content and link to the post
+    if (text) {
+      const content = `${text}\n\n[${postUrl}](${postUrl})`;
+
+      const response = await fetch(
+        `${ARENA_API}/channels/${env.ARENA_CHANNEL_SLUG}/blocks`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            content: content,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`Are.na text block failed: ${response.status} - ${error}`);
+        results.push(false);
+      } else {
+        console.log('Successfully created Are.na text block');
+        results.push(true);
+      }
+    }
+
+    // Return true if at least one block was created successfully
+    return results.some(r => r === true);
+  } catch (error) {
+    console.error('Are.na post error:', error);
+    return false;
+  }
+}
+
+// Cross-post to Are.na (called after successful GitHub commit)
+async function crossPostToArena(
+  text: string,
+  media: MediaItem[],
+  postId: string,
+  env: Env
+): Promise<boolean> {
+  if (!isArenaConfigured(env)) {
+    return false; // Silently skip if not configured
+  }
+
+  return await createArenaBlock(text, media, postId, env);
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -662,13 +770,26 @@ export default {
           ? `Saved as draft (user ${userId} not whitelisted)`
           : `${action} ${getFormattedDate()}`;
 
-        // Cross-post to Bluesky (only for published posts, not drafts)
-        if (!isDraft && isBlueskyConfigured(env)) {
-          const blueskySuccess = await crossPostToBluesky(messageText, media, postId, env);
-          if (blueskySuccess) {
-            status += ' + Bluesky';
-          } else {
-            status += ' (Bluesky failed)';
+        // Cross-post to other platforms (only for published posts, not drafts)
+        if (!isDraft) {
+          // Bluesky
+          if (isBlueskyConfigured(env)) {
+            const blueskySuccess = await crossPostToBluesky(messageText, media, postId, env);
+            if (blueskySuccess) {
+              status += ' + Bluesky';
+            } else {
+              status += ' (Bluesky failed)';
+            }
+          }
+
+          // Are.na
+          if (isArenaConfigured(env)) {
+            const arenaSuccess = await crossPostToArena(messageText, media, postId, env);
+            if (arenaSuccess) {
+              status += ' + Are.na';
+            } else {
+              status += ' (Are.na failed)';
+            }
           }
         }
 

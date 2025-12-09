@@ -6,3 +6,5 @@ category: "Typeface"
 size: "3"
 tags: ["typeface", "typography", "brand"]
 ---
+
+April Sans was a small glyph design project for some Tlon logotypes. It's named after the month it was created.

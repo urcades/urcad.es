@@ -6,3 +6,5 @@ category: "Graphic Design"
 url: "https://decept.org/about"
 tags: ["graphic-design", "identity"]
 ---
+
+A simple drawing for Decept, a mastodon instance run by a friend.
