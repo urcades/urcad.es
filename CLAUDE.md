@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and deployed on Vercel. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components.
+This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and deployed on Cloudflare Pages. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components.
 
 ## Development Commands
 
@@ -120,7 +120,7 @@ Telegram App → Bot → Cloudflare Worker → GitHub API → Auto-deploy
 2. Worker receives the webhook, validates user against whitelist
 3. Media files are uploaded to R2 bucket (`urcades`) under `stream/YYMMDD/` path
 4. Content is committed to GitHub via API, creating/updating daily digest posts
-5. Site auto-deploys via existing Vercel workflow
+5. Site auto-deploys via Cloudflare Pages (connected to GitHub)
 
 **Daily Digest Format**:
 - Posts are aggregated into daily files named `YYMMDD.md` (e.g., `251205.md`)
@@ -166,13 +166,10 @@ Uses Astro's strict TypeScript config: `"extends": "astro/tsconfigs/strict"`
 
 ## Deployment
 
-The site auto-deploys to Vercel on push to main branch via GitHub Actions workflow (`.github/workflows/publish.yml`). The workflow:
-1. Checks out code
-2. Sets up Node.js 23
-3. Installs dependencies
-4. Runs build (which includes type checking)
+The site auto-deploys to Cloudflare Pages on push to main branch. Cloudflare Pages is connected directly to the GitHub repository and handles the build process automatically.
 
-Site URL: https://www.urcad.es
+- **Pages URL**: `urcades.pages.dev`
+- **Custom Domain**: `https://www.urcad.es`
 
 ## Configuration Notes
 
