@@ -132,11 +132,12 @@ Telegram App → Bot → Cloudflare Worker → GitHub API → Auto-deploy
 **Worker Configuration** (`workers/sms-publisher/wrangler.toml`):
 - R2 bucket binding: `MEDIA_BUCKET` → `urcades`
 - Required secrets: `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `WHITELISTED_USERS`
-- Optional secrets: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD` (for cross-posting)
+- Optional secrets for Bluesky: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `BLUESKY_PDS_URL` (defaults to `https://bsky.social/xrpc`)
 - Environment variable: `GITHUB_REPO`
 
 **Bluesky Cross-posting**:
 - When Bluesky credentials are configured, posts are automatically cross-posted
+- Supports custom PDS servers via `BLUESKY_PDS_URL` (for self-hosted AT Protocol instances)
 - Text is truncated to 300 characters with a link to the full blog post
 - Images are uploaded to Bluesky (max 4 per post, under 1MB each)
 - Videos are skipped (Bluesky API doesn't support video uploads yet)

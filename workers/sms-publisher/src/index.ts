@@ -17,6 +17,8 @@ export interface Env {
   // Bluesky credentials (optional - for cross-posting)
   BLUESKY_HANDLE?: string;
   BLUESKY_APP_PASSWORD?: string;
+  // Custom PDS URL (optional - defaults to bsky.social)
+  BLUESKY_PDS_URL?: string;
   // Are.na credentials (optional - for cross-posting)
   ARENA_ACCESS_TOKEN?: string;
   ARENA_CHANNEL_SLUG?: string;
@@ -403,8 +405,12 @@ async function sendTelegramMessage(chatId: number, text: string, env: Env): Prom
 // Bluesky Cross-posting Functions
 // ============================================
 
-const BLUESKY_API = 'https://bsky.social/xrpc';
 const BLUESKY_CHAR_LIMIT = 300;
+
+// Get Bluesky API URL (supports custom PDS)
+function getBlueskyApi(env: Env): string {
+  return env.BLUESKY_PDS_URL || 'https://bsky.social/xrpc';
+}
 
 // Check if Bluesky is configured
 function isBlueskyConfigured(env: Env): boolean {
@@ -417,8 +423,9 @@ async function createBlueskySession(env: Env): Promise<BlueskySession | null> {
     return null;
   }
 
+  const apiUrl = getBlueskyApi(env);
   try {
-    const response = await fetch(`${BLUESKY_API}/com.atproto.server.createSession`, {
+    const response = await fetch(`${apiUrl}/com.atproto.server.createSession`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -442,8 +449,10 @@ async function createBlueskySession(env: Env): Promise<BlueskySession | null> {
 // Upload an image blob to Bluesky
 async function uploadBlueskyBlob(
   imageUrl: string,
-  session: BlueskySession
+  session: BlueskySession,
+  env: Env
 ): Promise<BlueskyBlob | null> {
+  const apiUrl = getBlueskyApi(env);
   try {
     // Fetch the image from R2 URL
     const imageResponse = await fetch(imageUrl);
@@ -462,7 +471,7 @@ async function uploadBlueskyBlob(
     }
 
     // Upload to Bluesky
-    const response = await fetch(`${BLUESKY_API}/com.atproto.repo.uploadBlob`, {
+    const response = await fetch(`${apiUrl}/com.atproto.repo.uploadBlob`, {
       method: 'POST',
       headers: {
         'Content-Type': contentType,
@@ -514,8 +523,10 @@ async function postToBluesky(
   text: string,
   media: MediaItem[],
   postId: string,
-  session: BlueskySession
+  session: BlueskySession,
+  env: Env
 ): Promise<boolean> {
+  const apiUrl = getBlueskyApi(env);
   try {
     const postUrl = getPostUrl(postId);
     const truncatedText = truncateForBluesky(text, postUrl);
@@ -533,7 +544,7 @@ async function postToBluesky(
       const uploadedImages: Array<{ image: BlueskyBlob; alt: string }> = [];
 
       for (const img of images) {
-        const blob = await uploadBlueskyBlob(img.url, session);
+        const blob = await uploadBlueskyBlob(img.url, session, env);
         if (blob) {
           uploadedImages.push({
             image: blob,
@@ -551,7 +562,7 @@ async function postToBluesky(
     }
 
     // Create the post
-    const response = await fetch(`${BLUESKY_API}/com.atproto.repo.createRecord`, {
+    const response = await fetch(`${apiUrl}/com.atproto.repo.createRecord`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -595,7 +606,7 @@ async function crossPostToBluesky(
     return false;
   }
 
-  return await postToBluesky(text, media, postId, session);
+  return await postToBluesky(text, media, postId, session, env);
 }
 
 // ============================================
