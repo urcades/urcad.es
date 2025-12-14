@@ -6,6 +6,7 @@ const pageTitle = `${frontmatter.title} — É. Urcades`;
 
 <style is:global>
   .work-header {
+    margin-top: 1.33em;
     margin-block-end: 2em;
   }
 
@@ -115,14 +116,24 @@ const pageTitle = `${frontmatter.title} — É. Urcades`;
 
   <div class="work-meta">
     <em>{frontmatter.category}</em>
-    {frontmatter.tags && (
-      <div class="work-tags">
-        {frontmatter.tags.map((tag: string) => <span>#{tag}</span>)}
-      </div>
-    )}
-    {frontmatter.url && (
-      <p><a href={frontmatter.url} target="_blank" rel="noopener">Visit project ♨︎</a></p>
-    )}
+    {
+      frontmatter.tags && (
+        <div class="work-tags">
+          {frontmatter.tags.map((tag: string) => (
+            <span>#{tag}</span>
+          ))}
+        </div>
+      )
+    }
+    {
+      frontmatter.url && (
+        <p>
+          <a href={frontmatter.url} target="_blank" rel="noopener">
+            Visit project ♨︎
+          </a>
+        </p>
+      )
+    }
   </div>
 
   <article>
