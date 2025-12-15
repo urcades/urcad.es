@@ -5,3 +5,5 @@ imageUrl: "https://d2w9rnfcy7mm78.cloudfront.net/27304470/original_518bf14f0482b
 category: "Ephemera"
 tags: ["ephemera", "print"]
 ---
+
+A fun little graphic/meme for some friends/fellow travelers.

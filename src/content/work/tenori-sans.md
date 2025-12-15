@@ -6,3 +6,5 @@ category: "Typeface"
 url: "https://tenori.vercel.app/"
 tags: ["typeface", "typography"]
 ---
+
+A typeface extrapolating the character set of the iconic Yamaha Tenori-on, a grid synthesizer.
