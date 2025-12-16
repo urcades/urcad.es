@@ -97,6 +97,49 @@ const { frontmatter } = Astro.props;
   ol ~ pre {
     margin-inline-start: 1em;
   }
+
+  /* Reading highlight styles (from remark-highlight plugin) */
+  .reading-highlight {
+    font-style: italic;
+    padding-inline-start: 1em;
+    margin-inline-start: 0;
+    margin-block: 1.5em;
+
+    @supports (color: light-dark(white, black)) {
+      border-inline-start: 2px solid
+        light-dark(
+          var(--txtColor, var(--fallback-txt-color)),
+          var(--txtColorDark, var(--fallback-txt-color-dark))
+        );
+    }
+
+    @supports not (color: light-dark(white, black)) {
+      border-inline-start: 2px solid var(--txtColor, var(--fallback-txt-color));
+
+      @media (prefers-color-scheme: dark) {
+        border-inline-start-color: var(
+          --txtColorDark,
+          var(--fallback-txt-color-dark)
+        );
+      }
+    }
+  }
+
+  .reading-highlight p {
+    margin: 0;
+    margin-block-end: 0.5em;
+  }
+
+  .reading-highlight cite {
+    display: block;
+    font-style: normal;
+    opacity: 0.6;
+  }
+
+  .highlight-missing {
+    color: #c00;
+    font-style: italic;
+  }
 </style>
 
 <Base

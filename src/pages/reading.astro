@@ -1,0 +1,137 @@
+---
+import Base from "../layouts/Base.astro";
+import readings from "../data/readings.json";
+
+const pageTitle = "Reading";
+
+// Get books with highlights, sorted by number of highlights (most first)
+const books = readings.books
+  .filter((book: any) => book.highlights.length > 0)
+  .sort((a: any, b: any) => b.highlights.length - a.highlights.length);
+
+const totalHighlights = books.reduce(
+  (sum: number, book: any) => sum + book.highlights.length,
+  0
+);
+---
+
+<style>
+  .reading-stream {
+    max-width: 55ch;
+  }
+
+  .book-section {
+    margin-block: 1em;
+  }
+
+  .book-header {
+    margin-block-end: 1.5em;
+  }
+
+  .book-title {
+    font-style: italic;
+    margin: 0;
+  }
+
+  .book-author {
+    opacity: 0.7;
+    margin: 0;
+    margin-block-start: 0.25em;
+  }
+
+  .highlight-entry {
+    margin-block-end: 2em;
+    padding-inline-start: 1em;
+    border-inline-start: 1px solid currentColor;
+  }
+
+  .highlight-text {
+    margin: 0;
+    margin-block-end: 0.5em;
+  }
+
+  .highlight-meta {
+    font-style: italic;
+    opacity: 0.6;
+    margin: 0;
+  }
+
+  .copy-highlight {
+    margin-inline-start: 0.5em;
+    opacity: 0.5;
+    text-decoration: none;
+  }
+
+  .copy-highlight:hover {
+    opacity: 1;
+  }
+
+  .highlight-note {
+    font-style: italic;
+    opacity: 0.75;
+    margin: 0;
+    margin-block-start: 0.5em;
+  }
+
+  .stats {
+    opacity: 0.6;
+    margin-block: 1em;
+  }
+
+  .empty-state {
+    font-style: italic;
+    opacity: 0.6;
+  }
+</style>
+
+<Base pageTitle={pageTitle}>
+  <p>{totalHighlights} highlights from {books.length} books</p>
+
+  <div class="reading-stream">
+    {books.length === 0 && <p class="empty-state">No highlights yet.</p>}
+
+    {
+      books.map((book: any) => (
+        <section class="book-section">
+          <div class="book-header">
+            <p class="book-title">{book.title}</p>
+            <p class="book-author">{book.author}</p>
+          </div>
+          {book.highlights.map((h: any) => (
+            <div class="highlight-entry" id={h.id}>
+              <p class="highlight-text">{h.text}</p>
+              <p class="highlight-meta">
+                {book.title}, {book.author}
+                <a
+                  href="#"
+                  class="copy-highlight"
+                  data-highlight-id={h.id}
+                  title="Copy highlight reference"
+                >
+                  ❧
+                </a>
+              </p>
+              {h.note && <p class="highlight-note">Note: {h.note}</p>}
+            </div>
+          ))}
+        </section>
+      ))
+    }
+  </div>
+
+  <script>
+    document.querySelectorAll(".copy-highlight").forEach((link) => {
+      link.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const id = (e.currentTarget as HTMLElement).dataset.highlightId;
+        const text = `::highlight[${id}]`;
+        await navigator.clipboard.writeText(text);
+
+        const el = e.currentTarget as HTMLElement;
+        const original = el.textContent;
+        el.textContent = "✓";
+        setTimeout(() => (el.textContent = original), 1000);
+      });
+    });
+  </script>
+</Base>
