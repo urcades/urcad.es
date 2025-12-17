@@ -22,6 +22,10 @@ bucket_name = "urcades"
 # Get your access token from https://dev.are.na/oauth/applications
 #   npx wrangler secret put ARENA_ACCESS_TOKEN
 #   npx wrangler secret put ARENA_CHANNEL_SLUG
+#
+# Optional: GoToSocial/Fediverse cross-posting
+#   npx wrangler secret put GOTOSOCIAL_URL
+#   npx wrangler secret put GOTOSOCIAL_ACCESS_TOKEN
 
 [vars]
 GITHUB_REPO = "urcades/urcad.es"

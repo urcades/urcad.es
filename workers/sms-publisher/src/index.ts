@@ -22,6 +22,9 @@ export interface Env {
   // Are.na credentials (optional - for cross-posting)
   ARENA_ACCESS_TOKEN?: string;
   ARENA_CHANNEL_SLUG?: string;
+  // GoToSocial credentials (optional - for cross-posting)
+  GOTOSOCIAL_URL?: string;          // e.g., "https://social.example.com"
+  GOTOSOCIAL_ACCESS_TOKEN?: string; // OAuth Bearer token
 }
 
 interface TelegramUpdate {
@@ -714,6 +717,140 @@ async function crossPostToArena(
   return await createArenaBlock(text, media, postId, env);
 }
 
+// ============================================
+// GoToSocial Cross-posting Functions
+// ============================================
+
+interface GoToSocialMediaAttachment {
+  id: string;
+  type: string;
+  url: string;
+}
+
+// Check if GoToSocial is configured
+function isGoToSocialConfigured(env: Env): boolean {
+  return !!(env.GOTOSOCIAL_URL && env.GOTOSOCIAL_ACCESS_TOKEN);
+}
+
+// Upload media to GoToSocial and return attachment ID
+async function uploadGoToSocialMedia(
+  mediaUrl: string,
+  env: Env
+): Promise<string | null> {
+  try {
+    // Fetch the media from R2 URL
+    const mediaResponse = await fetch(mediaUrl);
+    if (!mediaResponse.ok) {
+      console.error(`Failed to fetch media: ${mediaUrl}`);
+      return null;
+    }
+
+    const mediaData = await mediaResponse.arrayBuffer();
+    const contentType = mediaResponse.headers.get('content-type') || 'image/jpeg';
+
+    // Extract filename from URL
+    const filename = mediaUrl.split('/').pop() || 'media';
+
+    // Create form data for upload
+    const formData = new FormData();
+    formData.append('file', new Blob([mediaData], { type: contentType }), filename);
+
+    // Upload to GoToSocial
+    const response = await fetch(`${env.GOTOSOCIAL_URL}/api/v1/media`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.GOTOSOCIAL_ACCESS_TOKEN}`,
+        'User-Agent': 'Telegram-Publisher-Worker',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error(`GoToSocial media upload failed: ${response.status} - ${error}`);
+      return null;
+    }
+
+    const result = await response.json() as GoToSocialMediaAttachment;
+    return result.id;
+  } catch (error) {
+    console.error('GoToSocial media upload error:', error);
+    return null;
+  }
+}
+
+// Create a status on GoToSocial
+async function postToGoToSocial(
+  text: string,
+  media: MediaItem[],
+  postId: string,
+  env: Env
+): Promise<boolean> {
+  try {
+    const postUrl = getPostUrl(postId);
+
+    // Build status text with link to blog post
+    const statusText = text ? `${text}\n\n${postUrl}` : postUrl;
+
+    // Upload media and collect IDs (images only, skip videos for now)
+    const mediaIds: string[] = [];
+    const images = media.filter(m => m.type === 'image').slice(0, 6); // GTS allows up to 6
+
+    for (const img of images) {
+      const mediaId = await uploadGoToSocialMedia(img.url, env);
+      if (mediaId) {
+        mediaIds.push(mediaId);
+      }
+    }
+
+    // Create form data for status
+    const formData = new FormData();
+    formData.append('status', statusText);
+    formData.append('visibility', 'public');
+
+    // Add media IDs
+    for (const id of mediaIds) {
+      formData.append('media_ids[]', id);
+    }
+
+    // Create the status
+    const response = await fetch(`${env.GOTOSOCIAL_URL}/api/v1/statuses`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.GOTOSOCIAL_ACCESS_TOKEN}`,
+        'User-Agent': 'Telegram-Publisher-Worker',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error(`GoToSocial post failed: ${response.status} - ${error}`);
+      return false;
+    }
+
+    console.log('Successfully posted to GoToSocial');
+    return true;
+  } catch (error) {
+    console.error('GoToSocial post error:', error);
+    return false;
+  }
+}
+
+// Cross-post to GoToSocial (called after successful GitHub commit)
+async function crossPostToGoToSocial(
+  text: string,
+  media: MediaItem[],
+  postId: string,
+  env: Env
+): Promise<boolean> {
+  if (!isGoToSocialConfigured(env)) {
+    return false; // Silently skip if not configured
+  }
+
+  return await postToGoToSocial(text, media, postId, env);
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -805,6 +942,16 @@ export default {
               status += ' + Are.na';
             } else {
               status += ' (Are.na failed)';
+            }
+          }
+
+          // GoToSocial
+          if (isGoToSocialConfigured(env)) {
+            const gtsSuccess = await crossPostToGoToSocial(messageText, media, postId, env);
+            if (gtsSuccess) {
+              status += ' + GoToSocial';
+            } else {
+              status += ' (GoToSocial failed)';
             }
           }
         }

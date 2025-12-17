@@ -113,6 +113,8 @@ A Cloudflare Worker that enables publishing blog posts via Telegram messages. Lo
 Telegram App → Bot → Cloudflare Worker → GitHub API → Auto-deploy
                             ↓
                      Cloudflare R2 (media storage)
+                            ↓
+              Cross-post to: Bluesky, Are.na, GoToSocial
 ```
 
 **How it works**:
@@ -133,6 +135,7 @@ Telegram App → Bot → Cloudflare Worker → GitHub API → Auto-deploy
 - R2 bucket binding: `MEDIA_BUCKET` → `urcades`
 - Required secrets: `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `WHITELISTED_USERS`
 - Optional secrets for Bluesky: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `BLUESKY_PDS_URL` (defaults to `https://bsky.social/xrpc`)
+- Optional secrets for GoToSocial: `GOTOSOCIAL_URL`, `GOTOSOCIAL_ACCESS_TOKEN`
 - Environment variable: `GITHUB_REPO`
 
 **Bluesky Cross-posting**:
@@ -141,6 +144,14 @@ Telegram App → Bot → Cloudflare Worker → GitHub API → Auto-deploy
 - Text is truncated to 300 characters with a link to the full blog post
 - Images are uploaded to Bluesky (max 4 per post, under 1MB each)
 - Videos are skipped (Bluesky API doesn't support video uploads yet)
+- Only published posts (whitelisted users) are cross-posted, not drafts
+
+**GoToSocial Cross-posting**:
+- When GoToSocial credentials are configured, posts are automatically cross-posted to the Fediverse
+- Uses Mastodon-compatible API (`/api/v1/statuses`, `/api/v1/media`)
+- Full post text with link to blog post (no truncation needed, 5000 char limit)
+- Images are uploaded to GoToSocial (max 6 per post)
+- Videos are skipped (API support varies)
 - Only published posts (whitelisted users) are cross-posted, not drafts
 
 **Key Files**:
