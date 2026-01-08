@@ -300,12 +300,19 @@ function appendToPost(existingContent: string, snippet: string): string {
   return `${existingContent.trim()}\n\n~\n\n${snippet}`;
 }
 
+// Result type for GitHub operations with detailed errors
+interface GitHubResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
 // Try to get existing file from GitHub
 async function getExistingFile(
   postId: string,
   isDraft: boolean,
   env: Env
-): Promise<GitHubFile | null> {
+): Promise<GitHubResult<GitHubFile>> {
   const [owner, repo] = env.GITHUB_REPO.split('/');
   const collection = isDraft ? 'drafts' : 'writing';
   const path = `src/content/${collection}/${postId}.md`;
@@ -323,21 +330,36 @@ async function getExistingFile(
     );
 
     if (response.status === 404) {
-      return null;
+      return { success: true, data: undefined }; // File doesn't exist yet, that's fine
+    }
+
+    if (response.status === 401) {
+      console.error('GitHub API: Authentication failed - token may be expired or invalid');
+      return { success: false, error: 'GitHub token expired or invalid. Please update GITHUB_TOKEN secret.' };
+    }
+
+    if (response.status === 403) {
+      const errorBody = await response.text();
+      console.error(`GitHub API: Forbidden - ${errorBody}`);
+      if (errorBody.includes('rate limit')) {
+        return { success: false, error: 'GitHub API rate limit exceeded. Try again later.' };
+      }
+      return { success: false, error: 'GitHub access forbidden. Check token permissions.' };
     }
 
     if (!response.ok) {
-      console.error(`GitHub API error: ${response.status}`);
-      return null;
+      const errorBody = await response.text();
+      console.error(`GitHub API error: ${response.status} - ${errorBody}`);
+      return { success: false, error: `GitHub API error: ${response.status}` };
     }
 
     const data = await response.json() as { content: string; sha: string };
     // Decode base64 content
     const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
-    return { content, sha: data.sha };
+    return { success: true, data: { content, sha: data.sha } };
   } catch (error) {
     console.error('Error fetching file from GitHub:', error);
-    return null;
+    return { success: false, error: `Network error: ${error}` };
   }
 }
 
@@ -348,7 +370,7 @@ async function commitToGitHub(
   isDraft: boolean,
   sha: string | null,
   env: Env
-): Promise<boolean> {
+): Promise<GitHubResult<void>> {
   const [owner, repo] = env.GITHUB_REPO.split('/');
   const collection = isDraft ? 'drafts' : 'writing';
   const path = `src/content/${collection}/${postId}.md`;
@@ -379,16 +401,41 @@ async function commitToGitHub(
       }
     );
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error(`GitHub API error: ${response.status} - ${error}`);
-      return false;
+    if (response.status === 401) {
+      console.error('GitHub API: Authentication failed during commit');
+      return { success: false, error: 'GitHub token expired or invalid. Please update GITHUB_TOKEN secret.' };
     }
 
-    return true;
+    if (response.status === 403) {
+      const errorBody = await response.text();
+      console.error(`GitHub API: Forbidden during commit - ${errorBody}`);
+      if (errorBody.includes('rate limit')) {
+        return { success: false, error: 'GitHub API rate limit exceeded. Try again later.' };
+      }
+      return { success: false, error: 'GitHub access forbidden. Check token permissions (needs repo or contents:write scope).' };
+    }
+
+    if (response.status === 409) {
+      console.error('GitHub API: Conflict - file was modified externally');
+      return { success: false, error: 'File conflict - file was modified externally. Try again.' };
+    }
+
+    if (response.status === 422) {
+      const errorBody = await response.text();
+      console.error(`GitHub API: Unprocessable entity - ${errorBody}`);
+      return { success: false, error: 'GitHub rejected the commit. Check file path and content.' };
+    }
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`GitHub API error: ${response.status} - ${errorBody}`);
+      return { success: false, error: `GitHub API error: ${response.status}` };
+    }
+
+    return { success: true };
   } catch (error) {
     console.error('Error committing to GitHub:', error);
-    return false;
+    return { success: false, error: `Network error: ${error}` };
   }
 }
 
@@ -899,26 +946,32 @@ export default {
       const snippet = createSnippet(messageText, media);
 
       // Check if today's post already exists
-      const existingFile = await getExistingFile(postId, isDraft, env);
+      const existingFileResult = await getExistingFile(postId, isDraft, env);
+
+      // Handle GitHub fetch errors
+      if (!existingFileResult.success) {
+        await sendTelegramMessage(chatId, existingFileResult.error || 'Error checking existing file.', env);
+        return new Response('OK', { status: 200 });
+      }
 
       let finalContent: string;
       let sha: string | null = null;
 
-      if (existingFile) {
+      if (existingFileResult.data) {
         // Append to existing post
-        finalContent = appendToPost(existingFile.content, snippet);
-        sha = existingFile.sha;
+        finalContent = appendToPost(existingFileResult.data.content, snippet);
+        sha = existingFileResult.data.sha;
       } else {
         // Create new daily post
         finalContent = createNewDailyPost(snippet);
       }
 
       // Commit to GitHub
-      const success = await commitToGitHub(finalContent, postId, isDraft, sha, env);
+      const commitResult = await commitToGitHub(finalContent, postId, isDraft, sha, env);
 
       // Send response to user
-      if (success) {
-        const action = existingFile ? 'Added to' : 'Started';
+      if (commitResult.success) {
+        const action = existingFileResult.data ? 'Added to' : 'Started';
         let status = isDraft
           ? `Saved as draft (user ${userId} not whitelisted)`
           : `${action} ${getFormattedDate()}`;
@@ -958,7 +1011,7 @@ export default {
 
         await sendTelegramMessage(chatId, status, env);
       } else {
-        await sendTelegramMessage(chatId, 'Error publishing. Please try again.', env);
+        await sendTelegramMessage(chatId, commitResult.error || 'Error publishing. Please try again.', env);
       }
 
       return new Response('OK', { status: 200 });
