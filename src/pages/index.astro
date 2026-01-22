@@ -1,9 +1,27 @@
 ---
 import Base from "../layouts/Base.astro";
 const pageTitle = "É. Urcades";
+
+// JSON-LD structured data for website
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Édouard Urcades",
+  "url": "https://www.urcad.es",
+  "description": "Personal website and blog of Édouard Urcades, a designer and artist.",
+  "author": {
+    "@type": "Person",
+    "name": "Édouard Urcades",
+    "email": "edouard@urcad.es",
+    "url": "https://www.urcad.es/about/"
+  }
+};
 ---
 
 <Base pageTitle={pageTitle}>
+  <!-- JSON-LD structured data -->
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
   <p>
     Founding the <a href="https://flowercomputer.com"
       >Flower Computer Company.</a
@@ -11,7 +29,9 @@ const pageTitle = "É. Urcades";
   </p>
   <p>I dream harder than you.</p>
   <p>~</p>
-  <p><a href="/writing/">Writing</a></p>
-  <p><a href="/work/">Recent Works</a></p>
-  <p><a href="/about/">About Me</a></p>
+  <nav>
+    <p><a href="/writing/">Writing</a></p>
+    <p><a href="/work/">Recent Works</a></p>
+    <p><a href="/about/">About Me</a></p>
+  </nav>
 </Base>

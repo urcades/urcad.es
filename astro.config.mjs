@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import sitemap from "@astrojs/sitemap";
 import remarkHighlight from "./plugins/remark-highlight.mjs";
 
 export default defineConfig({
@@ -13,4 +14,5 @@ export default defineConfig({
   prefetch: {
     prefetchAll: true,
   },
+  integrations: [sitemap()],
 });

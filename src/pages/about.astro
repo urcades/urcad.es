@@ -1,6 +1,25 @@
 ---
 import Base from "../layouts/Base.astro";
 const pageTitle = "É. Urcades: About Me";
+
+// JSON-LD structured data for person/author
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Édouard Urcades",
+  "url": "https://www.urcad.es",
+  "email": "edouard@urcad.es",
+  "jobTitle": "Designer",
+  "description": "An optimistic designer and artist with a background in materials science, human factors research, and industrial design.",
+  "sameAs": [
+    "https://x.com/neogeomancer",
+    "https://www.instagram.com/neogeomancer/",
+    "https://warpcast.com/ed",
+    "https://bsky.app/profile/urcad.es",
+    "https://www.are.na/edouard-urcades/sketching",
+    "https://github.com/urcades"
+  ]
+};
 ---
 
 <style>
@@ -14,6 +33,9 @@ const pageTitle = "É. Urcades: About Me";
 </style>
 
 <Base pageTitle={pageTitle}>
+  <!-- JSON-LD structured data -->
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
   <p>
     I'm an optimistic designer / artist<br />
     with a background in materials science,<br />

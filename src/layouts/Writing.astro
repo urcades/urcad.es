@@ -1,11 +1,40 @@
 ---
 import Base from "./Base.astro";
-const pageTitle = Astro.props.frontmatter.title;
-const txtColor = Astro.props.frontmatter.foregroundColor;
-const bgColor = Astro.props.frontmatter.backgroundColor;
-const txtColorDark = Astro.props.frontmatter.foregroundColorDark;
-const bgColorDark = Astro.props.frontmatter.backgroundColorDark;
 const { frontmatter } = Astro.props;
+
+const pageTitle = frontmatter.title;
+const txtColor = frontmatter.foregroundColor;
+const bgColor = frontmatter.backgroundColor;
+const txtColorDark = frontmatter.foregroundColorDark;
+const bgColorDark = frontmatter.backgroundColorDark;
+
+// Format date for meta tags and JSON-LD
+const pubDateISO = frontmatter.pubDate instanceof Date
+  ? frontmatter.pubDate.toISOString()
+  : new Date(frontmatter.pubDate).toISOString();
+
+// JSON-LD structured data for blog post
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": frontmatter.title,
+  "datePublished": pubDateISO,
+  "description": frontmatter.description,
+  "author": {
+    "@type": "Person",
+    "name": "Édouard Urcades",
+    "email": "edouard@urcad.es",
+    "url": "https://www.urcad.es/about/"
+  },
+  "publisher": {
+    "@type": "Person",
+    "name": "Édouard Urcades"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": Astro.url.href
+  }
+};
 ---
 
 <style is:global>
@@ -148,18 +177,30 @@ const { frontmatter } = Astro.props;
   txtColor={txtColor}
   bgColorDark={bgColorDark}
   txtColorDark={txtColorDark}
+  articleAuthor="Édouard Urcades"
+  articlePublishedTime={pubDateISO}
+  articleDescription={frontmatter.description}
 >
+  <!-- JSON-LD structured data -->
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
   <p><a href="/writing/">Back to All Writing</a></p>
-  <h1>{frontmatter.title}</h1>
   <article>
+    <header>
+      <h1>{frontmatter.title}</h1>
+    </header>
     <slot />
+    <footer>
+      <p>~</p>
+      <p>Title: {frontmatter.title}</p>
+      <p>Description: {frontmatter.description}</p>
+      <p>Published: {frontmatter.pubDate}</p>
+      <p>~</p>
+    </footer>
   </article>
-  <p>~</p>
-  <p>Title: {frontmatter.title}</p>
-  <p>Description: {frontmatter.description}</p>
-  <p>Published: {frontmatter.pubDate}</p>
-  <p>~</p>
-  <p><a href="/writing/">Back to All Writing</a></p>
-  <p><a href="https://urcades.substack.com/">Subscribe</a></p>
-  <p><a href="/rss.xml">RSS</a></p>
+  <nav>
+    <p><a href="/writing/">Back to All Writing</a></p>
+    <p><a href="https://urcades.substack.com/">Subscribe</a></p>
+    <p><a href="/rss.xml">RSS</a></p>
+  </nav>
 </Base>

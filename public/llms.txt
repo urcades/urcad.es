@@ -1,0 +1,16 @@
+# urcad.es
+
+Personal website and blog of Édouard Urcades, a designer and artist.
+
+## Content
+- /writing/ - Blog posts and essays
+- /work/ - Portfolio of design work
+- /about/ - Contact and bio
+
+## Machine-readable endpoints
+- /rss.xml - RSS feed with full post content
+- /api/posts.json - JSON list of all posts
+- /sitemap.xml - XML sitemap
+
+## Author
+Édouard Urcades <edouard@urcad.es>
