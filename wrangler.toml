@@ -3,6 +3,11 @@ main = "worker/src/index.ts"
 compatibility_date = "2026-02-18"
 compatibility_flags = ["nodejs_compat"]
 
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
+
 # Serve the Astro static build alongside the worker
 [assets]
 directory = "./dist"
