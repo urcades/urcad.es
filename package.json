@@ -8,7 +8,11 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "sync:readings": "bash scripts/sync-readings.sh"
+    "sync:readings": "bash scripts/sync-readings.sh",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy",
+    "worker:tail": "wrangler tail",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -18,5 +22,9 @@
     "markdown-it": "^14.1.0",
     "sanitize-html": "^2.13.1",
     "typescript": "^5.5.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260219.0",
+    "wrangler": "^4.66.0"
   }
 }

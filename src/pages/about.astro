@@ -52,6 +52,8 @@ const jsonLd = {
   </p>
   <p>~</p>
 
+  <p id="location-line"></p>
+
   <p>Email: <a href="mailto:edouard@urcad.es">edouard@urcad.es</a></p>
   <p>
     X: <a href="https://x.com/neogeomancer" target="_blank">@neogeomancer</a>
@@ -84,4 +86,16 @@ const jsonLd = {
       target="_blank">0x01ab...1e20</a
     >
   </p>
+
+  <script>
+    fetch('/api/location/current')
+      .then(r => r.json())
+      .then((data: { city?: string; country?: string }) => {
+        if (data.city) {
+          const el = document.getElementById('location-line');
+          if (el) el.textContent = `Currently in ${data.city}${data.country ? ', ' + data.country : ''}.`;
+        }
+      })
+      .catch(() => {});
+  </script>
 </Base>
