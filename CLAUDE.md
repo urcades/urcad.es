@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and deployed on Cloudflare Pages. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components.
+This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and served as a Cloudflare Worker. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components. A unified Worker handles static asset delivery, Telegram publishing, and Overland location tracking.
 
 ## Development Commands
 
@@ -22,6 +22,12 @@ npm run preview
 
 # Run Astro CLI directly
 npm run astro
+
+# Worker commands (Cloudflare)
+npm run worker:dev      # Local Worker dev (serves dist/ + API routes)
+npm run worker:deploy    # Deploy Worker only (no build)
+npm run deploy          # Build + deploy Worker
+npm run worker:tail     # Stream Worker logs
 ```
 
 The build command runs `astro check` for TypeScript validation before building.
@@ -30,12 +36,13 @@ The build command runs `astro check` for TypeScript validation before building.
 
 ### Content Collections
 
-The site uses Astro's Content Collections API with two collections:
+The site uses Astro's Content Collections API with three collections:
 
 - **`writing`**: Published blog posts in `src/content/writing/`
 - **`drafts`**: Draft posts in `src/content/drafts/` (visible only in dev mode)
+- **`work`**: Portfolio items in `src/content/work/`
 
-Both collections share the same schema defined in `src/content.config.ts`:
+Writing and drafts share the same post schema defined in `src/content.config.ts`:
 - `title`: string
 - `pubDate`: date
 - `description`: string
@@ -48,6 +55,8 @@ Additional schema fields for stream posts (added for Telegram publishing):
 - `tags`: optional array of strings (e.g., `["stream"]`)
 - `media`: optional array of media objects with `url`, `type` ('image'|'video'), and optional `alt`
 - `source`: optional enum ('sms', 'web', 'cli', 'telegram') indicating how the post was created
+
+Work collection schema: `title`, `pubDate`, `imageUrl`, `category`, `tags`, `url`, `size` (1–3)
 
 ### Layout System
 
@@ -69,6 +78,7 @@ Additional schema fields for stream posts (added for Telegram publishing):
 **Dynamic Routes**:
 - `/writing/[id].astro`: Published blog posts
 - `/drafts/[id].astro`: Draft posts (dev only)
+- `/work/[id].astro`: Portfolio item detail pages
 
 **Static Pages**:
 - `index.astro`: Homepage
@@ -104,73 +114,46 @@ Additional schema fields for stream posts (added for Telegram publishing):
 
 `src/assets/` contains images organized by date-based directories (format: YYMMDD) referenced in blog posts using relative paths.
 
-### Telegram Blog Publisher (`workers/sms-publisher/`)
+### Unified Cloudflare Worker (`worker/`)
 
-A Cloudflare Worker that enables publishing blog posts via Telegram messages. Located in `workers/sms-publisher/`.
+The site is served by a single Cloudflare Worker that handles static assets and API routes. Configuration is in `wrangler.toml` at the repo root.
 
 **Architecture**:
 ```
-Telegram App → Bot → Cloudflare Worker → GitHub API → Auto-deploy
-                            ↓
-                     Cloudflare R2 (media storage)
-                            ↓
-              Cross-post to: Bluesky, Are.na, GoToSocial
+Request → Worker (run_worker_first) → API routes or fallthrough to ASSETS (dist/)
 ```
 
-**How it works**:
-1. User sends a message (text, photo, or video) to the Telegram bot
-2. Worker receives the webhook, validates user against whitelist
-3. Media files are uploaded to R2 bucket (`urcades`) under `stream/YYMMDD/` path
-4. Content is committed to GitHub via API, creating/updating daily digest posts
-5. Site auto-deploys via Cloudflare Pages (connected to GitHub)
+**Routes**:
+- `POST /api/telegram` — Telegram bot webhook (blog publishing)
+- `POST /api/location` — Overland iOS location receiver
+- `GET /api/location/current` — Latest stored location (city, coords) — used by about page
+- `*` — Static Astro site from `dist/` via `[assets]` binding
 
-**Daily Digest Format**:
-- Posts are aggregated into daily files named `YYMMDD.md` (e.g., `251205.md`)
-- Each message entry includes timestamp (e.g., "7:13 AM") and content
-- Multiple entries in a day are separated by `~` on its own line
-- Frontmatter includes `tags: ["stream"]` and `source: "telegram"`
-- Media URLs point to `https://media.urcad.es/stream/YYMMDD/filename`
+**Bindings** (`wrangler.toml`):
+- `ASSETS`: Static build from `./dist`
+- `MEDIA_BUCKET`: R2 bucket `urcades` (media storage)
+- `LOCATION_KV`: KV namespace for latest location
 
-**Worker Configuration** (`workers/sms-publisher/wrangler.toml`):
-- R2 bucket binding: `MEDIA_BUCKET` → `urcades`
-- Required secrets: `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `WHITELISTED_USERS`
-- Optional secrets for Bluesky: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `BLUESKY_PDS_URL` (defaults to `https://bsky.social/xrpc`)
-- Optional secrets for GoToSocial: `GOTOSOCIAL_URL`, `GOTOSOCIAL_ACCESS_TOKEN`
-- Environment variable: `GITHUB_REPO`
+**Required secrets** (set via `npx wrangler secret put <NAME>` or `scripts/set-secrets.sh`):
+- `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `WHITELISTED_USERS`, `OVERLAND_TOKEN`
 
-**Bluesky Cross-posting**:
-- When Bluesky credentials are configured, posts are automatically cross-posted
-- Supports custom PDS servers via `BLUESKY_PDS_URL` (for self-hosted AT Protocol instances)
-- Text is truncated to 300 characters with a link to the full blog post
-- Images are uploaded to Bluesky (max 4 per post, under 1MB each)
-- Videos are skipped (Bluesky API doesn't support video uploads yet)
-- Only published posts (whitelisted users) are cross-posted, not drafts
-
-**GoToSocial Cross-posting**:
-- When GoToSocial credentials are configured, posts are automatically cross-posted to the Fediverse
-- Uses Mastodon-compatible API (`/api/v1/statuses`, `/api/v1/media`)
-- Full post text with link to blog post (no truncation needed, 5000 char limit)
-- Images are uploaded to GoToSocial (max 6 per post)
-- Videos are skipped (API support varies)
-- Only published posts (whitelisted users) are cross-posted, not drafts
+**Optional cross-posting**: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `BLUESKY_PDS_URL`, `ARENA_ACCESS_TOKEN`, `ARENA_CHANNEL_SLUG`, `GOTOSOCIAL_URL`, `GOTOSOCIAL_ACCESS_TOKEN`
 
 **Key Files**:
-- `workers/sms-publisher/src/index.ts`: Main worker logic
-- `workers/sms-publisher/SETUP.md`: Detailed setup instructions
-- `workers/sms-publisher/wrangler.toml`: Cloudflare configuration
+- `worker/src/index.ts`: Router and Env interface
+- `worker/src/telegram.ts`: Telegram → GitHub → R2 publishing (daily digest, Bluesky/Are.na/GoToSocial cross-posting)
+- `worker/src/location.ts`: Overland receiver, KV storage, Nominatim geocoding
 
-**Access Control**:
-- Whitelisted Telegram user IDs → posts go to `src/content/writing/`
-- Non-whitelisted users → posts go to `src/content/drafts/`
+**Telegram publishing flow**:
+1. User sends message (text, photo, video) to Telegram bot
+2. Worker validates user against whitelist
+3. Media → R2 under `stream/YYMMDD/`
+4. Content committed to GitHub via API (daily digest `YYMMDD.md`)
+5. Deploy triggers rebuild and redeploy of Worker
 
-**Worker Commands**:
-```bash
-cd workers/sms-publisher
-npm install
-npm run dev      # Local development
-npm run deploy   # Deploy to Cloudflare
-npm run tail     # View logs
-```
+**Location tracking**: Overland iOS app POSTs GeoJSON to `/api/location`; Worker stores latest in KV and reverse-geocodes via Nominatim. The about page fetches `/api/location/current` to display "Currently in {city}, {country}".
+
+**Access Control**: Whitelisted Telegram users → `src/content/writing/`; non-whitelisted → `src/content/drafts/`
 
 ## TypeScript Configuration
 
@@ -178,9 +161,8 @@ Uses Astro's strict TypeScript config: `"extends": "astro/tsconfigs/strict"`
 
 ## Deployment
 
-The site auto-deploys to Cloudflare Pages on push to main branch. Cloudflare Pages is connected directly to the GitHub repository and handles the build process automatically.
+Deploy via `npm run deploy` (builds Astro, then deploys Worker with `wrangler deploy`). CI or manual push to main can trigger this. The Worker serves the static site and API routes.
 
-- **Pages URL**: `urcades.pages.dev`
 - **Custom Domain**: `https://www.urcad.es`
 
 ## Configuration Notes

@@ -1,6 +1,6 @@
 # urcad.es
 
-Personal website and blog for Édouard Urcades, built with [Astro](https://astro.build) and deployed on [Cloudflare Pages](https://pages.cloudflare.com).
+Personal website and blog for Édouard Urcades, built with [Astro](https://astro.build) and served as a [Cloudflare Worker](https://workers.cloudflare.com). A unified Worker delivers the static site and handles Telegram publishing plus Overland location tracking.
 
 ## Development
 
@@ -13,6 +13,11 @@ npm run build
 
 # Preview production build locally
 npm run preview
+
+# Worker commands
+npm run worker:dev      # Local Worker dev (serves dist/ + API routes)
+npm run deploy         # Build + deploy Worker
+npm run worker:tail    # Stream Worker logs
 ```
 
 The build command runs `astro check` for type validation before building.
@@ -50,48 +55,47 @@ Files prefixed with `_` are excluded from collections.
 
 ## Deployment
 
-Cloudflare Pages auto-deploys on push to `main`. No manual deployment commands needed.
+Deploy with `npm run deploy` (builds Astro, then deploys the Worker via `wrangler deploy`). The Worker serves the static site from `dist/` and handles API routes.
 
 - **Build command**: `npm run build`
 - **Output directory**: `dist/`
-- **Pages URL**: `urcades.pages.dev`
 - **Custom domain**: `https://www.urcad.es`
 
-## Telegram Publishing
+Secrets are configured via `npx wrangler secret put <NAME>` or `scripts/set-secrets.sh`.
 
-A Cloudflare Worker enables publishing posts directly from Telegram. Located in `workers/sms-publisher/`.
+## Unified Worker
+
+A single Cloudflare Worker serves the site and handles:
+
+- **Static assets** — Astro build from `dist/` (run_worker_first)
+- **Telegram publishing** — `POST /api/telegram` webhook → GitHub API → R2 → cross-post to Bluesky, Are.na, GoToSocial
+- **Location tracking** — `POST /api/location` (Overland iOS) and `GET /api/location/current` (displayed on about page)
 
 ```mermaid
 flowchart LR
-    TG[Telegram] --> W[Cloudflare Worker]
+    TG[Telegram] --> W[Worker]
+    OV[Overland] --> W
     W --> GH[GitHub API]
-    W --> R2[Cloudflare R2]
-    GH --> CF[Cloudflare Pages]
-    CF --> Site[urcad.es]
+    W --> R2[R2]
+    W --> KV[KV]
+    GH --> W
+    W --> Site[urcad.es]
     W --> BS[Bluesky]
     W --> AR[Are.na]
     W --> GTS[GoToSocial]
 ```
 
-### How It Works
+### Telegram Flow
 
 1. Send a message (text, photo, or video) to the Telegram bot
 2. Worker validates user against whitelist
-3. Media files are uploaded to R2 bucket under `stream/YYMMDD/` path
-4. Content is committed to GitHub via API
-5. Site auto-deploys via Cloudflare Pages
-6. Optionally cross-posts to Bluesky, Are.na, and GoToSocial
+3. Media → R2 under `stream/YYMMDD/`
+4. Content committed to GitHub (daily digest `YYMMDD.md`)
+5. Deploy triggers rebuild and redeploy
 
-### Access Control
+**Whitelisted users** → `src/content/writing/`; **non-whitelisted** → `src/content/drafts/`. Daily digests use `~` as entry separator; media URLs: `https://media.urcad.es/stream/YYMMDD/filename`.
 
-- **Whitelisted users** → posts go to `src/content/writing/` (published)
-- **Non-whitelisted users** → posts go to `src/content/drafts/` (dev only)
-
-### Daily Digest Format
-
-Posts are aggregated into daily files named `YYMMDD.md`. Each entry includes a timestamp, and multiple entries are separated by `~`. Media URLs point to `https://media.urcad.es/stream/YYMMDD/filename`.
-
-For detailed setup instructions, see [`workers/sms-publisher/SETUP.md`](workers/sms-publisher/SETUP.md).
+Configuration: `wrangler.toml` at repo root. Secrets: `scripts/set-secrets.sh` or `npx wrangler secret put <NAME>`.
 
 ## Additional Features
 
@@ -99,6 +103,7 @@ For detailed setup instructions, see [`workers/sms-publisher/SETUP.md`](workers/
 - **Custom layouts**: `Base.astro`, `Writing.astro`, `Work.astro`
 - **Per-post theming** via frontmatter color properties
 - **Prefetching** enabled for all internal links
+- **Location display** on about page via Overland + Nominatim geocoding
 
 ---
 
