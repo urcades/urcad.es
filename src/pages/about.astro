@@ -6,19 +6,20 @@ const pageTitle = "É. Urcades: About Me";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Person",
-  "name": "Édouard Urcades",
-  "url": "https://www.urcad.es",
-  "email": "edouard@urcad.es",
-  "jobTitle": "Designer",
-  "description": "An optimistic designer and artist with a background in materials science, human factors research, and industrial design.",
-  "sameAs": [
+  name: "Édouard Urcades",
+  url: "https://www.urcad.es",
+  email: "edouard@urcad.es",
+  jobTitle: "Designer",
+  description:
+    "An optimistic designer and artist with a background in materials science, human factors research, and industrial design.",
+  sameAs: [
     "https://x.com/neogeomancer",
     "https://www.instagram.com/neogeomancer/",
     "https://warpcast.com/ed",
     "https://bsky.app/profile/urcad.es",
     "https://www.are.na/edouard-urcades/sketching",
-    "https://github.com/urcades"
-  ]
+    "https://github.com/urcades",
+  ],
 };
 ---
 
@@ -34,7 +35,11 @@ const jsonLd = {
 
 <Base pageTitle={pageTitle}>
   <!-- JSON-LD structured data -->
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(jsonLd)}
+  />
 
   <p>
     I'm an optimistic designer / artist<br />
@@ -67,6 +72,10 @@ const jsonLd = {
   <p>PGP: <a href="/writing/231114/">69CC...8B14</a></p>
   <p>Bluesky: <a href="https://bsky.app/profile/urcad.es">@urcad.es</a></p>
   <p>
+    Fediverse: <a href="https://fedi.urcad.es/@edouard"
+      >@edouard@fedi.urcad.es</a>
+  </p>
+  <p>
     Are.na: <a
       href="https://www.are.na/edouard-urcades/sketching"
       target="_blank">Édouard Urcades</a
@@ -88,12 +97,13 @@ const jsonLd = {
   </p>
 
   <script>
-    fetch('/api/location/current')
-      .then(r => r.json())
+    fetch("/api/location/current")
+      .then((r) => r.json())
       .then((data: { city?: string; country?: string }) => {
         if (data.city) {
-          const el = document.getElementById('location-line');
-          if (el) el.textContent = `Currently in ${data.city}${data.country ? ', ' + data.country : ''}.`;
+          const el = document.getElementById("location-line");
+          if (el)
+            el.textContent = `Currently in ${data.city}${data.country ? ", " + data.country : ""}.`;
         }
       })
       .catch(() => {});

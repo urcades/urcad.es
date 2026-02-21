@@ -95,10 +95,16 @@ interface BlueskyExternalEmbed {
   };
 }
 
+interface BlueskyFacet {
+  index: { byteStart: number; byteEnd: number };
+  features: Array<{ $type: 'app.bsky.richtext.facet#link'; uri: string }>;
+}
+
 interface BlueskyPost {
   $type: 'app.bsky.feed.post';
   text: string;
   createdAt: string;
+  facets?: BlueskyFacet[];
   embed?: BlueskyImageEmbed | BlueskyExternalEmbed;
 }
 
@@ -400,6 +406,31 @@ async function sendTelegramMessage(chatId: number, text: string, env: Env): Prom
 
 const BLUESKY_CHAR_LIMIT = 300;
 
+// Bluesky requires explicit "facets" to make URLs clickable.
+// Facets use UTF-8 byte offsets, not JS string indices.
+function detectLinkFacets(text: string): BlueskyFacet[] {
+  const encoder = new TextEncoder();
+  const facets: BlueskyFacet[] = [];
+  const urlRegex = /https?:\/\/[^\s<>")\]]+/g;
+  let match;
+
+  while ((match = urlRegex.exec(text)) !== null) {
+    let url = match[0];
+    // Strip trailing punctuation that's unlikely part of the URL
+    url = url.replace(/[.,;:!?]+$/, '');
+
+    const byteStart = encoder.encode(text.slice(0, match.index)).byteLength;
+    const byteEnd = byteStart + encoder.encode(url).byteLength;
+
+    facets.push({
+      index: { byteStart, byteEnd },
+      features: [{ $type: 'app.bsky.richtext.facet#link', uri: url }],
+    });
+  }
+
+  return facets;
+}
+
 function getBlueskyApi(env: Env): string {
   return env.BLUESKY_PDS_URL || 'https://bsky.social/xrpc';
 }
@@ -503,10 +534,12 @@ async function postToBluesky(
     const postUrl = getPostUrl(postId);
     const truncatedText = truncateForBluesky(text, postUrl);
 
+    const facets = detectLinkFacets(truncatedText);
     const record: BlueskyPost = {
       $type: 'app.bsky.feed.post',
       text: truncatedText,
       createdAt: new Date().toISOString(),
+      ...(facets.length > 0 && { facets }),
     };
 
     const images = media.filter(m => m.type === 'image').slice(0, 4);
