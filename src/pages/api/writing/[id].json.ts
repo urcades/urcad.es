@@ -1,11 +1,11 @@
 import type { APIRoute, GetStaticPaths } from "astro";
-import { getCollection } from "astro:content";
+import { getFilteredWriting } from "../../../lib/writing-api";
 
 /**
- * Generate static paths for all posts.
+ * Generate static paths for all writing posts.
  */
 export const getStaticPaths: GetStaticPaths = async () => {
-  const posts = await getCollection("writing");
+  const posts = await getFilteredWriting();
   return posts.map((post) => ({
     params: { id: post.id },
     props: { post },
@@ -14,7 +14,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 /**
  * JSON API endpoint returning a single post with full content.
- * Designed for AI agents and programmatic access.
+ * GET /api/writing/[id]
  */
 export const GET: APIRoute = async ({ props }) => {
   try {
@@ -36,7 +36,6 @@ export const GET: APIRoute = async ({ props }) => {
       pubDate: post.data.pubDate.toISOString(),
       url: `/writing/${post.id}/`,
       tags: post.data.tags || [],
-      // Include the raw markdown content for AI consumption
       content: post.body || "",
     };
 
