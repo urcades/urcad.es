@@ -623,22 +623,23 @@ async function createArenaBlock(
 
   try {
     const postUrl = getPostUrl(postId);
+    const channelSlug = env.ARENA_CHANNEL_SLUG!;
     const errors: string[] = [];
     let anySuccess = false;
 
     for (const item of media) {
       if (item.type === 'image') {
-        const response = await fetch(
-          `${ARENA_API}/channels/${env.ARENA_CHANNEL_SLUG}/blocks`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
-            },
-            body: JSON.stringify({ source: item.url }),
-          }
-        );
+        const response = await fetch(`${ARENA_API}/blocks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            value: item.url,
+            channel_ids: [channelSlug],
+          }),
+        });
 
         if (!response.ok) {
           const error = await response.text();
@@ -652,18 +653,18 @@ async function createArenaBlock(
     }
 
     if (text) {
-      const content = `${text}\n\n[${postUrl}](${postUrl})`;
-      const response = await fetch(
-        `${ARENA_API}/channels/${env.ARENA_CHANNEL_SLUG}/blocks`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({ content }),
-        }
-      );
+      const value = `${text}\n\n[${postUrl}](${postUrl})`;
+      const response = await fetch(`${ARENA_API}/blocks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          value,
+          channel_ids: [channelSlug],
+        }),
+      });
 
       if (!response.ok) {
         const error = await response.text();
