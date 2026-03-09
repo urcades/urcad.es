@@ -607,7 +607,7 @@ async function crossPostToBluesky(
 // Are.na Cross-posting
 // ============================================
 
-const ARENA_API = 'https://api.are.na/v3';
+const ARENA_API = 'https://api.are.na/v2';
 
 function isArenaConfigured(env: Env): boolean {
   return !!(env.ARENA_ACCESS_TOKEN && env.ARENA_CHANNEL_SLUG);
@@ -629,17 +629,17 @@ async function createArenaBlock(
 
     for (const item of media) {
       if (item.type === 'image') {
-        const response = await fetch(`${ARENA_API}/blocks`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            value: item.url,
-            channel_ids: [channelSlug],
-          }),
-        });
+        const response = await fetch(
+          `${ARENA_API}/channels/${channelSlug}/blocks`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
+            },
+            body: JSON.stringify({ source: item.url }),
+          }
+        );
 
         if (!response.ok) {
           const error = await response.text();
@@ -653,18 +653,18 @@ async function createArenaBlock(
     }
 
     if (text) {
-      const value = `${text}\n\n[${postUrl}](${postUrl})`;
-      const response = await fetch(`${ARENA_API}/blocks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          value,
-          channel_ids: [channelSlug],
-        }),
-      });
+      const content = `${text}\n\n[${postUrl}](${postUrl})`;
+      const response = await fetch(
+        `${ARENA_API}/channels/${channelSlug}/blocks`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({ content }),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.text();
