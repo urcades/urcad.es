@@ -439,8 +439,8 @@ function isBlueskyConfigured(env: Env): boolean {
   return !!(env.BLUESKY_HANDLE && env.BLUESKY_APP_PASSWORD);
 }
 
-async function createBlueskySession(env: Env): Promise<BlueskySession | null> {
-  if (!isBlueskyConfigured(env)) return null;
+async function createBlueskySession(env: Env): Promise<{ session?: BlueskySession; error?: string }> {
+  if (!isBlueskyConfigured(env)) return { error: 'not configured' };
 
   const apiUrl = getBlueskyApi(env);
   try {
@@ -454,14 +454,15 @@ async function createBlueskySession(env: Env): Promise<BlueskySession | null> {
     });
 
     if (!response.ok) {
-      console.error(`Bluesky auth failed: ${response.status}`);
-      return null;
+      const body = await response.text();
+      console.error(`Bluesky auth failed: ${response.status} - ${body}`);
+      return { error: `auth ${response.status}` };
     }
 
-    return await response.json() as BlueskySession;
+    return { session: await response.json() as BlueskySession };
   } catch (error) {
     console.error('Bluesky auth error:', error);
-    return null;
+    return { error: `auth exception: ${error}` };
   }
 }
 
@@ -528,7 +529,7 @@ async function postToBluesky(
   postId: string,
   session: BlueskySession,
   env: Env
-): Promise<boolean> {
+): Promise<string | null> {
   const apiUrl = getBlueskyApi(env);
   try {
     const postUrl = getPostUrl(postId);
@@ -577,14 +578,14 @@ async function postToBluesky(
     if (!response.ok) {
       const error = await response.text();
       console.error(`Bluesky post failed: ${response.status} - ${error}`);
-      return false;
+      return `post ${response.status}`;
     }
 
     console.log('Successfully posted to Bluesky');
-    return true;
+    return null;
   } catch (error) {
     console.error('Bluesky post error:', error);
-    return false;
+    return `exception: ${error}`;
   }
 }
 
@@ -593,14 +594,11 @@ async function crossPostToBluesky(
   media: MediaItem[],
   postId: string,
   env: Env
-): Promise<boolean> {
-  if (!isBlueskyConfigured(env)) return false;
+): Promise<string | null> {
+  if (!isBlueskyConfigured(env)) return 'not configured';
 
-  const session = await createBlueskySession(env);
-  if (!session) {
-    console.error('Failed to create Bluesky session');
-    return false;
-  }
+  const { session, error } = await createBlueskySession(env);
+  if (!session) return error || 'auth failed';
 
   return await postToBluesky(text, media, postId, session, env);
 }
@@ -620,12 +618,13 @@ async function createArenaBlock(
   media: MediaItem[],
   postId: string,
   env: Env
-): Promise<boolean> {
-  if (!isArenaConfigured(env)) return false;
+): Promise<string | null> {
+  if (!isArenaConfigured(env)) return 'not configured';
 
   try {
     const postUrl = getPostUrl(postId);
-    const results: boolean[] = [];
+    const errors: string[] = [];
+    let anySuccess = false;
 
     for (const item of media) {
       if (item.type === 'image') {
@@ -644,10 +643,10 @@ async function createArenaBlock(
         if (!response.ok) {
           const error = await response.text();
           console.error(`Are.na image block failed: ${response.status} - ${error}`);
-          results.push(false);
+          errors.push(`image ${response.status}`);
         } else {
           console.log('Successfully created Are.na image block');
-          results.push(true);
+          anySuccess = true;
         }
       }
     }
@@ -669,17 +668,18 @@ async function createArenaBlock(
       if (!response.ok) {
         const error = await response.text();
         console.error(`Are.na text block failed: ${response.status} - ${error}`);
-        results.push(false);
+        errors.push(`text ${response.status}`);
       } else {
         console.log('Successfully created Are.na text block');
-        results.push(true);
+        anySuccess = true;
       }
     }
 
-    return results.some(r => r === true);
+    if (anySuccess) return null;
+    return errors.join(', ') || 'no blocks created';
   } catch (error) {
     console.error('Are.na post error:', error);
-    return false;
+    return `exception: ${error}`;
   }
 }
 
@@ -688,8 +688,8 @@ async function crossPostToArena(
   media: MediaItem[],
   postId: string,
   env: Env
-): Promise<boolean> {
-  if (!isArenaConfigured(env)) return false;
+): Promise<string | null> {
+  if (!isArenaConfigured(env)) return 'not configured';
   return await createArenaBlock(text, media, postId, env);
 }
 
@@ -747,7 +747,7 @@ async function postToGoToSocial(
   media: MediaItem[],
   postId: string,
   env: Env
-): Promise<boolean> {
+): Promise<string | null> {
   try {
     const postUrl = getPostUrl(postId);
     const statusText = text ? `${text}\n\n${postUrl}` : postUrl;
@@ -779,14 +779,14 @@ async function postToGoToSocial(
     if (!response.ok) {
       const error = await response.text();
       console.error(`GoToSocial post failed: ${response.status} - ${error}`);
-      return false;
+      return `${response.status}`;
     }
 
     console.log('Successfully posted to GoToSocial');
-    return true;
+    return null;
   } catch (error) {
     console.error('GoToSocial post error:', error);
-    return false;
+    return `exception: ${error}`;
   }
 }
 
@@ -795,8 +795,8 @@ async function crossPostToGoToSocial(
   media: MediaItem[],
   postId: string,
   env: Env
-): Promise<boolean> {
-  if (!isGoToSocialConfigured(env)) return false;
+): Promise<string | null> {
+  if (!isGoToSocialConfigured(env)) return 'not configured';
   return await postToGoToSocial(text, media, postId, env);
 }
 
@@ -853,18 +853,18 @@ export async function handleTelegram(
 
       if (!isDraft) {
         if (isBlueskyConfigured(env)) {
-          const ok = await crossPostToBluesky(messageText, media, postId, env);
-          status += ok ? ' + Bluesky' : ' (Bluesky failed)';
+          const err = await crossPostToBluesky(messageText, media, postId, env);
+          status += err ? ` (Bluesky: ${err})` : ' + Bluesky';
         }
 
         if (isArenaConfigured(env)) {
-          const ok = await crossPostToArena(messageText, media, postId, env);
-          status += ok ? ' + Are.na' : ' (Are.na failed)';
+          const err = await crossPostToArena(messageText, media, postId, env);
+          status += err ? ` (Are.na: ${err})` : ' + Are.na';
         }
 
         if (isGoToSocialConfigured(env)) {
-          const ok = await crossPostToGoToSocial(messageText, media, postId, env);
-          status += ok ? ' + GoToSocial' : ' (GoToSocial failed)';
+          const err = await crossPostToGoToSocial(messageText, media, postId, env);
+          status += err ? ` (GoToSocial: ${err})` : ' + GoToSocial';
         }
       }
 
