@@ -644,7 +644,7 @@ async function createArenaBlock(
         if (!response.ok) {
           const error = await response.text();
           console.error(`Are.na image block failed: ${response.status} - ${error}`);
-          errors.push(`image ${response.status}`);
+          errors.push(`image ${response.status}: ${error.slice(0, 80)}`);
         } else {
           console.log('Successfully created Are.na image block');
           anySuccess = true;
@@ -669,7 +669,7 @@ async function createArenaBlock(
       if (!response.ok) {
         const error = await response.text();
         console.error(`Are.na text block failed: ${response.status} - ${error}`);
-        errors.push(`text ${response.status}`);
+        errors.push(`text ${response.status}: ${error.slice(0, 80)}`);
       } else {
         console.log('Successfully created Are.na text block');
         anySuccess = true;
