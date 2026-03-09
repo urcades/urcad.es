@@ -607,10 +607,34 @@ async function crossPostToBluesky(
 // Are.na Cross-posting
 // ============================================
 
-const ARENA_API = 'https://api.are.na/v2';
+const ARENA_API = 'https://api.are.na/v3';
 
 function isArenaConfigured(env: Env): boolean {
   return !!(env.ARENA_ACCESS_TOKEN && env.ARENA_CHANNEL_SLUG);
+}
+
+async function postArenaBlock(
+  body: Record<string, unknown>,
+  env: Env
+): Promise<{ ok: boolean; status: number; error?: string }> {
+  const response = await fetch(`${ARENA_API}/blocks`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
+      'User-Agent': 'urcades-worker',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error(`Are.na block failed: ${response.status} - ${error}`);
+    return { ok: false, status: response.status, error: error.slice(0, 80) };
+  }
+
+  return { ok: true, status: response.status };
 }
 
 async function createArenaBlock(
@@ -623,56 +647,36 @@ async function createArenaBlock(
 
   try {
     const postUrl = getPostUrl(postId);
-    const channelSlug = env.ARENA_CHANNEL_SLUG!;
+    const channelIds = [env.ARENA_CHANNEL_SLUG!];
     const errors: string[] = [];
     let anySuccess = false;
 
     for (const item of media) {
       if (item.type === 'image') {
-        const response = await fetch(
-          `${ARENA_API}/channels/${channelSlug}/blocks`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
-            },
-            body: JSON.stringify({ source: item.url }),
-          }
+        const result = await postArenaBlock(
+          { value: item.url, channel_ids: channelIds },
+          env
         );
-
-        if (!response.ok) {
-          const error = await response.text();
-          console.error(`Are.na image block failed: ${response.status} - ${error}`);
-          errors.push(`image ${response.status}: ${error.slice(0, 80)}`);
-        } else {
+        if (result.ok) {
           console.log('Successfully created Are.na image block');
           anySuccess = true;
+        } else {
+          errors.push(`image ${result.status}: ${result.error}`);
         }
       }
     }
 
     if (text) {
-      const content = `${text}\n\n[${postUrl}](${postUrl})`;
-      const response = await fetch(
-        `${ARENA_API}/channels/${channelSlug}/blocks`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.ARENA_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({ content }),
-        }
+      const value = `${text}\n\n[${postUrl}](${postUrl})`;
+      const result = await postArenaBlock(
+        { value, channel_ids: channelIds },
+        env
       );
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error(`Are.na text block failed: ${response.status} - ${error}`);
-        errors.push(`text ${response.status}: ${error.slice(0, 80)}`);
-      } else {
+      if (result.ok) {
         console.log('Successfully created Are.na text block');
         anySuccess = true;
+      } else {
+        errors.push(`text ${result.status}: ${result.error}`);
       }
     }
 
