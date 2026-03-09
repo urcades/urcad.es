@@ -607,7 +607,7 @@ async function crossPostToBluesky(
 // Are.na Cross-posting
 // ============================================
 
-const ARENA_API = 'https://api.are.na/v2';
+const ARENA_API = 'https://api.are.na/v3';
 
 function isArenaConfigured(env: Env): boolean {
   return !!(env.ARENA_ACCESS_TOKEN && env.ARENA_CHANNEL_SLUG);
