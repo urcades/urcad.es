@@ -22,40 +22,40 @@ const {
   .sketch {
     --sketch-width-base: 100%;
     width: var(--sketch-width-base);
-    margin-block-end: 1em;
+    margin-block-end: var(--sketch-grid-gap, var(--space-1));
 
     /* Use container queries where supported */
     @supports (container-type: inline-size) {
       @container (min-width: 800px) {
-        --sketch-width-base: calc(50% - 1em);
+        --sketch-width-base: calc(50% - var(--sketch-grid-gap, var(--space-1)));
 
         &[data-size="2"],
         &[data-size="3"] {
-          --sketch-width-base: calc(100% - 1em);
+          --sketch-width-base: calc(100% - var(--sketch-grid-gap, var(--space-1)));
         }
       }
 
       @container (min-width: 1000px) {
-        --sketch-width-base: calc(33.333% - 1em);
+        --sketch-width-base: calc(33.333% - var(--sketch-grid-gap, var(--space-1)));
 
         &[data-size="2"] {
-          --sketch-width-base: calc(66.666% - 1em);
+          --sketch-width-base: calc(66.666% - var(--sketch-grid-gap, var(--space-1)));
         }
 
         &[data-size="3"] {
-          --sketch-width-base: calc(100% - 1em);
+          --sketch-width-base: calc(100% - var(--sketch-grid-gap, var(--space-1)));
         }
       }
 
       @container (min-width: 2222px) {
-        --sketch-width-base: calc(25% - 1em);
+        --sketch-width-base: calc(25% - var(--sketch-grid-gap, var(--space-1)));
 
         &[data-size="2"] {
-          --sketch-width-base: calc(50% - 1em);
+          --sketch-width-base: calc(50% - var(--sketch-grid-gap, var(--space-1)));
         }
 
         &[data-size="3"] {
-          --sketch-width-base: calc(75% - 1em);
+          --sketch-width-base: calc(75% - var(--sketch-grid-gap, var(--space-1)));
         }
       }
     }
@@ -63,35 +63,35 @@ const {
     /* Fallback to media queries for older browsers */
     @supports not (container-type: inline-size) {
       @media (min-width: 800px) {
-        --sketch-width-base: calc(50% - 1em);
+        --sketch-width-base: calc(50% - var(--sketch-grid-gap, var(--space-1)));
 
         &[data-size="2"],
         &[data-size="3"] {
-          --sketch-width-base: calc(100% - 1em);
+          --sketch-width-base: calc(100% - var(--sketch-grid-gap, var(--space-1)));
         }
       }
 
       @media (min-width: 1000px) {
-        --sketch-width-base: calc(33.333% - 1em);
+        --sketch-width-base: calc(33.333% - var(--sketch-grid-gap, var(--space-1)));
 
         &[data-size="2"] {
-          --sketch-width-base: calc(66.666% - 1em);
+          --sketch-width-base: calc(66.666% - var(--sketch-grid-gap, var(--space-1)));
         }
 
         &[data-size="3"] {
-          --sketch-width-base: calc(100% - 1em);
+          --sketch-width-base: calc(100% - var(--sketch-grid-gap, var(--space-1)));
         }
       }
 
       @media (min-width: 2222px) {
-        --sketch-width-base: calc(25% - 1em);
+        --sketch-width-base: calc(25% - var(--sketch-grid-gap, var(--space-1)));
 
         &[data-size="2"] {
-          --sketch-width-base: calc(50% - 1em);
+          --sketch-width-base: calc(50% - var(--sketch-grid-gap, var(--space-1)));
         }
 
         &[data-size="3"] {
-          --sketch-width-base: calc(75% - 1em);
+          --sketch-width-base: calc(75% - var(--sketch-grid-gap, var(--space-1)));
         }
       }
     }
@@ -104,7 +104,7 @@ const {
   }
 
   .sketch-info {
-    margin-block-start: 0.5em;
+    margin-block-start: var(--space-half);
   }
 </style>
 

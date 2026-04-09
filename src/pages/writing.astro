@@ -45,18 +45,12 @@ const sortedYears = Object.keys(groupedPosts).sort(
 );
 ---
 
-<style>
-  li {
-    list-style: circle;
-  }
-</style>
-
 <Base pageTitle={pageTitle}>
   {
     sortedYears.map((year) => (
       <>
         <em>{year}</em>
-        <ul>
+        <ul class="list-circle">
           {groupedPosts[year]?.map((post) => (
             <li>
               <a

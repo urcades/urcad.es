@@ -89,6 +89,44 @@ const {
         --breakpoint-md: 768px;
         --breakpoint-lg: 1000px;
         --breakpoint-xl: 2222px;
+        --space-quarter: 0.25em;
+        --space-half: 0.5em;
+        --space-1: 1em;
+        --space-1-5: 1.5em;
+        --space-2: 2em;
+        --heading-space: 0.67em;
+        --page-gutter-mobile: 1.11em;
+        --page-gutter-block: 2em;
+        --page-gutter-inline: 2.55em;
+        --prose-width: 55ch;
+        --title-measure: 22ch;
+        --pre-radius: 0.33em;
+        --pre-bg-light: #ededed;
+        --pre-bg-dark: #333333;
+        --text-muted-opacity: 0.6;
+        --text-soft-opacity: 0.7;
+        --text-note-opacity: 0.75;
+        --sketch-grid-gap: var(--space-1);
+        --surface-code: var(--pre-bg-light);
+      }
+
+      @supports (margin-block: 1lh) {
+        :root {
+          --space-quarter: 0.25lh;
+          --space-half: 0.5lh;
+          --space-1: 1lh;
+          --space-1-5: 1.5lh;
+          --space-2: 2lh;
+          --heading-space: 0.67lh;
+        }
+      }
+
+      @supports (margin: 1rlh) {
+        :root {
+          --page-gutter-mobile: 0.95rlh;
+          --page-gutter-block: 1.65rlh;
+          --page-gutter-inline: 2.1rlh;
+        }
       }
 
       /* Use light-dark() for modern color scheme handling */
@@ -98,6 +136,10 @@ const {
             var(--txtColor, var(--fallback-txt-color)),
             var(--txtColorDark, var(--fallback-txt-color-dark))
           );
+        }
+
+        :root {
+          --surface-code: light-dark(var(--pre-bg-light), var(--pre-bg-dark));
         }
 
         body {
@@ -122,6 +164,14 @@ const {
           }
         }
 
+        :root {
+          --surface-code: var(--pre-bg-light);
+
+          @media (prefers-color-scheme: dark) {
+            --surface-code: var(--pre-bg-dark);
+          }
+        }
+
         body {
           background-color: var(--bgColor, var(--fallback-bg-color));
           color: var(--txtColor, var(--fallback-txt-color));
@@ -134,11 +184,11 @@ const {
       }
 
       html {
-        margin: 1.11em;
+        margin: var(--page-gutter-mobile);
 
         @media screen and (min-width: 555px) {
-          margin: 2em 2.55em;
-          padding-block-end: 2em;
+          margin: var(--page-gutter-block) var(--page-gutter-inline);
+          padding-block-end: var(--page-gutter-block);
         }
       }
 
@@ -146,6 +196,107 @@ const {
         font-family: "Times New Roman", Times, serif;
         font-size: 1.23em;
         -webkit-font-smoothing: antialiased;
+      }
+
+      .prose {
+        max-width: var(--prose-width);
+        text-wrap: pretty;
+      }
+
+      .title-measure {
+        max-width: var(--title-measure);
+      }
+
+      .prose img {
+        display: inline-block;
+        max-width: 100%;
+        height: auto;
+        padding-block-end: var(--space-1);
+      }
+
+      .prose video {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin-block-end: var(--space-1);
+      }
+
+      .prose blockquote {
+        font-style: italic;
+        padding-inline-start: var(--space-1);
+        margin-inline-start: 0;
+        border-inline-start: 1px solid currentColor;
+      }
+
+      .prose pre {
+        padding: var(--space-1);
+        overflow-x: auto;
+        border-radius: var(--pre-radius);
+        background-color: var(--surface-code);
+      }
+
+      @supports selector(:has(*)) {
+        .prose:has(img:last-child) img:last-child {
+          padding-block-end: 0;
+        }
+      }
+
+      @supports not selector(:has(*)) {
+        .prose img:last-of-type {
+          padding-block-end: 0;
+        }
+      }
+
+      .text-muted {
+        opacity: var(--text-muted-opacity);
+      }
+
+      .text-soft {
+        opacity: var(--text-soft-opacity);
+      }
+
+      .text-note {
+        opacity: var(--text-note-opacity);
+      }
+
+      .button-reset {
+        background: none;
+        border: none;
+        padding: 0;
+        font: inherit;
+      }
+
+      .responsive-break {
+        display: inline;
+
+        @media screen and (max-width: 554px) {
+          display: none;
+        }
+      }
+
+      .list-circle li {
+        list-style: circle;
+      }
+
+      .sketch-grid {
+        container-type: inline-size;
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sketch-grid-gap);
+
+        @media (min-width: 768px) {
+          justify-content: flex-start;
+        }
+      }
+
+      :where(main, article, nav, header, footer)
+        > :where(p, ul, ol, dl, blockquote, pre, figure) {
+        margin-block: var(--space-1);
+      }
+
+      :where(main, article, nav, header, footer)
+        > :where(h1, h2, h3, h4, h5, h6) {
+        margin-block: var(--heading-space);
       }
 
       :is(a, button) {

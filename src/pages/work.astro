@@ -28,20 +28,6 @@ const years = Object.keys(workByYear)
   .sort((a, b) => b - a);
 ---
 
-<style>
-  .sketches {
-    /* Use container queries for more responsive layout */
-    container-type: inline-size;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1em;
-
-    @media (min-width: 768px) {
-      justify-content: flex-start;
-    }
-  }
-</style>
-
 <Base pageTitle={pageTitle}>
   <p>Samples of recent work, sketching, doodling</p>
 
@@ -49,7 +35,7 @@ const years = Object.keys(workByYear)
     years.map((year) => (
       <>
         <h1>{year}</h1>
-        <section class="sketches">
+        <section class="sketch-grid">
           {workByYear[year].map((item) => {
             const hasContent = item.body && item.body.trim().length > 0;
             return (

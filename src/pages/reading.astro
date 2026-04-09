@@ -16,16 +16,12 @@ const totalHighlights = books.reduce(
 ---
 
 <style>
-  .reading-stream {
-    max-width: 55ch;
-  }
-
   .book-section {
-    margin-block: 1em;
+    margin-block: var(--space-1);
   }
 
   .book-header {
-    margin-block-end: 1.5em;
+    margin-block-end: var(--space-1-5);
   }
 
   .book-title {
@@ -34,30 +30,28 @@ const totalHighlights = books.reduce(
   }
 
   .book-author {
-    opacity: 0.7;
     margin: 0;
-    margin-block-start: 0.25em;
+    margin-block-start: var(--space-quarter);
   }
 
   .highlight-entry {
-    margin-block-end: 2em;
-    padding-inline-start: 1em;
+    margin-block-end: var(--space-2);
+    padding-inline-start: var(--space-1);
     border-inline-start: 1px solid currentColor;
   }
 
   .highlight-text {
     margin: 0;
-    margin-block-end: 0.5em;
+    margin-block-end: var(--space-half);
   }
 
   .highlight-meta {
     font-style: italic;
-    opacity: 0.6;
     margin: 0;
   }
 
   .copy-highlight {
-    margin-inline-start: 0.5em;
+    margin-inline-start: var(--space-half);
     opacity: 0.5;
     text-decoration: none;
   }
@@ -68,39 +62,32 @@ const totalHighlights = books.reduce(
 
   .highlight-note {
     font-style: italic;
-    opacity: 0.75;
     margin: 0;
-    margin-block-start: 0.5em;
-  }
-
-  .stats {
-    opacity: 0.6;
-    margin-block: 1em;
+    margin-block-start: var(--space-half);
   }
 
   .empty-state {
     font-style: italic;
-    opacity: 0.6;
   }
 </style>
 
 <Base pageTitle={pageTitle}>
   <p>{totalHighlights} highlights from {books.length} books</p>
 
-  <div class="reading-stream">
-    {books.length === 0 && <p class="empty-state">No highlights yet.</p>}
+  <div class="prose">
+    {books.length === 0 && <p class="empty-state text-muted">No highlights yet.</p>}
 
     {
       books.map((book: any) => (
         <section class="book-section">
           <div class="book-header">
             <p class="book-title">{book.title}</p>
-            <p class="book-author">{book.author}</p>
+            <p class="book-author text-soft">{book.author}</p>
           </div>
           {book.highlights.map((h: any) => (
             <div class="highlight-entry" id={h.id}>
               <p class="highlight-text">{h.text}</p>
-              <p class="highlight-meta">
+              <p class="highlight-meta text-muted">
                 {book.title}, {book.author}
                 <a
                   href="#"
@@ -111,7 +98,7 @@ const totalHighlights = books.reduce(
                   ❧
                 </a>
               </p>
-              {h.note && <p class="highlight-note">Note: {h.note}</p>}
+              {h.note && <p class="highlight-note text-note">Note: {h.note}</p>}
             </div>
           ))}
         </section>

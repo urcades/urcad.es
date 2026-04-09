@@ -38,125 +38,22 @@ const jsonLd = {
 ---
 
 <style is:global>
-  h1 {
-    max-width: 22ch;
-  }
-
-  article {
-    max-width: 55ch;
-    text-wrap: pretty;
-
-    /* Remove padding from last image using :has() */
-    @supports selector(:has(*)) {
-      &:has(img:last-child) img:last-child {
-        padding-block-end: 0;
-      }
-    }
-  }
-
-  /* Video styling for stream posts */
-  video {
-    display: block;
-    max-width: 100%;
-    height: auto;
-    margin-block-end: 1em;
-  }
-
-  blockquote {
-    font-style: italic;
-    padding-inline-start: 1em;
-    margin-inline-start: 0;
-
-    /* Use light-dark() for border color */
-    @supports (color: light-dark(white, black)) {
-      border-inline-start: 1px solid
-        light-dark(
-          var(--txtColor, var(--fallback-txt-color)),
-          var(--txtColorDark, var(--fallback-txt-color-dark))
-        );
-    }
-
-    /* Fallback for browsers without light-dark() */
-    @supports not (color: light-dark(white, black)) {
-      border-inline-start: 1px solid var(--txtColor, var(--fallback-txt-color));
-
-      @media (prefers-color-scheme: dark) {
-        border-inline-start-color: var(
-          --txtColorDark,
-          var(--fallback-txt-color-dark)
-        );
-      }
-    }
-  }
-
-  img {
-    display: inline-block;
-    max-width: 100%;
-    height: auto;
-    padding-block-end: 1em;
-
-    /* Fallback for browsers without :has() support */
-    @supports not selector(:has(*)) {
-      &:last-of-type {
-        padding-block-end: 0;
-      }
-    }
-  }
-
-  pre {
-    padding: 1em;
-    overflow-x: auto;
-    border-radius: 0.33em;
-
-    /* Use light-dark() for pre background */
-    @supports (color: light-dark(white, black)) {
-      background-color: light-dark(#ededed, #333333);
-    }
-
-    /* Fallback for browsers without light-dark() */
-    @supports not (color: light-dark(white, black)) {
-      background-color: #ededed;
-
-      @media (prefers-color-scheme: dark) {
-        background-color: #333333;
-      }
-    }
-  }
-
-  ol ~ pre {
-    margin-inline-start: 1em;
+  .writing-article ol ~ pre {
+    margin-inline-start: var(--space-1);
   }
 
   /* Reading highlight styles (from remark-highlight plugin) */
   .reading-highlight {
     font-style: italic;
-    padding-inline-start: 1em;
+    padding-inline-start: var(--space-1);
     margin-inline-start: 0;
-    margin-block: 1.5em;
-
-    @supports (color: light-dark(white, black)) {
-      border-inline-start: 2px solid
-        light-dark(
-          var(--txtColor, var(--fallback-txt-color)),
-          var(--txtColorDark, var(--fallback-txt-color-dark))
-        );
-    }
-
-    @supports not (color: light-dark(white, black)) {
-      border-inline-start: 2px solid var(--txtColor, var(--fallback-txt-color));
-
-      @media (prefers-color-scheme: dark) {
-        border-inline-start-color: var(
-          --txtColorDark,
-          var(--fallback-txt-color-dark)
-        );
-      }
-    }
+    margin-block: var(--space-1-5);
+    border-inline-start: 2px solid currentColor;
   }
 
   .reading-highlight p {
     margin: 0;
-    margin-block-end: 0.5em;
+    margin-block-end: var(--space-half);
   }
 
   .reading-highlight cite {
@@ -185,9 +82,9 @@ const jsonLd = {
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
   <p><a href="/writing/">Back to All Writing</a></p>
-  <article>
+  <article class="prose writing-article">
     <header>
-      <h1>{frontmatter.title}</h1>
+      <h1 class="title-measure">{frontmatter.title}</h1>
     </header>
     <slot />
     <footer>
