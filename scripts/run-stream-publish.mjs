@@ -3,11 +3,12 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function usage() {
-  return `Usage: npm run publish:stream:run -- --event /path/to/event.json [--no-deploy] [--no-verify] [--dry-run]
+  return `Usage: npm run publish:stream:run -- --event /path/to/event.json [--result-json /absolute/path.json] [--no-deploy] [--no-verify] [--dry-run]
 
 Runs the full host-agent publishing flow:
 publish event -> tests -> build -> commit generated post -> push -> deploy -> verify public URL.`;
@@ -19,6 +20,7 @@ function parseArgs(argv) {
     dryRun: false,
     deploy: true,
     verify: true,
+    resultJsonPath: null,
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -26,6 +28,14 @@ function parseArgs(argv) {
 
     if (arg === '--event') {
       args.eventPath = argv[++i];
+      if (!args.eventPath) {
+        throw new Error('--event requires a path.');
+      }
+    } else if (arg === '--result-json') {
+      args.resultJsonPath = argv[++i];
+      if (!args.resultJsonPath) {
+        throw new Error('--result-json requires a path.');
+      }
     } else if (arg === '--dry-run') {
       args.dryRun = true;
     } else if (arg === '--no-deploy') {
@@ -44,11 +54,41 @@ function parseArgs(argv) {
     throw new Error('Missing required --event argument.');
   }
 
+  if (args.resultJsonPath && !path.isAbsolute(args.resultJsonPath)) {
+    throw new Error('--result-json must be an absolute path.');
+  }
+
   if (!args.deploy) {
     args.verify = false;
   }
 
   return args;
+}
+
+async function writeResultJson(resultJsonPath, payload) {
+  if (!resultJsonPath) return;
+
+  const dir = path.dirname(resultJsonPath);
+  const base = path.basename(resultJsonPath);
+  const tempPath = path.join(dir, `.${base}.${process.pid}.${Date.now()}.tmp`);
+  const serialized = `${JSON.stringify(payload, null, 2)}\n`;
+
+  await mkdir(dir, { recursive: true });
+  await writeFile(tempPath, serialized);
+  await rename(tempPath, resultJsonPath);
+}
+
+async function tryWriteResultJson(resultJsonPath, payload) {
+  try {
+    await writeResultJson(resultJsonPath, payload);
+  } catch (error) {
+    console.error(`run-stream-publish: failed to write result JSON: ${error.message}`);
+  }
+}
+
+async function finish(resultJsonPath, payload) {
+  await writeResultJson(resultJsonPath, payload);
+  console.log(JSON.stringify(payload, null, 2));
 }
 
 function run(command, args, options = {}) {
@@ -138,9 +178,14 @@ async function ensureOnlyExpectedPostChanged(outputPath) {
   return relativePath;
 }
 
-async function commitAndPush(relativePath, postId, collection, branch) {
+async function commitPost(relativePath, postId, collection) {
   await git(['add', '--', relativePath]);
   await git(['commit', '-m', `${collection === 'drafts' ? 'Update draft stream' : 'Publish stream entry'}: ${postId}`]);
+  const { stdout } = await git(['rev-parse', 'HEAD'], { capture: true });
+  return stdout.trim();
+}
+
+async function pushBranch(branch) {
   await git(['push', 'origin', branch]);
 }
 
@@ -160,53 +205,95 @@ async function verifyPublicPost(postId) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
-  const eventPath = path.resolve(args.eventPath);
-  const branch = await getCurrentBranch();
+  const result = {
+    ok: false,
+    phase: 'parse_args',
+    branch: null,
+    collection: null,
+    postId: null,
+    committedPath: null,
+    commit: null,
+    pushed: false,
+    deployed: false,
+    publicUrl: null,
+    media: [],
+  };
 
-  await ensureNoTrackedChanges();
-  await syncCurrentBranch(branch);
-  await ensureNoTrackedChanges();
+  let resultJsonPath = null;
 
-  const publishResult = await runPublisher(eventPath, args.dryRun);
-  if (!publishResult.wrote) {
-    console.log(JSON.stringify({
-      ok: true,
-      dryRun: true,
-      publishResult,
-    }, null, 2));
-    return;
-  }
+  try {
+    const args = parseArgs(process.argv.slice(2));
+    resultJsonPath = args.resultJsonPath;
+    const eventPath = path.resolve(args.eventPath);
 
-  const relativePath = await ensureOnlyExpectedPostChanged(publishResult.outputPath);
+    result.phase = 'get_branch';
+    const branch = await getCurrentBranch();
+    result.branch = branch;
 
-  await run('npm', ['run', 'test:publish-stream']);
-  await run('npm', ['run', 'build']);
-  await commitAndPush(relativePath, publishResult.postId, publishResult.collection, branch);
+    result.phase = 'preflight_clean';
+    await ensureNoTrackedChanges();
 
-  let deployed = false;
-  let publicUrl = null;
+    result.phase = 'sync_branch';
+    await syncCurrentBranch(branch);
 
-  if (args.deploy && publishResult.collection === 'writing') {
-    await run('npm', ['run', 'deploy']);
-    deployed = true;
+    result.phase = 'post_sync_clean';
+    await ensureNoTrackedChanges();
 
-    if (args.verify) {
-      publicUrl = await verifyPublicPost(publishResult.postId);
+    result.phase = 'publish';
+    const publishResult = await runPublisher(eventPath, args.dryRun);
+    result.collection = publishResult.collection;
+    result.postId = publishResult.postId;
+    result.media = publishResult.media;
+
+    if (!publishResult.wrote) {
+      result.ok = true;
+      result.phase = 'dry_run';
+      await finish(resultJsonPath, {
+        ...result,
+        dryRun: true,
+      });
+      return;
     }
-  }
 
-  console.log(JSON.stringify({
-    ok: true,
-    branch,
-    collection: publishResult.collection,
-    postId: publishResult.postId,
-    committedPath: relativePath,
-    pushed: true,
-    deployed,
-    publicUrl,
-    media: publishResult.media,
-  }, null, 2));
+    result.phase = 'verify_changed_path';
+    const relativePath = await ensureOnlyExpectedPostChanged(publishResult.outputPath);
+    result.committedPath = relativePath;
+
+    result.phase = 'test';
+    await run('npm', ['run', 'test:publish-stream']);
+
+    result.phase = 'build';
+    await run('npm', ['run', 'build']);
+
+    result.phase = 'commit';
+    result.commit = await commitPost(relativePath, publishResult.postId, publishResult.collection);
+
+    result.phase = 'push';
+    await pushBranch(branch);
+    result.pushed = true;
+
+    if (args.deploy && publishResult.collection === 'writing') {
+      result.phase = 'deploy';
+      await run('npm', ['run', 'deploy']);
+      result.deployed = true;
+
+      if (args.verify) {
+        result.phase = 'verify';
+        result.publicUrl = await verifyPublicPost(publishResult.postId);
+      }
+    }
+
+    result.ok = true;
+    result.phase = 'complete';
+    await finish(resultJsonPath, result);
+  } catch (error) {
+    result.error = {
+      message: error.message,
+    };
+    await tryWriteResultJson(resultJsonPath, result);
+    console.error(`run-stream-publish: ${error.message}`);
+    process.exitCode = 1;
+  }
 }
 
 main().catch(error => {
