@@ -52,7 +52,7 @@ async function testPublishCreatesAndAppends() {
     id: 'msg-create',
     source: 'imessage',
     receivedAt: '2026-05-30T12:34:56.000Z',
-    text: 'publish: first entry',
+    text: '🎡 first entry',
   });
 
   const first = runPublisher(['--event', firstEvent, '--root', root]);
@@ -64,6 +64,7 @@ async function testPublishCreatesAndAppends() {
   assert.match(content, /source: "imessage"/);
   assert.match(content, new RegExp(localTimeLabel('2026-05-30T12:34:56.000Z')));
   assert.match(content, /first entry/);
+  assert.doesNotMatch(content, /🎡/);
 
   const secondEvent = await writeEvent(root, 'publish-second', {
     id: 'msg-append',
@@ -111,7 +112,22 @@ async function testMissingPrefixWritesNothing() {
 
   const result = runPublisher(['--event', eventPath, '--root', root]);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /publish:|draft:/);
+  assert.match(result.stderr, /🎡|publish:|draft:/);
+  assert.equal(existsSync(path.join(root, 'src')), false);
+}
+
+async function testEmptyPublishWritesNothing() {
+  const root = await makeTempRoot();
+  const eventPath = await writeEvent(root, 'empty', {
+    id: 'msg-empty',
+    source: 'imessage',
+    receivedAt: '2026-05-30T12:34:56.000Z',
+    text: '🎡',
+  });
+
+  const result = runPublisher(['--event', eventPath, '--root', root]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /text content or media/);
   assert.equal(existsSync(path.join(root, 'src')), false);
 }
 
@@ -146,6 +162,7 @@ async function testMediaDryRunPlansR2Key() {
 await testPublishCreatesAndAppends();
 await testDraftCreatesDraft();
 await testMissingPrefixWritesNothing();
+await testEmptyPublishWritesNothing();
 await testMediaDryRunPlansR2Key();
 
 console.log('publish-stream tests passed');

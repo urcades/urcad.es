@@ -171,21 +171,22 @@ Normalized event contract:
   "source": "imessage",
   "sender": "optional sender identifier",
   "receivedAt": "2026-05-30T12:34:56.000Z",
-  "text": "publish: body text",
+  "text": "🎡 body text",
   "media": [{ "path": "/absolute/path.jpg", "mimeType": "image/jpeg", "alt": "" }]
 }
 ```
 
 Rules for host agents:
 
-1. `text` must start with `publish:` or `draft:`. Missing prefixes are intentional hard failures and must not be auto-corrected into publishes.
-2. `publish:` writes/appends `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`.
-3. `source` must be one of `imessage`, `email`, `sms`, `cli`, `web`, or `telegram`.
-4. Media paths must be absolute local paths and attachments must exist before invoking the publisher.
-5. The host bridge must maintain its own processed-message ledger keyed by durable message and attachment IDs. Do not rely on timestamp/text matching for dedupe.
-6. The host machine must have Cloudflare/Wrangler auth available for R2 uploads. Use `--dry-run` to inspect R2 keys and output paths without writing files or uploading media.
-7. After publishing, run `npm run build`. Only commit/push after the build passes.
-8. Telegram publishing remains intact for now; do not remove `/api/telegram` or Telegram secrets until the local path has real-world parity.
+1. Human-facing publish messages should start with `🎡`. The marker is control metadata and must not appear in the generated markdown.
+2. `text` must start with `🎡`, `publish:`, or `draft:`. Missing prefixes are intentional hard failures and must not be auto-corrected into publishes.
+3. `🎡` and `publish:` write/append `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`.
+4. `source` must be one of `imessage`, `email`, `sms`, `cli`, `web`, or `telegram`.
+5. Media paths must be absolute local paths and attachments must exist before invoking the publisher.
+6. The host bridge must maintain its own processed-message ledger keyed by durable message and attachment IDs. Do not rely on timestamp/text matching for dedupe.
+7. The host machine must have Cloudflare/Wrangler auth available for R2 uploads. Use `--dry-run` to inspect R2 keys and output paths without writing files or uploading media.
+8. After publishing, run `npm run build`. Only commit/push after the build passes.
+9. Telegram publishing remains intact for now; do not remove `/api/telegram` or Telegram secrets until the local path has real-world parity.
 
 ## TypeScript Configuration
 

@@ -8,6 +8,7 @@ import { spawn } from 'node:child_process';
 
 const ALLOWED_SOURCES = new Set(['imessage', 'email', 'sms', 'cli', 'web', 'telegram']);
 const COMMANDS = [
+  { prefix: '🎡', collection: 'writing' },
   { prefix: 'publish:', collection: 'writing' },
   { prefix: 'draft:', collection: 'drafts' },
 ];
@@ -20,7 +21,7 @@ Required event shape:
   "id": "stable-message-or-bridge-id",
   "source": "imessage",
   "receivedAt": "2026-05-30T12:34:56.000Z",
-  "text": "publish: body text",
+  "text": "🎡 body text",
   "media": [{ "path": "/absolute/path.jpg", "mimeType": "image/jpeg", "alt": "" }]
 }`;
 }
@@ -97,7 +98,7 @@ function parseCommand(text) {
   const trimmed = text.trimStart();
   const command = COMMANDS.find(({ prefix }) => trimmed.toLowerCase().startsWith(prefix));
   if (!command) {
-    throw new Error('Message text must start with "publish:" or "draft:".');
+    throw new Error('Message text must start with "🎡", "publish:", or "draft:".');
   }
 
   const body = trimmed.slice(command.prefix.length).trim();
@@ -271,6 +272,11 @@ async function main() {
   const postId = getPostId(date);
   const command = parseCommand(event.text);
   const uploadedMedia = await uploadMedia(event, date, args.dryRun);
+
+  if (!command.body && uploadedMedia.length === 0) {
+    throw new Error('Message must include text content or media after the command prefix.');
+  }
+
   const snippet = createSnippet({
     timeLabel: getTimeLabel(date),
     body: command.body,

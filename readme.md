@@ -117,12 +117,12 @@ Event JSON:
   "source": "imessage",
   "sender": "optional sender identifier",
   "receivedAt": "2026-05-30T12:34:56.000Z",
-  "text": "publish: body text",
+  "text": "🎡 body text",
   "media": [{ "path": "/absolute/path.jpg", "mimeType": "image/jpeg", "alt": "" }]
 }
 ```
 
-Text must start with `publish:` or `draft:`. `publish:` writes/appends `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`. Missing prefixes fail without writing content.
+Text must start with `🎡`, `publish:`, or `draft:`. `🎡` is the human-facing publish marker and is stripped from the generated markdown. `🎡` and `publish:` write/append `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`. Missing prefixes fail without writing content.
 
 Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-file-name> --file <path> --content-type <mime> --remote` and referenced as `https://media.urcad.es/stream/YYMMDD/<safe-file-name>`. Use `--dry-run` to inspect planned output and R2 keys without writing files or uploading media.
 
