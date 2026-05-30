@@ -14,6 +14,10 @@ npm run build
 # Preview production build locally
 npm run preview
 
+# Local publishing
+npm run publish:stream -- --event /path/to/event.json
+npm run test:publish-stream
+
 # Worker commands
 npm run worker:dev      # Local Worker dev (serves dist/ + API routes)
 npm run deploy         # Build + deploy Worker
@@ -43,7 +47,7 @@ Writing and draft posts share the same schema:
 - `backgroundColor`, `backgroundColorDark` (optional) - Custom background colors
 - `tags` (optional) - Array of strings (e.g., `["stream"]`)
 - `media` (optional) - Array of media objects with `url`, `type`, and `alt`
-- `source` (optional) - How the post was created (`sms`, `web`, `cli`, `telegram`)
+- `source` (optional) - How the post was created (`sms`, `web`, `cli`, `telegram`, `imessage`, `email`)
 
 Files prefixed with `_` are excluded from collections.
 
@@ -96,6 +100,31 @@ flowchart LR
 **Whitelisted users** → `src/content/writing/`; **non-whitelisted** → `src/content/drafts/`. Daily digests use `~` as entry separator; media URLs: `https://media.urcad.es/stream/YYMMDD/filename`.
 
 Configuration: `wrangler.toml` at repo root. Secrets: `scripts/set-secrets.sh` or `npx wrangler secret put <NAME>`.
+
+## Local Stream Publishing
+
+The local publisher is the bridge target for Apple Messages, email, or any other private capture surface that can produce normalized JSON. It writes markdown locally and uses Wrangler to upload media to the existing R2 bucket.
+
+```bash
+npm run publish:stream -- --event /path/to/event.json
+```
+
+Event JSON:
+
+```json
+{
+  "id": "stable-message-or-bridge-id",
+  "source": "imessage",
+  "sender": "optional sender identifier",
+  "receivedAt": "2026-05-30T12:34:56.000Z",
+  "text": "publish: body text",
+  "media": [{ "path": "/absolute/path.jpg", "mimeType": "image/jpeg", "alt": "" }]
+}
+```
+
+Text must start with `publish:` or `draft:`. `publish:` writes/appends `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`. Missing prefixes fail without writing content.
+
+Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-file-name> --file <path> --content-type <mime> --remote` and referenced as `https://media.urcad.es/stream/YYMMDD/<safe-file-name>`. Use `--dry-run` to inspect planned output and R2 keys without writing files or uploading media.
 
 ## Additional Features
 

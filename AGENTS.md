@@ -23,6 +23,10 @@ npm run preview
 # Run Astro CLI directly
 npm run astro
 
+# Local stream publishing
+npm run publish:stream -- --event /path/to/event.json
+npm run test:publish-stream
+
 # Worker commands (Cloudflare)
 npm run worker:dev      # Local Worker dev (serves dist/ + API routes)
 npm run worker:deploy    # Deploy Worker only (no build)
@@ -54,7 +58,7 @@ Content is loaded using Astro's glob loader pattern, excluding files prefixed wi
 Additional schema fields for stream posts (added for Telegram publishing):
 - `tags`: optional array of strings (e.g., `["stream"]`)
 - `media`: optional array of media objects with `url`, `type` ('image'|'video'), and optional `alt`
-- `source`: optional enum ('sms', 'web', 'cli', 'telegram') indicating how the post was created
+- `source`: optional enum ('sms', 'web', 'cli', 'telegram', 'imessage', 'email') indicating how the post was created
 
 Work collection schema: `title`, `pubDate`, `imageUrl`, `category`, `tags`, `url`, `size` (1–3)
 
@@ -154,6 +158,34 @@ Request → Worker (run_worker_first) → API routes or fallthrough to ASSETS (d
 **Location tracking**: Overland iOS app POSTs GeoJSON to `/api/location`; Worker stores latest in KV and reverse-geocodes via Nominatim. The about page fetches `/api/location/current` to display "Currently in {city}, {country}".
 
 **Access Control**: Whitelisted Telegram users → `src/content/writing/`; non-whitelisted → `src/content/drafts/`
+
+### Local Stream Publisher for Host Agents
+
+Use `npm run publish:stream -- --event /path/to/event.json` when a local host agent needs to author stream content from Apple Messages, email, or another private capture surface. This repository owns deterministic publishing from a normalized event; the host bridge owns message watching, attachment readiness, duplicate detection, and event JSON creation.
+
+Normalized event contract:
+
+```json
+{
+  "id": "stable-message-or-bridge-id",
+  "source": "imessage",
+  "sender": "optional sender identifier",
+  "receivedAt": "2026-05-30T12:34:56.000Z",
+  "text": "publish: body text",
+  "media": [{ "path": "/absolute/path.jpg", "mimeType": "image/jpeg", "alt": "" }]
+}
+```
+
+Rules for host agents:
+
+1. `text` must start with `publish:` or `draft:`. Missing prefixes are intentional hard failures and must not be auto-corrected into publishes.
+2. `publish:` writes/appends `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`.
+3. `source` must be one of `imessage`, `email`, `sms`, `cli`, `web`, or `telegram`.
+4. Media paths must be absolute local paths and attachments must exist before invoking the publisher.
+5. The host bridge must maintain its own processed-message ledger keyed by durable message and attachment IDs. Do not rely on timestamp/text matching for dedupe.
+6. The host machine must have Cloudflare/Wrangler auth available for R2 uploads. Use `--dry-run` to inspect R2 keys and output paths without writing files or uploading media.
+7. After publishing, run `npm run build`. Only commit/push after the build passes.
+8. Telegram publishing remains intact for now; do not remove `/api/telegram` or Telegram secrets until the local path has real-world parity.
 
 ## TypeScript Configuration
 
