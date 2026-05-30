@@ -16,6 +16,7 @@ npm run preview
 
 # Local publishing
 npm run publish:stream -- --event /path/to/event.json
+npm run publish:stream:run -- --event /path/to/event.json
 npm run test:publish-stream
 
 # Worker commands
@@ -106,8 +107,11 @@ Configuration: `wrangler.toml` at repo root. Secrets: `scripts/set-secrets.sh` o
 The local publisher is the bridge target for Apple Messages, email, or any other private capture surface that can produce normalized JSON. It writes markdown locally and uses Wrangler to upload media to the existing R2 bucket.
 
 ```bash
+npm run publish:stream:run -- --event /path/to/event.json
 npm run publish:stream -- --event /path/to/event.json
 ```
+
+Use `publish:stream:run` for the host-agent flow. It publishes the event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys published writing posts, verifies the public URL, and prints a JSON result. Use `publish:stream` for lower-level debugging.
 
 Event JSON:
 
@@ -124,7 +128,7 @@ Event JSON:
 
 Text must start with `🎡`, `publish:`, or `draft:`. `🎡` is the human-facing publish marker and is stripped from the generated markdown. `🎡` and `publish:` write/append `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`. Missing prefixes fail without writing content.
 
-Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-file-name> --file <path> --content-type <mime> --remote` and referenced as `https://media.urcad.es/stream/YYMMDD/<safe-file-name>`. Use `--dry-run` to inspect planned output and R2 keys without writing files or uploading media.
+Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-file-name> --file <path> --content-type <mime> --remote` and referenced as `https://media.urcad.es/stream/YYMMDD/<safe-file-name>`. Use `--dry-run` to inspect planned output and R2 keys without writing files, committing, pushing, deploying, or uploading media.
 
 ## Additional Features
 

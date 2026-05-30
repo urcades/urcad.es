@@ -25,6 +25,7 @@ npm run astro
 
 # Local stream publishing
 npm run publish:stream -- --event /path/to/event.json
+npm run publish:stream:run -- --event /path/to/event.json
 npm run test:publish-stream
 
 # Worker commands (Cloudflare)
@@ -161,7 +162,9 @@ Request → Worker (run_worker_first) → API routes or fallthrough to ASSETS (d
 
 ### Local Stream Publisher for Host Agents
 
-Use `npm run publish:stream -- --event /path/to/event.json` when a local host agent needs to author stream content from Apple Messages, email, or another private capture surface. This repository owns deterministic publishing from a normalized event; the host bridge owns message watching, attachment readiness, duplicate detection, and event JSON creation.
+Use `npm run publish:stream:run -- --event /path/to/event.json` when a local host agent needs to author stream content from Apple Messages, email, or another private capture surface. This full-run command publishes the normalized event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys published writing posts, verifies the public URL, and prints a JSON result. Use `npm run publish:stream -- --event /path/to/event.json` only for low-level debugging.
+
+This repository owns deterministic publishing from a normalized event; the host bridge owns message watching, attachment readiness, duplicate detection, and event JSON creation.
 
 Normalized event contract:
 
@@ -184,8 +187,8 @@ Rules for host agents:
 4. `source` must be one of `imessage`, `email`, `sms`, `cli`, `web`, or `telegram`.
 5. Media paths must be absolute local paths and attachments must exist before invoking the publisher.
 6. The host bridge must maintain its own processed-message ledger keyed by durable message and attachment IDs. Do not rely on timestamp/text matching for dedupe.
-7. The host machine must have Cloudflare/Wrangler auth available for R2 uploads. Use `--dry-run` to inspect R2 keys and output paths without writing files or uploading media.
-8. After publishing, run `npm run build`. Only commit/push after the build passes.
+7. The host machine must have Cloudflare/Wrangler auth available for R2 uploads and deploys. Use `--dry-run` to inspect R2 keys and output paths without writing files, committing, pushing, deploying, or uploading media.
+8. Prefer the full-run command. It refuses to start with pre-existing tracked changes, fast-forwards the current branch from `origin`, commits only the generated markdown file, and deploys only published writing posts.
 9. Telegram publishing remains intact for now; do not remove `/api/telegram` or Telegram secrets until the local path has real-world parity.
 
 ## TypeScript Configuration
