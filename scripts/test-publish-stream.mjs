@@ -159,10 +159,31 @@ async function testMediaDryRunPlansR2Key() {
   assert.equal(existsSync(path.join(root, 'src')), false);
 }
 
+async function testDoubleFerrisWheelStripsMediaIntentMarker() {
+  const root = await makeTempRoot();
+  const eventPath = await writeEvent(root, 'double-wheel-media-dry-run', {
+    id: 'double wheel/media guid',
+    source: 'imessage',
+    receivedAt: '2026-05-30T12:34:56.000Z',
+    text: '🎡🎡 physical memory',
+    media: [{
+      path: '/Users/edouard/Library/Messages/Attachments/example photo.jpg',
+      mimeType: 'image/jpeg',
+      alt: '',
+    }],
+  });
+
+  const result = runPublisher(['--event', eventPath, '--root', root]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Media file does not exist/);
+  assert.doesNotMatch(result.stderr, /Nothing to publish/);
+}
+
 await testPublishCreatesAndAppends();
 await testDraftCreatesDraft();
 await testMissingPrefixWritesNothing();
 await testEmptyPublishWritesNothing();
 await testMediaDryRunPlansR2Key();
+await testDoubleFerrisWheelStripsMediaIntentMarker();
 
 console.log('publish-stream tests passed');

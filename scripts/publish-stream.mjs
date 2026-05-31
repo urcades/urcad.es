@@ -8,6 +8,7 @@ import { spawn } from 'node:child_process';
 
 const ALLOWED_SOURCES = new Set(['imessage', 'email', 'sms', 'cli', 'web', 'telegram']);
 const COMMANDS = [
+  { prefix: '🎡🎡', collection: 'writing' },
   { prefix: '🎡', collection: 'writing' },
   { prefix: 'publish:', collection: 'writing' },
   { prefix: 'draft:', collection: 'drafts' },
@@ -149,10 +150,16 @@ function buildR2Key({ postId, eventId, receivedAt, mediaPath, index }) {
 function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
-      stdio: 'inherit',
+      stdio: ['ignore', 'pipe', 'pipe'],
       ...options,
     });
 
+    child.stdout.on('data', chunk => {
+      process.stderr.write(chunk);
+    });
+    child.stderr.on('data', chunk => {
+      process.stderr.write(chunk);
+    });
     child.on('error', reject);
     child.on('close', code => {
       if (code === 0) {
