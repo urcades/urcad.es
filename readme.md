@@ -111,7 +111,7 @@ npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to
 npm run publish:stream -- --event /path/to/event.json
 ```
 
-Use `publish:stream:run` for the host-agent flow. It publishes the event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys published writing posts, verifies the public URL, writes a machine-readable result JSON file, and prints JSON for human/manual use. Use `publish:stream` for lower-level debugging.
+Use `publish:stream:run` for the host-agent flow. It publishes the event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, writes a machine-readable result JSON file, and prints JSON for human/manual use. Use `publish:stream` for lower-level debugging.
 
 Event JSON:
 

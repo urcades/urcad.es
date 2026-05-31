@@ -162,7 +162,7 @@ Request → Worker (run_worker_first) → API routes or fallthrough to ASSETS (d
 
 ### Local Stream Publisher for Host Agents
 
-Use `npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to/result.json` when a local host agent needs to author stream content from Apple Messages, email, or another private capture surface. This full-run command publishes the normalized event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys published writing posts, verifies the public URL, writes a machine-readable result JSON file, and prints a JSON result for humans. Use `npm run publish:stream -- --event /path/to/event.json` only for low-level debugging.
+Use `npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to/result.json` when a local host agent needs to author stream content from Apple Messages, email, or another private capture surface. This full-run command publishes the normalized event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, writes a machine-readable result JSON file, and prints a JSON result for humans. Use `npm run publish:stream -- --event /path/to/event.json` only for low-level debugging.
 
 This repository owns deterministic publishing from a normalized event; the host bridge owns message watching, attachment readiness, duplicate detection, and event JSON creation.
 

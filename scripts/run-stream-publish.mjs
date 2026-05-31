@@ -274,7 +274,7 @@ async function main() {
 
     if (args.deploy && publishResult.collection === 'writing') {
       result.phase = 'deploy';
-      await run('npm', ['run', 'deploy']);
+      await run('npm', ['run', 'worker:deploy']);
       result.deployed = true;
 
       if (args.verify) {
