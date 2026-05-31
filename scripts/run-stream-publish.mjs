@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const tokenRelativePath = path.join('Library', 'Application Support', 'urcad.es', 'cloudflare-api-token');
 
 function usage() {
   return `Usage: npm run publish:stream:run -- --event /path/to/event.json [--result-json /absolute/path.json] [--no-deploy] [--no-verify] [--dry-run]
@@ -99,12 +100,72 @@ function tailLines(value, count = 20) {
     .join('\n');
 }
 
-function run(command, args, options = {}) {
+export function getCloudflareApiTokenFilePath(homeDir = process.env.HOME) {
+  if (!homeDir) {
+    throw new Error('Cannot resolve Cloudflare token file without HOME.');
+  }
+
+  return path.join(homeDir, tokenRelativePath);
+}
+
+function hasUnsafePermissionBits(mode) {
+  return (mode & 0o077) !== 0;
+}
+
+export async function resolveCloudflareApiToken({ env = process.env } = {}) {
+  const homeDir = env.HOME || process.env.HOME;
+  const tokenPath = getCloudflareApiTokenFilePath(homeDir);
+
+  try {
+    const info = await stat(tokenPath);
+    if (hasUnsafePermissionBits(info.mode)) {
+      throw new Error(`Cloudflare API token file must use owner-only permissions: ${tokenPath}`);
+    }
+
+    const token = (await readFile(tokenPath, 'utf8')).trim();
+    if (!token) {
+      throw new Error(`Cloudflare API token file is empty: ${tokenPath}`);
+    }
+
+    return token;
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+
+  const envToken = env.CLOUDFLARE_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN;
+  return envToken ? envToken.trim() : null;
+}
+
+export async function createChildEnv({
+  baseEnv = process.env,
+  needsCloudflareApiToken = false,
+} = {}) {
+  const childEnv = { ...baseEnv };
+  delete childEnv.CLOUDFLARE_API_TOKEN;
+
+  if (needsCloudflareApiToken) {
+    const token = await resolveCloudflareApiToken({ env: baseEnv });
+    if (token) {
+      childEnv.CLOUDFLARE_API_TOKEN = token;
+    }
+  }
+
+  return childEnv;
+}
+
+async function run(command, args, options = {}) {
+  const env = await createChildEnv({
+    needsCloudflareApiToken: options.needsCloudflareApiToken,
+  });
+
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: repoRoot,
       stdio: options.capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
       encoding: 'utf8',
+      env,
     });
 
     let stdout = '';
@@ -173,7 +234,10 @@ async function runPublisher(eventPath, dryRun) {
   const args = ['scripts/publish-stream.mjs', '--event', eventPath];
   if (dryRun) args.push('--dry-run');
 
-  const { stdout } = await run(process.execPath, args, { capture: true });
+  const { stdout } = await run(process.execPath, args, {
+    capture: true,
+    needsCloudflareApiToken: true,
+  });
   return JSON.parse(stdout);
 }
 
@@ -244,6 +308,21 @@ async function main() {
     const branch = await getCurrentBranch();
     result.branch = branch;
 
+    if (args.dryRun) {
+      result.phase = 'publish';
+      const publishResult = await runPublisher(eventPath, true);
+      result.collection = publishResult.collection;
+      result.postId = publishResult.postId;
+      result.media = publishResult.media;
+      result.ok = true;
+      result.phase = 'dry_run';
+      await finish(resultJsonPath, {
+        ...result,
+        dryRun: true,
+      });
+      return;
+    }
+
     result.phase = 'preflight_clean';
     await ensureNoTrackedChanges();
 
@@ -258,16 +337,6 @@ async function main() {
     result.collection = publishResult.collection;
     result.postId = publishResult.postId;
     result.media = publishResult.media;
-
-    if (!publishResult.wrote) {
-      result.ok = true;
-      result.phase = 'dry_run';
-      await finish(resultJsonPath, {
-        ...result,
-        dryRun: true,
-      });
-      return;
-    }
 
     result.phase = 'verify_changed_path';
     const relativePath = await ensureOnlyExpectedPostChanged(publishResult.outputPath);
@@ -288,7 +357,10 @@ async function main() {
 
     if (args.deploy && publishResult.collection === 'writing') {
       result.phase = 'deploy';
-      await run('npm', ['run', 'worker:deploy'], { capture: true });
+      await run('npm', ['run', 'worker:deploy'], {
+        capture: true,
+        needsCloudflareApiToken: true,
+      });
       result.deployed = true;
 
       if (args.verify) {
@@ -320,7 +392,9 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(`run-stream-publish: ${error.message}`);
-  process.exit(1);
-});
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(error => {
+    console.error(`run-stream-publish: ${error.message}`);
+    process.exit(1);
+  });
+}
