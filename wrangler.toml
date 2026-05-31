@@ -15,11 +15,6 @@ binding = "ASSETS"
 run_worker_first = true
 html_handling = "auto-trailing-slash"
 
-# R2 bucket for media storage (existing bucket)
-[[r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "urcades"
-
 # KV namespace for latest location storage
 # Run: npx wrangler kv namespace create "LOCATION_KV"
 # Then fill in the IDs below
@@ -28,22 +23,7 @@ binding = "LOCATION_KV"
 id = "d44c4e8fbfb04b829ee1c860f92106d3"
 preview_id = "1a94def8304a4c1783a7f6d0ddda1fcb"
 
-[vars]
-GITHUB_REPO = "urcades/urcad.es"
-
 # Secrets — set via: npx wrangler secret put <NAME>
 #
 # Required:
-#   GITHUB_TOKEN
-#   TELEGRAM_BOT_TOKEN
-#   WHITELISTED_USERS
 #   OVERLAND_TOKEN
-#
-# Optional cross-posting:
-#   BLUESKY_HANDLE
-#   BLUESKY_APP_PASSWORD
-#   BLUESKY_PDS_URL
-#   ARENA_ACCESS_TOKEN
-#   ARENA_CHANNEL_SLUG
-#   GOTOSOCIAL_URL
-#   GOTOSOCIAL_ACCESS_TOKEN
