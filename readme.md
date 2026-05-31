@@ -14,6 +14,11 @@ npm run build
 # Preview production build locally
 npm run preview
 
+# Local publishing
+npm run publish:stream -- --event /path/to/event.json
+npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to/result.json
+npm run test:publish-stream
+
 # Worker commands
 npm run worker:dev      # Local Worker dev (serves dist/ + API routes)
 npm run deploy         # Build + deploy Worker
@@ -43,7 +48,7 @@ Writing and draft posts share the same schema:
 - `backgroundColor`, `backgroundColorDark` (optional) - Custom background colors
 - `tags` (optional) - Array of strings (e.g., `["stream"]`)
 - `media` (optional) - Array of media objects with `url`, `type`, and `alt`
-- `source` (optional) - How the post was created (`sms`, `web`, `cli`, `telegram`)
+- `source` (optional) - How the post was created (`sms`, `web`, `cli`, `telegram`, `imessage`, `email`)
 
 Files prefixed with `_` are excluded from collections.
 
@@ -96,6 +101,58 @@ flowchart LR
 **Whitelisted users** → `src/content/writing/`; **non-whitelisted** → `src/content/drafts/`. Daily digests use `~` as entry separator; media URLs: `https://media.urcad.es/stream/YYMMDD/filename`.
 
 Configuration: `wrangler.toml` at repo root. Secrets: `scripts/set-secrets.sh` or `npx wrangler secret put <NAME>`.
+
+## Local Stream Publishing
+
+The local publisher is the bridge target for Apple Messages, email, or any other private capture surface that can produce normalized JSON. It writes markdown locally and uses Wrangler to upload media to the existing R2 bucket.
+
+```bash
+npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to/result.json
+npm run publish:stream -- --event /path/to/event.json
+```
+
+Use `publish:stream:run` for the host-agent flow. It publishes the event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, cross-posts to configured social targets, writes a machine-readable result JSON file, and prints JSON for human/manual use. Use `publish:stream` for lower-level debugging.
+
+Event JSON:
+
+```json
+{
+  "id": "stable-message-or-bridge-id",
+  "source": "imessage",
+  "sender": "optional sender identifier",
+  "receivedAt": "2026-05-30T12:34:56.000Z",
+  "text": "🎡 body text",
+  "media": [{ "path": "/absolute/path.jpg", "mimeType": "image/jpeg", "alt": "" }]
+}
+```
+
+Text must start with `🎡`, `publish:`, or `draft:`. `🎡` is the human-facing publish marker and is stripped from the generated markdown. `🎡` and `publish:` write/append `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`. Missing prefixes fail without writing content.
+
+Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-file-name> --file <path> --content-type <mime> --remote` and referenced as `https://media.urcad.es/stream/YYMMDD/<safe-file-name>`. Use `--dry-run` to inspect planned output and R2 keys without writing files, committing, pushing, deploying, uploading media, or cross-posting. Bridge integrations should parse `--result-json` first because stdout can include npm or subprocess output before the final JSON.
+
+### Local Cross-posting
+
+After a published writing post is deployed and its public URL returns 200, `publish:stream:run` mirrors the post to configured social targets. Cross-post failures are non-fatal: the blog publish remains successful, and `crossposts` in the result JSON records per-target status.
+
+Local cross-post credentials are a manual non-repo mirror of Worker secrets because Wrangler secrets cannot be read back out. Store them at `~/Library/Application Support/urcad.es/social-crosspost.json` with mode `600`:
+
+```json
+{
+  "BLUESKY_HANDLE": "example.bsky.social",
+  "BLUESKY_APP_PASSWORD": "app-password",
+  "BLUESKY_PDS_URL": "https://bsky.social/xrpc",
+  "ARENA_ACCESS_TOKEN": "arena-token",
+  "ARENA_CHANNEL_SLUG": "channel-slug",
+  "GOTOSOCIAL_URL": "https://social.example",
+  "GOTOSOCIAL_ACCESS_TOKEN": "gotosocial-token"
+}
+```
+
+`BLUESKY_PDS_URL` is optional. The doctor checks both Cloudflare auth and this social config:
+
+```bash
+npm run publish:stream:doctor
+```
 
 ## Additional Features
 

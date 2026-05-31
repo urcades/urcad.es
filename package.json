@@ -8,11 +8,15 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "publish:stream": "node scripts/publish-stream.mjs",
+    "publish:stream:run": "node scripts/run-stream-publish.mjs",
+    "publish:stream:doctor": "node scripts/doctor-stream-publish-auth.mjs",
+    "test:publish-stream": "node --check scripts/publish-stream.mjs && node --check scripts/run-stream-publish.mjs && node --check scripts/social-crosspost.mjs && node --check scripts/doctor-stream-publish-auth.mjs && node --check scripts/run-with-cloudflare-api-token.mjs && node scripts/test-publish-stream.mjs && node scripts/test-social-crosspost.mjs && node scripts/test-run-stream-publish.mjs",
     "sync:readings": "bash scripts/sync-readings.sh",
     "worker:dev": "wrangler dev",
-    "worker:deploy": "wrangler deploy",
+    "worker:deploy": "node scripts/run-with-cloudflare-api-token.mjs -- wrangler deploy",
     "worker:tail": "wrangler tail",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && npm run worker:deploy"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
