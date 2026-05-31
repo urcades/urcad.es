@@ -4,6 +4,12 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
+import {
+  createSkippedCrosspostResult,
+  crossPostStream,
+  loadSocialCrosspostConfig,
+  sanitizeSocialError,
+} from './social-crosspost.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tokenRelativePath = path.join('Library', 'Application Support', 'urcad.es', 'cloudflare-api-token');
@@ -282,6 +288,51 @@ async function verifyPublicPost(postId) {
   throw new Error(`Public URL did not return 200 after deploy: ${url}`);
 }
 
+export function getCrosspostSkipReason({ args, publishResult, publicUrl }) {
+  if (args.dryRun) return 'dry run';
+  if (publishResult.collection !== 'writing') return 'not a published writing post';
+  if (!args.deploy) return 'deploy disabled';
+  if (!args.verify) return 'public URL verification disabled';
+  if (!publicUrl) return 'public URL unavailable';
+  return null;
+}
+
+export async function runCrosspostPhase({
+  args,
+  publishResult,
+  publicUrl,
+  loadConfig = loadSocialCrosspostConfig,
+  crossPost = crossPostStream,
+} = {}) {
+  const skipReason = getCrosspostSkipReason({ args, publishResult, publicUrl });
+  if (skipReason) {
+    return createSkippedCrosspostResult(skipReason);
+  }
+
+  let config;
+  try {
+    config = await loadConfig({ allowMissing: true });
+  } catch (error) {
+    return createSkippedCrosspostResult(sanitizeSocialError(error));
+  }
+
+  if (!config) {
+    return createSkippedCrosspostResult('social config missing');
+  }
+
+  try {
+    return await crossPost({
+      text: publishResult.body || '',
+      postId: publishResult.postId,
+      publicUrl,
+      media: publishResult.media || [],
+      config,
+    });
+  } catch (error) {
+    return createSkippedCrosspostResult(sanitizeSocialError(error, config));
+  }
+}
+
 async function main() {
   const result = {
     ok: false,
@@ -295,6 +346,7 @@ async function main() {
     deployed: false,
     publicUrl: null,
     media: [],
+    crossposts: null,
   };
 
   let resultJsonPath = null;
@@ -314,6 +366,11 @@ async function main() {
       result.collection = publishResult.collection;
       result.postId = publishResult.postId;
       result.media = publishResult.media;
+      result.crossposts = await runCrosspostPhase({
+        args,
+        publishResult,
+        publicUrl: null,
+      });
       result.ok = true;
       result.phase = 'dry_run';
       await finish(resultJsonPath, {
@@ -368,6 +425,13 @@ async function main() {
         result.publicUrl = await verifyPublicPost(publishResult.postId);
       }
     }
+
+    result.phase = 'crosspost';
+    result.crossposts = await runCrosspostPhase({
+      args,
+      publishResult,
+      publicUrl: result.publicUrl,
+    });
 
     result.ok = true;
     result.phase = 'complete';

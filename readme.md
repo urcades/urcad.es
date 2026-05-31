@@ -111,7 +111,7 @@ npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to
 npm run publish:stream -- --event /path/to/event.json
 ```
 
-Use `publish:stream:run` for the host-agent flow. It publishes the event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, writes a machine-readable result JSON file, and prints JSON for human/manual use. Use `publish:stream` for lower-level debugging.
+Use `publish:stream:run` for the host-agent flow. It publishes the event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, cross-posts to configured social targets, writes a machine-readable result JSON file, and prints JSON for human/manual use. Use `publish:stream` for lower-level debugging.
 
 Event JSON:
 
@@ -128,7 +128,31 @@ Event JSON:
 
 Text must start with `🎡`, `publish:`, or `draft:`. `🎡` is the human-facing publish marker and is stripped from the generated markdown. `🎡` and `publish:` write/append `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`. Missing prefixes fail without writing content.
 
-Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-file-name> --file <path> --content-type <mime> --remote` and referenced as `https://media.urcad.es/stream/YYMMDD/<safe-file-name>`. Use `--dry-run` to inspect planned output and R2 keys without writing files, committing, pushing, deploying, or uploading media. Bridge integrations should parse `--result-json` first because stdout can include npm or subprocess output before the final JSON.
+Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-file-name> --file <path> --content-type <mime> --remote` and referenced as `https://media.urcad.es/stream/YYMMDD/<safe-file-name>`. Use `--dry-run` to inspect planned output and R2 keys without writing files, committing, pushing, deploying, uploading media, or cross-posting. Bridge integrations should parse `--result-json` first because stdout can include npm or subprocess output before the final JSON.
+
+### Local Cross-posting
+
+After a published writing post is deployed and its public URL returns 200, `publish:stream:run` mirrors the post to configured social targets. Cross-post failures are non-fatal: the blog publish remains successful, and `crossposts` in the result JSON records per-target status.
+
+Local cross-post credentials are a manual non-repo mirror of Worker secrets because Wrangler secrets cannot be read back out. Store them at `~/Library/Application Support/urcad.es/social-crosspost.json` with mode `600`:
+
+```json
+{
+  "BLUESKY_HANDLE": "example.bsky.social",
+  "BLUESKY_APP_PASSWORD": "app-password",
+  "BLUESKY_PDS_URL": "https://bsky.social/xrpc",
+  "ARENA_ACCESS_TOKEN": "arena-token",
+  "ARENA_CHANNEL_SLUG": "channel-slug",
+  "GOTOSOCIAL_URL": "https://social.example",
+  "GOTOSOCIAL_ACCESS_TOKEN": "gotosocial-token"
+}
+```
+
+`BLUESKY_PDS_URL` is optional. The doctor checks both Cloudflare auth and this social config:
+
+```bash
+npm run publish:stream:doctor
+```
 
 ## Additional Features
 

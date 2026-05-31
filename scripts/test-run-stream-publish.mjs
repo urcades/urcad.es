@@ -71,7 +71,95 @@ async function testRejectsReadableTokenFile() {
   );
 }
 
+async function testCrosspostSkipReasons() {
+  const publishResult = {
+    collection: 'writing',
+    postId: '260531',
+    body: 'hello',
+    media: [],
+  };
+
+  assert.equal(
+    runner.getCrosspostSkipReason({
+      args: { dryRun: true, deploy: true, verify: true },
+      publishResult,
+      publicUrl: 'https://www.urcad.es/writing/260531/',
+    }),
+    'dry run'
+  );
+
+  assert.equal(
+    runner.getCrosspostSkipReason({
+      args: { dryRun: false, deploy: true, verify: true },
+      publishResult: { ...publishResult, collection: 'drafts' },
+      publicUrl: 'https://www.urcad.es/writing/260531/',
+    }),
+    'not a published writing post'
+  );
+
+  assert.equal(
+    runner.getCrosspostSkipReason({
+      args: { dryRun: false, deploy: false, verify: false },
+      publishResult,
+      publicUrl: null,
+    }),
+    'deploy disabled'
+  );
+}
+
+async function testRunCrosspostPhaseAddsStructuredResult() {
+  const crossposts = await runner.runCrosspostPhase({
+    args: { dryRun: false, deploy: true, verify: true },
+    publishResult: {
+      collection: 'writing',
+      postId: '260531',
+      body: 'hello',
+      media: [{ url: 'https://media.urcad.es/stream/260531/photo.jpg', type: 'image' }],
+    },
+    publicUrl: 'https://www.urcad.es/writing/260531/',
+    loadConfig: async () => ({ ARENA_ACCESS_TOKEN: 'token', ARENA_CHANNEL_SLUG: 'channel' }),
+    crossPost: async payload => {
+      assert.equal(payload.text, 'hello');
+      assert.equal(payload.postId, '260531');
+      assert.equal(payload.publicUrl, 'https://www.urcad.es/writing/260531/');
+      assert.equal(payload.media.length, 1);
+      return {
+        attempted: true,
+        bluesky: { ok: false, skipped: true, error: 'not configured' },
+        arena: { ok: true, skipped: false, error: null },
+        gotosocial: { ok: false, skipped: true, error: 'not configured' },
+      };
+    },
+  });
+
+  assert.equal(crossposts.attempted, true);
+  assert.equal(crossposts.arena.ok, true);
+}
+
+async function testRunCrosspostPhaseIsNonFatal() {
+  const crossposts = await runner.runCrosspostPhase({
+    args: { dryRun: false, deploy: true, verify: true },
+    publishResult: {
+      collection: 'writing',
+      postId: '260531',
+      body: 'hello',
+      media: [],
+    },
+    publicUrl: 'https://www.urcad.es/writing/260531/',
+    loadConfig: async () => ({ ARENA_ACCESS_TOKEN: 'token', ARENA_CHANNEL_SLUG: 'channel' }),
+    crossPost: async () => {
+      throw new Error('secret-ish failure');
+    },
+  });
+
+  assert.equal(crossposts.attempted, false);
+  assert.match(crossposts.error, /failure/);
+}
+
 await testInjectsTokenOnlyIntoCloudflareChildren();
 await testRejectsReadableTokenFile();
+await testCrosspostSkipReasons();
+await testRunCrosspostPhaseAddsStructuredResult();
+await testRunCrosspostPhaseIsNonFatal();
 
 console.log('run-stream-publish tests passed');

@@ -315,9 +315,10 @@ async function main() {
     dryRun: args.dryRun,
     collection: command.collection,
     postId,
+    body: command.body,
     outputPath: result.outputPath,
     wrote: result.wrote,
-    media: uploadedMedia.map(({ key, url, type }) => ({ key, url, type })),
+    media: uploadedMedia.map(({ key, url, type, alt }) => ({ key, url, type, alt })),
   }, null, 2));
 }
 

@@ -9,6 +9,11 @@ import {
   getCloudflareApiTokenFilePath,
   resolveCloudflareApiToken,
 } from './run-stream-publish.mjs';
+import {
+  configuredTargets,
+  getSocialCrosspostConfigFilePath,
+  loadSocialCrosspostConfig,
+} from './social-crosspost.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -76,8 +81,20 @@ async function main() {
   const env = await createChildEnv({ needsCloudflareApiToken: true });
   await runWranglerWhoami(env);
 
+  const socialConfig = await loadSocialCrosspostConfig();
+  const targets = configuredTargets(socialConfig);
+  const configured = Object.entries(targets)
+    .filter(([, enabled]) => enabled)
+    .map(([name]) => name);
+
+  if (configured.length === 0) {
+    throw new Error(`No social cross-post targets configured in ${getSocialCrosspostConfigFilePath()}.`);
+  }
+
   console.log('stream publish auth doctor passed');
   console.log(`token source: ${source}`);
+  console.log(`social config source: ${getSocialCrosspostConfigFilePath()}`);
+  console.log(`social targets configured: ${configured.join(', ')}`);
 }
 
 main().catch(error => {

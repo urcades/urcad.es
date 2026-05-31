@@ -151,7 +151,9 @@ async function testMediaDryRunPlansR2Key() {
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.dryRun, true);
   assert.equal(payload.wrote, false);
+  assert.equal(payload.body, 'photo');
   assert.equal(payload.media[0].type, 'image');
+  assert.equal(payload.media[0].alt, 'example');
   assert.equal(
     payload.media[0].key,
     `stream/260530/260530-${localCompactTime('2026-05-30T12:34:56.000Z')}-message-media-guid-0-example-photo.jpg`
