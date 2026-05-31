@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project Overview
 
-This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and served as a Cloudflare Worker. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components. A unified Worker handles static asset delivery, Telegram publishing, and Overland location tracking.
+This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and served as a Cloudflare Worker. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components. A unified Worker handles static asset delivery and Overland location tracking; local publishing is handled by deterministic repo scripts that can be called by Apple Messages, email, or other private capture bridges.
 
 ## Development Commands
 
@@ -56,10 +56,10 @@ Writing and drafts share the same post schema defined in `src/content.config.ts`
 
 Content is loaded using Astro's glob loader pattern, excluding files prefixed with underscore.
 
-Additional schema fields for stream posts (added for Telegram publishing):
+Additional schema fields for stream posts:
 - `tags`: optional array of strings (e.g., `["stream"]`)
 - `media`: optional array of media objects with `url`, `type` ('image'|'video'), and optional `alt`
-- `source`: optional enum ('sms', 'web', 'cli', 'telegram', 'imessage', 'email') indicating how the post was created
+- `source`: optional enum ('sms', 'web', 'cli', 'telegram', 'imessage', 'email') indicating how the post was created. `telegram` remains valid historical provenance for old content, not an active publishing path.
 
 Work collection schema: `title`, `pubDate`, `imageUrl`, `category`, `tags`, `url`, `size` (1–3)
 
@@ -129,36 +129,22 @@ Request → Worker (run_worker_first) → API routes or fallthrough to ASSETS (d
 ```
 
 **Routes**:
-- `POST /api/telegram` — Telegram bot webhook (blog publishing)
 - `POST /api/location` — Overland iOS location receiver
 - `GET /api/location/current` — Latest stored location (city, coords) — used by about page
 - `*` — Static Astro site from `dist/` via `[assets]` binding
 
 **Bindings** (`wrangler.toml`):
 - `ASSETS`: Static build from `./dist`
-- `MEDIA_BUCKET`: R2 bucket `urcades` (media storage)
 - `LOCATION_KV`: KV namespace for latest location
 
 **Required secrets** (set via `npx wrangler secret put <NAME>` or `scripts/set-secrets.sh`):
-- `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `WHITELISTED_USERS`, `OVERLAND_TOKEN`
-
-**Optional cross-posting**: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `BLUESKY_PDS_URL`, `ARENA_ACCESS_TOKEN`, `ARENA_CHANNEL_SLUG`, `GOTOSOCIAL_URL`, `GOTOSOCIAL_ACCESS_TOKEN`
+- `OVERLAND_TOKEN`
 
 **Key Files**:
 - `worker/src/index.ts`: Router and Env interface
-- `worker/src/telegram.ts`: Telegram → GitHub → R2 publishing (daily digest, Bluesky/Are.na/GoToSocial cross-posting)
 - `worker/src/location.ts`: Overland receiver, KV storage, Nominatim geocoding
 
-**Telegram publishing flow**:
-1. User sends message (text, photo, video) to Telegram bot
-2. Worker validates user against whitelist
-3. Media → R2 under `stream/YYMMDD/`
-4. Content committed to GitHub via API (daily digest `YYMMDD.md`)
-5. Deploy triggers rebuild and redeploy of Worker
-
 **Location tracking**: Overland iOS app POSTs GeoJSON to `/api/location`; Worker stores latest in KV and reverse-geocodes via Nominatim. The about page fetches `/api/location/current` to display "Currently in {city}, {country}".
-
-**Access Control**: Whitelisted Telegram users → `src/content/writing/`; non-whitelisted → `src/content/drafts/`
 
 ### Local Stream Publisher for Host Agents
 
@@ -184,7 +170,7 @@ Rules for host agents:
 1. Human-facing publish messages should start with `🎡`. The marker is control metadata and must not appear in the generated markdown.
 2. `text` must start with `🎡`, `publish:`, or `draft:`. Missing prefixes are intentional hard failures and must not be auto-corrected into publishes.
 3. `🎡` and `publish:` write/append `src/content/writing/YYMMDD.md`; `draft:` writes/appends `src/content/drafts/YYMMDD.md`.
-4. `source` must be one of `imessage`, `email`, `sms`, `cli`, `web`, or `telegram`.
+4. `source` must be one of `imessage`, `email`, `sms`, `cli`, `web`, or `telegram`. Use `telegram` only for historical/imported provenance; it is not an active integration path.
 5. Media paths must be absolute local paths and attachments must exist before invoking the publisher.
 6. The host bridge must maintain its own processed-message ledger keyed by durable message and attachment IDs. Do not rely on timestamp/text matching for dedupe.
 7. The host machine must have Cloudflare/Wrangler auth available for R2 uploads and deploys. Use `--dry-run` to inspect R2 keys and output paths without writing files, committing, pushing, deploying, uploading media, or cross-posting.
@@ -192,7 +178,7 @@ Rules for host agents:
 9. Bridge integrations should parse the result JSON file first. Stdout is intentionally human-facing and may contain npm or subprocess output before the final JSON.
 10. After a deployed writing publish verifies its public URL, the wrapper attempts configured social cross-posts. Cross-post failures are non-fatal and appear under `crossposts` in the result JSON.
 11. Local cross-post credentials live outside the repo at `~/Library/Application Support/urcad.es/social-crosspost.json` with owner-only permissions. This file manually mirrors Worker secrets because Wrangler secrets cannot be read back out. Never print or commit its values.
-12. Telegram publishing remains intact for now; do not remove `/api/telegram` or Telegram secrets until the local path has real-world parity.
+12. Local publishing is the supported authoring path. Historical `source: "telegram"` content should remain valid, but the Worker no longer exposes that legacy endpoint.
 
 ## TypeScript Configuration
 

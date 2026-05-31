@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and served as a Cloudflare Worker. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components. A unified Worker handles static asset delivery, Telegram publishing, and Overland location tracking.
+This is a personal website and blog for Édouard Urcades (urcad.es), built with Astro and served as a Cloudflare Worker. The site features a minimalist design philosophy with blog posts, portfolio work samples, and custom interactive components. A unified Worker handles static asset delivery and Overland location tracking; local publishing is handled by deterministic repo scripts that can be called by Apple Messages, email, or other private capture bridges.
 
 ## Development Commands
 
@@ -22,6 +22,11 @@ npm run preview
 
 # Run Astro CLI directly
 npm run astro
+
+# Local stream publishing
+npm run publish:stream -- --event /path/to/event.json
+npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to/result.json
+npm run test:publish-stream
 
 # Worker commands (Cloudflare)
 npm run worker:dev      # Local Worker dev (serves dist/ + API routes)
@@ -51,10 +56,10 @@ Writing and drafts share the same post schema defined in `src/content.config.ts`
 
 Content is loaded using Astro's glob loader pattern, excluding files prefixed with underscore.
 
-Additional schema fields for stream posts (added for Telegram publishing):
+Additional schema fields for stream posts:
 - `tags`: optional array of strings (e.g., `["stream"]`)
 - `media`: optional array of media objects with `url`, `type` ('image'|'video'), and optional `alt`
-- `source`: optional enum ('sms', 'web', 'cli', 'telegram') indicating how the post was created
+- `source`: optional enum ('sms', 'web', 'cli', 'telegram', 'imessage', 'email') indicating how the post was created. `telegram` remains valid historical provenance for old content, not an active publishing path.
 
 Work collection schema: `title`, `pubDate`, `imageUrl`, `category`, `tags`, `url`, `size` (1–3)
 
@@ -124,36 +129,28 @@ Request → Worker (run_worker_first) → API routes or fallthrough to ASSETS (d
 ```
 
 **Routes**:
-- `POST /api/telegram` — Telegram bot webhook (blog publishing)
 - `POST /api/location` — Overland iOS location receiver
 - `GET /api/location/current` — Latest stored location (city, coords) — used by about page
 - `*` — Static Astro site from `dist/` via `[assets]` binding
 
 **Bindings** (`wrangler.toml`):
 - `ASSETS`: Static build from `./dist`
-- `MEDIA_BUCKET`: R2 bucket `urcades` (media storage)
 - `LOCATION_KV`: KV namespace for latest location
 
 **Required secrets** (set via `npx wrangler secret put <NAME>` or `scripts/set-secrets.sh`):
-- `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `WHITELISTED_USERS`, `OVERLAND_TOKEN`
-
-**Optional cross-posting**: `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `BLUESKY_PDS_URL`, `ARENA_ACCESS_TOKEN`, `ARENA_CHANNEL_SLUG`, `GOTOSOCIAL_URL`, `GOTOSOCIAL_ACCESS_TOKEN`
+- `OVERLAND_TOKEN`
 
 **Key Files**:
 - `worker/src/index.ts`: Router and Env interface
-- `worker/src/telegram.ts`: Telegram → GitHub → R2 publishing (daily digest, Bluesky/Are.na/GoToSocial cross-posting)
 - `worker/src/location.ts`: Overland receiver, KV storage, Nominatim geocoding
-
-**Telegram publishing flow**:
-1. User sends message (text, photo, video) to Telegram bot
-2. Worker validates user against whitelist
-3. Media → R2 under `stream/YYMMDD/`
-4. Content committed to GitHub via API (daily digest `YYMMDD.md`)
-5. Deploy triggers rebuild and redeploy of Worker
 
 **Location tracking**: Overland iOS app POSTs GeoJSON to `/api/location`; Worker stores latest in KV and reverse-geocodes via Nominatim. The about page fetches `/api/location/current` to display "Currently in {city}, {country}".
 
-**Access Control**: Whitelisted Telegram users → `src/content/writing/`; non-whitelisted → `src/content/drafts/`
+### Local Stream Publisher for Host Agents
+
+Use `npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to/result.json` when a local host agent needs to author stream content from Apple Messages, email, or another private capture surface. This full-run command publishes the normalized event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, cross-posts to configured social targets, writes a machine-readable result JSON file, and prints a JSON result for humans. Use `npm run publish:stream -- --event /path/to/event.json` only for low-level debugging.
+
+This repository owns deterministic publishing from a normalized event; the host bridge owns message watching, attachment readiness, duplicate detection, and event JSON creation. Historical `source: "telegram"` content should remain valid, but the Worker no longer exposes that legacy endpoint.
 
 ## TypeScript Configuration
 

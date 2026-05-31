@@ -1,6 +1,6 @@
 # urcad.es
 
-Personal website and blog for Édouard Urcades, built with [Astro](https://astro.build) and served as a [Cloudflare Worker](https://workers.cloudflare.com). A unified Worker delivers the static site and handles Telegram publishing plus Overland location tracking.
+Personal website and blog for Édouard Urcades, built with [Astro](https://astro.build) and served as a [Cloudflare Worker](https://workers.cloudflare.com). A unified Worker delivers the static site and handles Overland location tracking; local publishing is handled by deterministic repo scripts that can be called by Apple Messages, email, or other private capture bridges.
 
 ## Development
 
@@ -66,45 +66,27 @@ Deploy with `npm run deploy` (builds Astro, then deploys the Worker via `wrangle
 - **Output directory**: `dist/`
 - **Custom domain**: `https://www.urcad.es`
 
-Secrets are configured via `npx wrangler secret put <NAME>` or `scripts/set-secrets.sh`.
+The Worker requires only `OVERLAND_TOKEN`, configured via `npx wrangler secret put OVERLAND_TOKEN` or `scripts/set-secrets.sh`. Local publishing credentials are stored outside the repo; see [Local Stream Publishing](#local-stream-publishing).
 
 ## Unified Worker
 
 A single Cloudflare Worker serves the site and handles:
 
 - **Static assets** — Astro build from `dist/` (run_worker_first)
-- **Telegram publishing** — `POST /api/telegram` webhook → GitHub API → R2 → cross-post to Bluesky, Are.na, GoToSocial
 - **Location tracking** — `POST /api/location` (Overland iOS) and `GET /api/location/current` (displayed on about page)
 
 ```mermaid
 flowchart LR
-    TG[Telegram] --> W[Worker]
     OV[Overland] --> W
-    W --> GH[GitHub API]
-    W --> R2[R2]
     W --> KV[KV]
-    GH --> W
     W --> Site[urcad.es]
-    W --> BS[Bluesky]
-    W --> AR[Are.na]
-    W --> GTS[GoToSocial]
 ```
 
-### Telegram Flow
-
-1. Send a message (text, photo, or video) to the Telegram bot
-2. Worker validates user against whitelist
-3. Media → R2 under `stream/YYMMDD/`
-4. Content committed to GitHub (daily digest `YYMMDD.md`)
-5. Deploy triggers rebuild and redeploy
-
-**Whitelisted users** → `src/content/writing/`; **non-whitelisted** → `src/content/drafts/`. Daily digests use `~` as entry separator; media URLs: `https://media.urcad.es/stream/YYMMDD/filename`.
-
-Configuration: `wrangler.toml` at repo root. Secrets: `scripts/set-secrets.sh` or `npx wrangler secret put <NAME>`.
+Configuration lives in `wrangler.toml` at the repo root. Historical stream posts may still use `source: "telegram"` in frontmatter for provenance, but Telegram is no longer an active Worker publishing surface.
 
 ## Local Stream Publishing
 
-The local publisher is the bridge target for Apple Messages, email, or any other private capture surface that can produce normalized JSON. It writes markdown locally and uses Wrangler to upload media to the existing R2 bucket.
+The local publisher is the canonical bridge target for Apple Messages, email, or any other private capture surface that can produce normalized JSON. It writes markdown locally, uses Wrangler to upload media to the existing R2 bucket, commits/pushes the generated content, deploys the Worker assets, verifies the public URL, and mirrors the post to configured social targets.
 
 ```bash
 npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to/result.json
@@ -134,7 +116,7 @@ Media is uploaded with `npx wrangler r2 object put urcades/stream/YYMMDD/<safe-f
 
 After a published writing post is deployed and its public URL returns 200, `publish:stream:run` mirrors the post to configured social targets. Cross-post failures are non-fatal: the blog publish remains successful, and `crossposts` in the result JSON records per-target status.
 
-Local cross-post credentials are a manual non-repo mirror of Worker secrets because Wrangler secrets cannot be read back out. Store them at `~/Library/Application Support/urcad.es/social-crosspost.json` with mode `600`:
+Local cross-post credentials are stored outside the repo. Store them at `~/Library/Application Support/urcad.es/social-crosspost.json` with mode `600`:
 
 ```json
 {
