@@ -91,6 +91,14 @@ async function finish(resultJsonPath, payload) {
   console.log(JSON.stringify(payload, null, 2));
 }
 
+function tailLines(value, count = 20) {
+  return String(value || '')
+    .split('\n')
+    .filter(Boolean)
+    .slice(-count)
+    .join('\n');
+}
+
 function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -116,7 +124,13 @@ function run(command, args, options = {}) {
       if (code === 0) {
         resolve({ stdout, stderr });
       } else {
-        reject(new Error(`${command} ${args.join(' ')} exited with code ${code}${stderr ? `\n${stderr}` : ''}`));
+        const error = new Error(`${command} ${args.join(' ')} exited with code ${code}${stderr ? `\n${tailLines(stderr)}` : ''}`);
+        error.exitCode = code;
+        error.command = command;
+        error.args = args;
+        error.stdout = stdout;
+        error.stderr = stderr;
+        reject(error);
       }
     });
   });
@@ -274,7 +288,7 @@ async function main() {
 
     if (args.deploy && publishResult.collection === 'writing') {
       result.phase = 'deploy';
-      await run('npm', ['run', 'worker:deploy']);
+      await run('npm', ['run', 'worker:deploy'], { capture: true });
       result.deployed = true;
 
       if (args.verify) {
@@ -287,9 +301,19 @@ async function main() {
     result.phase = 'complete';
     await finish(resultJsonPath, result);
   } catch (error) {
+    result.message = error.message;
     result.error = {
       message: error.message,
     };
+    if (error.exitCode !== undefined) {
+      result.error.exitCode = error.exitCode;
+    }
+    if (error.stdout) {
+      result.error.stdoutTail = tailLines(error.stdout);
+    }
+    if (error.stderr) {
+      result.error.stderrTail = tailLines(error.stderr);
+    }
     await tryWriteResultJson(resultJsonPath, result);
     console.error(`run-stream-publish: ${error.message}`);
     process.exitCode = 1;
