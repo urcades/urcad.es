@@ -223,17 +223,68 @@ async function getCurrentBranch() {
   return branch;
 }
 
+async function getHead(ref = 'HEAD') {
+  const { stdout } = await git(['rev-parse', ref], { capture: true });
+  return stdout.trim();
+}
+
+export function dependencyManifestFilesFromDiff(stdout) {
+  return String(stdout || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(pathname => pathname === 'package.json' || pathname === 'package-lock.json');
+}
+
+export function hasDependencyManifestChanges(stdout) {
+  return dependencyManifestFilesFromDiff(stdout).length > 0;
+}
+
+async function getChangedDependencyManifestFiles(oldHead, newHead) {
+  if (oldHead === newHead) {
+    return [];
+  }
+
+  const { stdout } = await git([
+    'diff',
+    '--name-only',
+    oldHead,
+    newHead,
+    '--',
+    'package.json',
+    'package-lock.json',
+  ], { capture: true });
+
+  return dependencyManifestFilesFromDiff(stdout);
+}
+
 async function syncCurrentBranch(branch) {
   await git(['fetch', 'origin', branch]);
 
-  const { stdout: localHead } = await git(['rev-parse', 'HEAD'], { capture: true });
-  const { stdout: remoteHead } = await git(['rev-parse', 'FETCH_HEAD'], { capture: true });
+  const oldHead = await getHead('HEAD');
+  const remoteHead = await getHead('FETCH_HEAD');
 
-  if (localHead.trim() === remoteHead.trim()) {
-    return;
+  if (oldHead !== remoteHead) {
+    await git(['merge', '--ff-only', 'FETCH_HEAD']);
   }
 
-  await git(['merge', '--ff-only', 'FETCH_HEAD']);
+  const newHead = await getHead('HEAD');
+  const dependencyFiles = await getChangedDependencyManifestFiles(oldHead, newHead);
+
+  return {
+    oldHead,
+    newHead,
+    dependencyFiles,
+  };
+}
+
+async function refreshDependenciesIfNeeded(syncResult) {
+  const dependencyFiles = syncResult?.dependencyFiles || [];
+  if (dependencyFiles.length === 0) {
+    return false;
+  }
+
+  await run('npm', ['install']);
+  return true;
 }
 
 async function runPublisher(eventPath, dryRun) {
@@ -344,6 +395,8 @@ async function main() {
     commit: null,
     pushed: false,
     deployed: false,
+    dependenciesRefreshed: false,
+    dependencyRefreshFiles: [],
     publicUrl: null,
     media: [],
     crossposts: null,
@@ -384,7 +437,11 @@ async function main() {
     await ensureNoTrackedChanges();
 
     result.phase = 'sync_branch';
-    await syncCurrentBranch(branch);
+    const syncResult = await syncCurrentBranch(branch);
+    result.dependencyRefreshFiles = syncResult.dependencyFiles;
+
+    result.phase = 'refresh_dependencies';
+    result.dependenciesRefreshed = await refreshDependenciesIfNeeded(syncResult);
 
     result.phase = 'post_sync_clean';
     await ensureNoTrackedChanges();

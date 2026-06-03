@@ -71,6 +71,21 @@ async function testRejectsReadableTokenFile() {
   );
 }
 
+function testDependencyManifestChangeDetection() {
+  assert.equal(runner.hasDependencyManifestChanges(''), false);
+  assert.equal(runner.hasDependencyManifestChanges('src/content/writing/260603.md\n'), false);
+  assert.equal(runner.hasDependencyManifestChanges('package.json\n'), true);
+  assert.equal(runner.hasDependencyManifestChanges('package-lock.json\n'), true);
+  assert.equal(
+    runner.hasDependencyManifestChanges('src/layouts/Base.astro\npackage-lock.json\n'),
+    true
+  );
+  assert.deepEqual(
+    runner.dependencyManifestFilesFromDiff('package.json\nsrc/pages/index.astro\npackage-lock.json\n'),
+    ['package.json', 'package-lock.json']
+  );
+}
+
 async function testCrosspostSkipReasons() {
   const publishResult = {
     collection: 'writing',
@@ -158,6 +173,7 @@ async function testRunCrosspostPhaseIsNonFatal() {
 
 await testInjectsTokenOnlyIntoCloudflareChildren();
 await testRejectsReadableTokenFile();
+testDependencyManifestChangeDetection();
 await testCrosspostSkipReasons();
 await testRunCrosspostPhaseAddsStructuredResult();
 await testRunCrosspostPhaseIsNonFatal();
