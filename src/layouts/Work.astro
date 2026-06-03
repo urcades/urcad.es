@@ -1,4 +1,5 @@
 ---
+import { Image } from "astro:assets";
 import Base from "./Base.astro";
 const { frontmatter } = Astro.props;
 const pageTitle = `${frontmatter.title} — É. Urcades`;
@@ -38,10 +39,17 @@ const pageTitle = `${frontmatter.title} — É. Urcades`;
 </style>
 
 <Base pageTitle={pageTitle}>
-  <p><a href="/work/">Back to All Work</a></p>
+  <p><a href="/work/" data-astro-prefetch>Back to All Work</a></p>
 
   <div class="work-header">
-    <img src={frontmatter.imageUrl} alt={frontmatter.title} />
+    <Image
+      src={frontmatter.imageUrl}
+      alt={frontmatter.title}
+      inferSize
+      priority
+      widths={[640, 960, 1280, 1600, 2000]}
+      sizes="100vw"
+    />
   </div>
 
   <h1>{frontmatter.title}</h1>
@@ -73,5 +81,5 @@ const pageTitle = `${frontmatter.title} — É. Urcades`;
   </article>
 
   <p>~</p>
-  <p><a href="/work/">Back to All Work</a></p>
+  <p><a href="/work/" data-astro-prefetch>Back to All Work</a></p>
 </Base>

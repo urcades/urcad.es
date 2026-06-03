@@ -42,7 +42,7 @@ const jsonLd = {
     margin-inline-start: var(--space-1);
   }
 
-  /* Reading highlight styles (from remark-highlight plugin) */
+  /* Reading highlight styles (from the Sätteri highlight plugin) */
   .reading-highlight {
     font-style: italic;
     padding-inline-start: var(--space-1);
@@ -81,7 +81,7 @@ const jsonLd = {
   <!-- JSON-LD structured data -->
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-  <p><a href="/writing/">Back to All Writing</a></p>
+  <p><a href="/writing/" data-astro-prefetch>Back to All Writing</a></p>
   <article class="prose writing-article">
     <header>
       <h1 class="title-measure">{frontmatter.title}</h1>
@@ -96,7 +96,7 @@ const jsonLd = {
     </footer>
   </article>
   <nav>
-    <p><a href="/writing/">Back to All Writing</a></p>
+    <p><a href="/writing/" data-astro-prefetch>Back to All Writing</a></p>
     <p><a href="https://urcades.substack.com/">Subscribe</a></p>
     <p><a href="/rss.xml">RSS</a></p>
   </nav>

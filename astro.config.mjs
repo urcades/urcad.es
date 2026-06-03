@@ -1,18 +1,21 @@
 import { defineConfig } from "astro/config";
+import { satteri } from "@astrojs/markdown-satteri";
 import sitemap from "@astrojs/sitemap";
-import remarkHighlight from "./plugins/remark-highlight.mjs";
+import satteriHighlight from "./plugins/satteri-highlight.mjs";
 
 export default defineConfig({
   image: {
-    domains: ["media.urcad.es"],
+    domains: ["media.urcad.es", "d2w9rnfcy7mm78.cloudfront.net"],
   },
   markdown: {
     syntaxHighlight: false,
-    remarkPlugins: [remarkHighlight],
+    processor: satteri({
+      hastPlugins: [satteriHighlight()],
+    }),
   },
   site: "https://www.urcad.es",
   prefetch: {
-    prefetchAll: true,
+    prefetchAll: false,
   },
   integrations: [sitemap()],
 });

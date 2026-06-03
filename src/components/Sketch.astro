@@ -1,4 +1,6 @@
 ---
+import { Image } from "astro:assets";
+
 interface Props {
   imageUrl: string;
   title: string;
@@ -16,6 +18,12 @@ const {
   size = "1",
   caseStudyUrl,
 } = Astro.props;
+
+const imageSizes = {
+  "1": "(min-width: 2222px) 25vw, (min-width: 1000px) 33vw, (min-width: 800px) 50vw, 100vw",
+  "2": "(min-width: 2222px) 50vw, (min-width: 1000px) 67vw, 100vw",
+  "3": "(min-width: 2222px) 75vw, 100vw",
+}[size] ?? "100vw";
 ---
 
 <style>
@@ -97,7 +105,7 @@ const {
     }
   }
 
-  img {
+  :global(.sketch-image) {
     width: 100%;
     height: auto;
     object-fit: cover;
@@ -109,11 +117,18 @@ const {
 </style>
 
 <div class="sketch" data-size={size}>
-  <img src={imageUrl} alt={title} />
+  <Image
+    class="sketch-image"
+    src={imageUrl}
+    alt={title}
+    inferSize
+    widths={[320, 640, 960, 1280, 1600]}
+    sizes={imageSizes}
+  />
   <div class="sketch-info">
     <p>{title}</p>
     <em>{category}</em>
-    {caseStudyUrl && <a href={caseStudyUrl}>⌘</a>}
+    {caseStudyUrl && <a href={caseStudyUrl} data-astro-prefetch>⌘</a>}
     {
       url && (
         <a href={url} target="_blank" rel="noopener">

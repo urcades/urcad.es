@@ -1,9 +1,8 @@
-import { visit } from "unist-util-visit";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { defineHastPlugin } from "satteri";
 
-// Cache readings data at module load time
 let readingsData = null;
 
 function loadReadings() {
@@ -12,7 +11,6 @@ function loadReadings() {
   }
 
   try {
-    // Resolve path relative to project root
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const readingsPath = path.join(__dirname, "../src/data/readings.json");
     const content = fs.readFileSync(readingsPath, "utf-8");
@@ -38,10 +36,10 @@ function findHighlight(id) {
   return null;
 }
 
-export default function remarkHighlight() {
-  return (tree) => {
-    visit(tree, "text", (node, index, parent) => {
-      // Match ::highlight[id] syntax
+export default function satteriHighlight() {
+  return defineHastPlugin({
+    name: "reading-highlights",
+    text(node) {
       const regex = /::highlight\[([^\]]+)\]/g;
       const value = node.value;
 
@@ -49,20 +47,15 @@ export default function remarkHighlight() {
         return;
       }
 
-      // Reset regex
       regex.lastIndex = 0;
 
-      const parts = [];
+      let html = "";
       let lastIndex = 0;
       let match;
 
       while ((match = regex.exec(value)) !== null) {
-        // Text before the match
         if (match.index > lastIndex) {
-          parts.push({
-            type: "text",
-            value: value.slice(lastIndex, match.index),
-          });
+          html += escapeHtml(value.slice(lastIndex, match.index));
         }
 
         const highlightId = match[1];
@@ -70,40 +63,24 @@ export default function remarkHighlight() {
 
         if (result) {
           const { highlight, book } = result;
-          // Create HTML node for the blockquote
-          parts.push({
-            type: "html",
-            value: `<blockquote class="reading-highlight">
+          html += `<blockquote class="reading-highlight">
 <p>"${escapeHtml(highlight.text)}"</p>
 <cite>${escapeHtml(book.title)}, ${escapeHtml(book.author)}</cite>
-</blockquote>`,
-          });
+</blockquote>`;
         } else {
-          // Highlight not found
-          parts.push({
-            type: "html",
-            value: `<span class="highlight-missing">[Highlight not found: ${escapeHtml(highlightId)}]</span>`,
-          });
+          html += `<span class="highlight-missing">[Highlight not found: ${escapeHtml(highlightId)}]</span>`;
         }
 
         lastIndex = regex.lastIndex;
       }
 
-      // Text after last match
       if (lastIndex < value.length) {
-        parts.push({
-          type: "text",
-          value: value.slice(lastIndex),
-        });
+        html += escapeHtml(value.slice(lastIndex));
       }
 
-      // Replace node with parts
-      if (parts.length > 0) {
-        parent.children.splice(index, 1, ...parts);
-        return index + parts.length;
-      }
-    });
-  };
+      return { type: "raw", value: html };
+    },
+  });
 }
 
 function escapeHtml(str) {
