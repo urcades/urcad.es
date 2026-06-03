@@ -4,7 +4,6 @@ import readings from "../data/readings.json";
 
 const pageTitle = "Reading";
 
-// Get books with highlights, sorted by number of highlights (most first)
 const books = readings.books
   .filter((book: any) => book.highlights.length > 0)
   .sort((a: any, b: any) => b.highlights.length - a.highlights.length);
@@ -34,36 +33,8 @@ const totalHighlights = books.reduce(
     margin-block-start: var(--space-quarter);
   }
 
-  .highlight-entry {
-    margin-block-end: var(--space-2);
-    padding-inline-start: var(--space-1);
-    border-inline-start: 1px solid currentColor;
-  }
-
-  .highlight-text {
+  .book-count {
     margin: 0;
-    margin-block-end: var(--space-half);
-  }
-
-  .highlight-meta {
-    font-style: italic;
-    margin: 0;
-  }
-
-  .copy-highlight {
-    margin-inline-start: var(--space-half);
-    opacity: 0.5;
-    text-decoration: none;
-  }
-
-  .copy-highlight:hover {
-    opacity: 1;
-  }
-
-  .highlight-note {
-    font-style: italic;
-    margin: 0;
-    margin-block-start: var(--space-half);
   }
 
   .empty-state {
@@ -81,44 +52,31 @@ const totalHighlights = books.reduce(
       books.map((book: any) => (
         <section class="book-section">
           <div class="book-header">
-            <p class="book-title">{book.title}</p>
+            <p class="book-title">
+              <a href={`/reading/${book.id}/`} data-astro-prefetch>{book.title}</a>
+            </p>
             <p class="book-author text-soft">{book.author}</p>
+            <p class="book-count text-muted">
+              {book.highlights.length}{" "}
+              {book.highlights.length === 1 ? "highlight" : "highlights"}
+            </p>
           </div>
-          {book.highlights.map((h: any) => (
-            <div class="highlight-entry" id={h.id}>
-              <p class="highlight-text">{h.text}</p>
-              <p class="highlight-meta text-muted">
-                {book.title}, {book.author}
-                <a
-                  href="#"
-                  class="copy-highlight"
-                  data-highlight-id={h.id}
-                  title="Copy highlight reference"
-                >
-                  ❧
-                </a>
-              </p>
-              {h.note && <p class="highlight-note text-note">Note: {h.note}</p>}
-            </div>
-          ))}
         </section>
       ))
     }
   </div>
 
   <script>
-    document.querySelectorAll(".copy-highlight").forEach((link) => {
-      link.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const id = (e.currentTarget as HTMLElement).dataset.highlightId;
-        const text = `::highlight[${id}]`;
-        await navigator.clipboard.writeText(text);
+    const highlightId = window.location.hash.slice(1);
 
-        const el = e.currentTarget as HTMLElement;
-        const original = el.textContent;
-        el.textContent = "✓";
-        setTimeout(() => (el.textContent = original), 1000);
-      });
-    });
+    if (highlightId) {
+      fetch("/reading/highlights.json")
+        .then((response) => response.ok ? response.json() : {})
+        .then((highlightRoutes: Record<string, string>) => {
+          const target = highlightRoutes[highlightId];
+          if (target) window.location.replace(target);
+        })
+        .catch(() => {});
+    }
   </script>
 </Base>

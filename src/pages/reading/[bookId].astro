@@ -1,0 +1,115 @@
+---
+import Base from "../../layouts/Base.astro";
+import readings from "../../data/readings.json";
+
+export function getStaticPaths() {
+  return readings.books
+    .filter((book: any) => book.highlights.length > 0)
+    .map((book: any) => ({
+      params: { bookId: book.id },
+      props: { book },
+    }));
+}
+
+const { book } = Astro.props;
+const pageTitle = `${book.title} — Reading`;
+---
+
+<style>
+  .book-header {
+    margin-block-end: var(--space-1-5);
+  }
+
+  .book-title {
+    font-style: italic;
+    margin: 0;
+  }
+
+  .book-author {
+    margin: 0;
+    margin-block-start: var(--space-quarter);
+  }
+
+  .highlight-entry {
+    margin-block-end: var(--space-2);
+    padding-inline-start: var(--space-1);
+    border-inline-start: 1px solid currentColor;
+  }
+
+  .highlight-text {
+    margin: 0;
+    margin-block-end: var(--space-half);
+  }
+
+  .highlight-meta {
+    font-style: italic;
+    margin: 0;
+  }
+
+  .copy-highlight {
+    margin-inline-start: var(--space-half);
+    opacity: 0.5;
+    text-decoration: none;
+  }
+
+  .copy-highlight:hover {
+    opacity: 1;
+  }
+
+  .highlight-note {
+    font-style: italic;
+    margin: 0;
+    margin-block-start: var(--space-half);
+  }
+</style>
+
+<Base pageTitle={pageTitle}>
+  <p><a href="/reading/" data-astro-prefetch>Back to Reading</a></p>
+
+  <div class="book-header">
+    <p class="book-title">{book.title}</p>
+    <p class="book-author text-soft">{book.author}</p>
+    <p class="text-muted">
+      {book.highlights.length}{" "}
+      {book.highlights.length === 1 ? "highlight" : "highlights"}
+    </p>
+  </div>
+
+  <div class="prose">
+    {
+      book.highlights.map((h: any) => (
+        <div class="highlight-entry" id={h.id}>
+          <p class="highlight-text">{h.text}</p>
+          <p class="highlight-meta text-muted">
+            {book.title}, {book.author}
+            <a
+              href="#"
+              class="copy-highlight"
+              data-highlight-id={h.id}
+              title="Copy highlight reference"
+            >
+              ❧
+            </a>
+          </p>
+          {h.note && <p class="highlight-note text-note">Note: {h.note}</p>}
+        </div>
+      ))
+    }
+  </div>
+
+  <script>
+    document.querySelectorAll(".copy-highlight").forEach((link) => {
+      link.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const id = (e.currentTarget as HTMLElement).dataset.highlightId;
+        const text = `::highlight[${id}]`;
+        await navigator.clipboard.writeText(text);
+
+        const el = e.currentTarget as HTMLElement;
+        const original = el.textContent;
+        el.textContent = "✓";
+        setTimeout(() => (el.textContent = original), 1000);
+      });
+    });
+  </script>
+</Base>
