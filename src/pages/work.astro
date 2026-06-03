@@ -10,6 +10,7 @@ const allWork = await getCollection("work");
 const sortedWork = allWork.sort(
   (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
+const priorityWorkId = sortedWork[0]?.id;
 
 // Group by year
 const workByYear = sortedWork.reduce(
@@ -46,6 +47,7 @@ const years = Object.keys(workByYear)
                 url={item.data.url}
                 size={item.data.size}
                 caseStudyUrl={hasContent ? `/work/${item.id}` : undefined}
+                priority={item.id === priorityWorkId}
               />
             );
           })}

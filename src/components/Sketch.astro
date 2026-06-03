@@ -8,6 +8,7 @@ interface Props {
   url?: string;
   size?: string;
   caseStudyUrl?: string;
+  priority?: boolean;
 }
 
 const {
@@ -17,13 +18,28 @@ const {
   url,
   size = "1",
   caseStudyUrl,
+  priority = false,
 } = Astro.props;
 
-const imageSizes = {
-  "1": "(min-width: 2222px) 25vw, (min-width: 1000px) 33vw, (min-width: 800px) 50vw, 100vw",
-  "2": "(min-width: 2222px) 50vw, (min-width: 1000px) 67vw, 100vw",
-  "3": "(min-width: 2222px) 75vw, 100vw",
-}[size] ?? "100vw";
+const imageProfiles: Record<string, { sizes: string; widths: number[] }> = {
+  "1": {
+    sizes: "(min-width: 2222px) 25vw, (min-width: 1000px) 33vw, (min-width: 800px) 50vw, 100vw",
+    widths: [320, 480, 640, 800, 960, 1280],
+  },
+  "2": {
+    sizes: "(min-width: 2222px) 50vw, (min-width: 1000px) 67vw, 100vw",
+    widths: [320, 640, 960, 1280, 1600, 2000, 2400],
+  },
+  "3": {
+    sizes: "(min-width: 2222px) 75vw, 100vw",
+    widths: [320, 640, 960, 1280, 1600, 2000, 2400, 3200],
+  },
+};
+
+const imageProfile = imageProfiles[size] ?? {
+  sizes: "100vw",
+  widths: [320, 640, 960, 1280, 1600],
+};
 ---
 
 <style>
@@ -122,8 +138,9 @@ const imageSizes = {
     src={imageUrl}
     alt={title}
     inferSize
-    widths={[320, 640, 960, 1280, 1600]}
-    sizes={imageSizes}
+    priority={priority}
+    widths={imageProfile.widths}
+    sizes={imageProfile.sizes}
   />
   <div class="sketch-info">
     <p>{title}</p>
