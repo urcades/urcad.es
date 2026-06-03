@@ -3,6 +3,7 @@ import { defineHastPlugin } from "satteri";
 const DEFAULT_WIDTHS = [480, 720, 960, 1280];
 const DEFAULT_SIZES = "(min-width: 768px) 55ch, 100vw";
 const DEFAULT_REMOTE_DOMAINS = ["media.urcad.es", "d2w9rnfcy7mm78.cloudfront.net"];
+const UNSUPPORTED_IMAGE_EXTENSIONS = new Set([".gif", ".heic", ".heif", ".tif", ".tiff"]);
 
 export default function satteriResponsiveImages({
   widths = DEFAULT_WIDTHS,
@@ -30,10 +31,11 @@ export default function satteriResponsiveImages({
   });
 }
 
-function shouldAnnotateImage(src, props, allowedRemoteDomains) {
+export function shouldAnnotateImage(src, props, allowedRemoteDomains) {
   if (!src) return false;
   if (hasAuthorResponsiveProps(props)) return false;
   if (hasAuthorSizingProps(props)) return false;
+  if (hasUnsupportedImageExtension(src)) return false;
   if (isDataUrl(src) || isSvg(src) || src.startsWith("/")) return false;
 
   if (!URL.canParse(src)) {
@@ -41,6 +43,7 @@ function shouldAnnotateImage(src, props, allowedRemoteDomains) {
   }
 
   const url = new URL(src);
+  if (isStreamMediaUrl(url)) return false;
   return url.protocol === "https:" && allowedRemoteDomains.has(url.hostname);
 }
 
@@ -59,4 +62,14 @@ function isDataUrl(src) {
 function isSvg(src) {
   const pathname = URL.canParse(src) ? new URL(src).pathname : src.split("?")[0];
   return pathname.toLowerCase().endsWith(".svg");
+}
+
+function hasUnsupportedImageExtension(src) {
+  const pathname = URL.canParse(src) ? new URL(src).pathname : src.split("?")[0];
+  const extension = pathname.slice(pathname.lastIndexOf(".")).toLowerCase();
+  return UNSUPPORTED_IMAGE_EXTENSIONS.has(extension);
+}
+
+function isStreamMediaUrl(url) {
+  return url.hostname === "media.urcad.es" && url.pathname.startsWith("/stream/");
 }

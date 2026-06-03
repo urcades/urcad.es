@@ -6,7 +6,14 @@ import satteriResponsiveImages from "./plugins/satteri-responsive-images.mjs";
 
 export default defineConfig({
   image: {
-    domains: ["media.urcad.es", "d2w9rnfcy7mm78.cloudfront.net"],
+    domains: ["d2w9rnfcy7mm78.cloudfront.net"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "media.urcad.es",
+        pathname: "/assets/**",
+      },
+    ],
   },
   markdown: {
     syntaxHighlight: false,

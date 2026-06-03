@@ -11,7 +11,7 @@
     "publish:stream": "node scripts/publish-stream.mjs",
     "publish:stream:run": "node scripts/run-stream-publish.mjs",
     "publish:stream:doctor": "node scripts/doctor-stream-publish-auth.mjs",
-    "test:publish-stream": "node --check scripts/publish-stream.mjs && node --check scripts/run-stream-publish.mjs && node --check scripts/social-crosspost.mjs && node --check scripts/doctor-stream-publish-auth.mjs && node --check scripts/run-with-cloudflare-api-token.mjs && node scripts/test-publish-stream.mjs && node scripts/test-social-crosspost.mjs && node scripts/test-run-stream-publish.mjs",
+    "test:publish-stream": "node --check scripts/publish-stream.mjs && node --check scripts/run-stream-publish.mjs && node --check scripts/social-crosspost.mjs && node --check scripts/doctor-stream-publish-auth.mjs && node --check scripts/run-with-cloudflare-api-token.mjs && node scripts/test-publish-stream.mjs && node scripts/test-social-crosspost.mjs && node scripts/test-run-stream-publish.mjs && node scripts/test-satteri-responsive-images.mjs",
     "test:readings": "node --test scripts/test-sync-readwise-readings.mjs",
     "sync:readings": "node scripts/sync-readwise-readings.mjs",
     "sync:readings:dry-run": "node scripts/sync-readwise-readings.mjs --dry-run",
