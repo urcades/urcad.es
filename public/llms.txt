@@ -9,7 +9,7 @@ Personal website and blog of Édouard Urcades, a designer and artist.
 
 ## Machine-readable endpoints
 - /rss.xml - RSS feed with full post content
-- /api/posts.json - JSON list of all posts
+- /api/writing.json - JSON list of all writing posts
 - /sitemap.xml - XML sitemap
 
 ## Author
