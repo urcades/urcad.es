@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: sync-readings
   cancel-in-progress: false
@@ -19,6 +22,7 @@ jobs:
       READWISE_ACCESS_TOKEN: ${{ secrets.READWISE_ACCESS_TOKEN }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Check out repository
@@ -51,15 +55,39 @@ jobs:
         if: steps.changes.outputs.changed == 'true'
         run: npm run build
 
-      - name: Deploy Worker and static assets
-        if: steps.changes.outputs.changed == 'true'
-        run: npx wrangler deploy
-
       - name: Commit synced readings
         if: steps.changes.outputs.changed == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/readings.json
-          git commit -m "Sync Readwise readings"
-          git push
+          node <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const repo = process.env.GITHUB_REPOSITORY;
+          const branch = process.env.GITHUB_REF_NAME;
+          const filePath = 'src/data/readings.json';
+          const sha = execFileSync(
+            'gh',
+            ['api', `repos/${repo}/contents/${filePath}`, '--jq', '.sha'],
+            { encoding: 'utf8' },
+          ).trim();
+
+          writeFileSync(
+            '/tmp/update-readings.json',
+            JSON.stringify({
+              message: 'Sync Readwise readings',
+              content: readFileSync(filePath, 'base64'),
+              sha,
+              branch,
+            }),
+          );
+          NODE
+
+          gh api \
+            --method PUT \
+            "repos/${GITHUB_REPOSITORY}/contents/src/data/readings.json" \
+            --input /tmp/update-readings.json \
+            >/tmp/update-readings-response.json
+
+      - name: Deploy Worker and static assets
+        if: steps.changes.outputs.changed == 'true'
+        run: npx wrangler deploy
