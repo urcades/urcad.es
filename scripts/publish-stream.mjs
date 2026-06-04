@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -13,6 +14,9 @@ const COMMANDS = [
   { prefix: 'publish:', collection: 'writing' },
   { prefix: 'draft:', collection: 'drafts' },
 ];
+const SIPS_PATH = '/usr/bin/sips';
+const HEIC_EXTENSIONS = new Set(['.heic', '.heif']);
+const HEIC_MIME_TYPES = new Set(['image/heic', 'image/heif']);
 
 function usage() {
   return `Usage: npm run publish:stream -- --event /path/to/event.json [--dry-run] [--root /repo/root]
@@ -140,11 +144,30 @@ function mediaTypeFromMime(mimeType) {
   throw new Error(`Unsupported media MIME type: ${mimeType || '(missing)'}`);
 }
 
+function mediaTypeFromItem(item) {
+  if (shouldConvertHeicToJpeg(item)) return 'image';
+  return mediaTypeFromMime(item.mimeType);
+}
+
 function buildR2Key({ postId, eventId, receivedAt, mediaPath, index }) {
   const basename = sanitizePathPart(path.basename(mediaPath), `media-${index}`);
   const eventPart = sanitizePathPart(eventId, 'event');
   const timePart = `${pad(receivedAt.getHours())}${pad(receivedAt.getMinutes())}${pad(receivedAt.getSeconds())}`;
   return `stream/${postId}/${postId}-${timePart}-${eventPart}-${index}-${basename}`;
+}
+
+function getPathExtension(mediaPath) {
+  return path.extname(mediaPath || '').toLowerCase();
+}
+
+function replacePathExtension(mediaPath, extension) {
+  const parsed = path.parse(mediaPath);
+  return path.join(parsed.dir, `${parsed.name}${extension}`);
+}
+
+function shouldConvertHeicToJpeg(item) {
+  const mimeType = typeof item.mimeType === 'string' ? item.mimeType.toLowerCase() : '';
+  return HEIC_MIME_TYPES.has(mimeType) || HEIC_EXTENSIONS.has(getPathExtension(item.path));
 }
 
 function run(command, args, options = {}) {
@@ -191,28 +214,58 @@ async function uploadMedia(event, date, dryRun) {
       throw new Error(`Media file does not exist: ${item.path}`);
     }
 
-    const type = mediaTypeFromMime(item.mimeType);
+    const shouldConvertToJpeg = shouldConvertHeicToJpeg(item);
+    const type = mediaTypeFromItem(item);
+    const keyMediaPath = shouldConvertToJpeg
+      ? replacePathExtension(item.path, '.jpg')
+      : item.path;
+    const contentType = shouldConvertToJpeg ? 'image/jpeg' : item.mimeType;
     const key = buildR2Key({
       postId,
       eventId: event.id,
       receivedAt: date,
-      mediaPath: item.path,
+      mediaPath: keyMediaPath,
       index,
     });
 
+    let uploadPath = item.path;
+    let tempDir = null;
+
     if (!dryRun) {
-      await run('npx', [
-        'wrangler',
-        'r2',
-        'object',
-        'put',
-        `urcades/${key}`,
-        '--file',
-        item.path,
-        '--content-type',
-        item.mimeType,
-        '--remote',
-      ]);
+      try {
+        if (shouldConvertToJpeg) {
+          tempDir = await mkdtemp(path.join(os.tmpdir(), 'urcades-stream-media-'));
+          uploadPath = path.join(tempDir, path.basename(keyMediaPath));
+          await run(SIPS_PATH, [
+            '-s',
+            'format',
+            'jpeg',
+            '-s',
+            'formatOptions',
+            '90',
+            item.path,
+            '--out',
+            uploadPath,
+          ]);
+        }
+
+        await run('npx', [
+          'wrangler',
+          'r2',
+          'object',
+          'put',
+          `urcades/${key}`,
+          '--file',
+          uploadPath,
+          '--content-type',
+          contentType,
+          '--remote',
+        ]);
+      } finally {
+        if (tempDir) {
+          await rm(tempDir, { recursive: true, force: true });
+        }
+      }
     }
 
     uploaded.push({
@@ -220,6 +273,8 @@ async function uploadMedia(event, date, dryRun) {
       type,
       alt: typeof item.alt === 'string' ? item.alt : '',
       key,
+      contentType,
+      convertedFrom: shouldConvertToJpeg ? item.mimeType : null,
     });
   }
 
@@ -318,7 +373,14 @@ async function main() {
     body: command.body,
     outputPath: result.outputPath,
     wrote: result.wrote,
-    media: uploadedMedia.map(({ key, url, type, alt }) => ({ key, url, type, alt })),
+    media: uploadedMedia.map(({ key, url, type, alt, contentType, convertedFrom }) => ({
+      key,
+      url,
+      type,
+      alt,
+      contentType,
+      convertedFrom,
+    })),
   }, null, 2));
 }
 

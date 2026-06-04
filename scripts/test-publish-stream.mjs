@@ -154,11 +154,90 @@ async function testMediaDryRunPlansR2Key() {
   assert.equal(payload.body, 'photo');
   assert.equal(payload.media[0].type, 'image');
   assert.equal(payload.media[0].alt, 'example');
+  assert.equal(payload.media[0].contentType, 'image/jpeg');
+  assert.equal(payload.media[0].convertedFrom, null);
   assert.equal(
     payload.media[0].key,
     `stream/260530/260530-${localCompactTime('2026-05-30T12:34:56.000Z')}-message-media-guid-0-example-photo.jpg`
   );
   assert.equal(existsSync(path.join(root, 'src')), false);
+}
+
+async function testHeicMediaDryRunPlansJpegUploadByMimeType() {
+  const root = await makeTempRoot();
+  const eventPath = await writeEvent(root, 'heic-media-dry-run', {
+    id: 'heic/media guid',
+    source: 'imessage',
+    receivedAt: '2026-05-30T12:34:56.000Z',
+    text: '🎡🎡 photo',
+    media: [{
+      path: '/Users/edouard/Library/Messages/Attachments/IMG_5910.HEIC',
+      mimeType: 'image/heic',
+      alt: 'example heic',
+    }],
+  });
+
+  const result = runPublisher(['--event', eventPath, '--root', root, '--dry-run']);
+  assert.equal(result.status, 0, result.stderr);
+
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.media[0].type, 'image');
+  assert.equal(payload.media[0].contentType, 'image/jpeg');
+  assert.equal(payload.media[0].convertedFrom, 'image/heic');
+  assert.equal(payload.media[0].url.endsWith('.jpg'), true);
+  assert.equal(
+    payload.media[0].key,
+    `stream/260530/260530-${localCompactTime('2026-05-30T12:34:56.000Z')}-heic-media-guid-0-IMG_5910.jpg`
+  );
+  assert.equal(existsSync(path.join(root, 'src')), false);
+}
+
+async function testHeifMediaDryRunPlansJpegUploadByExtension() {
+  const root = await makeTempRoot();
+  const eventPath = await writeEvent(root, 'heif-media-dry-run', {
+    id: 'heif/media guid',
+    source: 'imessage',
+    receivedAt: '2026-05-30T12:34:56.000Z',
+    text: 'publish: photo',
+    media: [{
+      path: '/Users/edouard/Library/Messages/Attachments/example.HEIF',
+      mimeType: 'application/octet-stream',
+      alt: '',
+    }],
+  });
+
+  const result = runPublisher(['--event', eventPath, '--root', root, '--dry-run']);
+  assert.equal(result.status, 0, result.stderr);
+
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.media[0].type, 'image');
+  assert.equal(payload.media[0].contentType, 'image/jpeg');
+  assert.equal(payload.media[0].convertedFrom, 'application/octet-stream');
+  assert.equal(payload.media[0].key.endsWith('-example.jpg'), true);
+  assert.equal(existsSync(path.join(root, 'src')), false);
+}
+
+async function testHeicExtensionWithImageMimeDryRunPlansJpegUpload() {
+  const root = await makeTempRoot();
+  const eventPath = await writeEvent(root, 'heic-extension-media-dry-run', {
+    id: 'heic extension/media guid',
+    source: 'imessage',
+    receivedAt: '2026-05-30T12:34:56.000Z',
+    text: 'publish: photo',
+    media: [{
+      path: '/Users/edouard/Library/Messages/Attachments/example.heif',
+      mimeType: 'image/heif-sequence',
+      alt: '',
+    }],
+  });
+
+  const result = runPublisher(['--event', eventPath, '--root', root, '--dry-run']);
+  assert.equal(result.status, 0, result.stderr);
+
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.media[0].contentType, 'image/jpeg');
+  assert.equal(payload.media[0].convertedFrom, 'image/heif-sequence');
+  assert.equal(payload.media[0].key.endsWith('-example.jpg'), true);
 }
 
 async function testDoubleFerrisWheelStripsMediaIntentMarker() {
@@ -186,6 +265,9 @@ await testDraftCreatesDraft();
 await testMissingPrefixWritesNothing();
 await testEmptyPublishWritesNothing();
 await testMediaDryRunPlansR2Key();
+await testHeicMediaDryRunPlansJpegUploadByMimeType();
+await testHeifMediaDryRunPlansJpegUploadByExtension();
+await testHeicExtensionWithImageMimeDryRunPlansJpegUpload();
 await testDoubleFerrisWheelStripsMediaIntentMarker();
 
 console.log('publish-stream tests passed');
