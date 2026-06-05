@@ -2,7 +2,7 @@ const DEFAULT_RECEIVER_URLS = [
   'http://127.0.0.1:8765',
   'http://violaceae-1:8765',
 ];
-const DEFAULT_TIMEOUT_MS = 1500;
+const DEFAULT_TIMEOUT_MS = 5000;
 const METERS_PER_MILE = 1609.344;
 const FEET_PER_METER = 3.28084;
 

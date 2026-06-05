@@ -399,6 +399,7 @@ async function main() {
     dependencyRefreshFiles: [],
     publicUrl: null,
     media: [],
+    locale: null,
     crossposts: null,
   };
 
@@ -419,6 +420,7 @@ async function main() {
       result.collection = publishResult.collection;
       result.postId = publishResult.postId;
       result.media = publishResult.media;
+      result.locale = publishResult.locale || null;
       result.crossposts = await runCrosspostPhase({
         args,
         publishResult,
@@ -451,6 +453,7 @@ async function main() {
     result.collection = publishResult.collection;
     result.postId = publishResult.postId;
     result.media = publishResult.media;
+    result.locale = publishResult.locale || null;
 
     result.phase = 'verify_changed_path';
     const relativePath = await ensureOnlyExpectedPostChanged(publishResult.outputPath);
