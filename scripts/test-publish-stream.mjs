@@ -250,7 +250,9 @@ previous
     assert.equal(first.status, 0, first.stderr);
 
     const postPath = path.join(root, 'src', 'content', 'writing', '260530.md');
-    let frontmatter = parseFrontmatter(await readFile(postPath, 'utf8'));
+    let content = await readFile(postPath, 'utf8');
+    assert.match(content, /capturedAt: "2026-05-30T12:34:56\.000Z"/);
+    let frontmatter = parseFrontmatter(content);
     assert.equal(frontmatter.locale.place.neighborhood, 'Brooklyn');
     assert.equal(frontmatter.locale.place.namedPlace, 'Home');
     assert.equal(frontmatter.locale.place.category, 'residential');
@@ -268,7 +270,8 @@ previous
     });
     assert.equal(second.status, 0, second.stderr);
 
-    const content = await readFile(postPath, 'utf8');
+    content = await readFile(postPath, 'utf8');
+    assert.match(content, /capturedAt: "2026-05-30T13:00:00\.000Z"/);
     frontmatter = parseFrontmatter(content);
     assert.match(content, /first with place/);
     assert.match(content, /second with place/);

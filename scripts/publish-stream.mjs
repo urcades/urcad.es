@@ -345,7 +345,30 @@ function normalizeFrontmatterForYaml(frontmatter) {
   if (normalized.pubDate instanceof Date) {
     normalized.pubDate = normalized.pubDate.toISOString();
   }
+  if (normalized.locale) {
+    normalized.locale = quoteYamlStrings(normalized.locale);
+  }
   return normalized;
+}
+
+function quoteYamlStrings(value) {
+  if (typeof value === 'string') {
+    const scalar = new YAML.Scalar(value);
+    scalar.type = 'QUOTE_DOUBLE';
+    return scalar;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(quoteYamlStrings);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, quoteYamlStrings(item)]),
+    );
+  }
+
+  return value;
 }
 
 function serializeMarkdownDocument(frontmatter, body) {
