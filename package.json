@@ -11,7 +11,7 @@
     "publish:stream": "node scripts/publish-stream.mjs",
     "publish:stream:run": "node scripts/run-stream-publish.mjs",
     "publish:stream:doctor": "node scripts/doctor-stream-publish-auth.mjs",
-    "test:publish-stream": "node --check scripts/publish-stream.mjs && node --check scripts/run-stream-publish.mjs && node --check scripts/social-crosspost.mjs && node --check scripts/doctor-stream-publish-auth.mjs && node --check scripts/run-with-cloudflare-api-token.mjs && node scripts/test-publish-stream.mjs && node scripts/test-social-crosspost.mjs && node scripts/test-run-stream-publish.mjs && node scripts/test-satteri-responsive-images.mjs",
+    "test:publish-stream": "node --check scripts/publish-stream.mjs && node --check scripts/run-stream-publish.mjs && node --check scripts/social-crosspost.mjs && node --check scripts/doctor-stream-publish-auth.mjs && node --check scripts/run-with-cloudflare-api-token.mjs && node --check scripts/locale-context.mjs && node scripts/test-locale-context.mjs && node scripts/test-publish-stream.mjs && node scripts/test-social-crosspost.mjs && node scripts/test-run-stream-publish.mjs && node scripts/test-satteri-responsive-images.mjs",
     "test:readings": "node --test scripts/test-sync-readwise-readings.mjs",
     "sync:readings": "node scripts/sync-readwise-readings.mjs",
     "sync:readings:dry-run": "node scripts/sync-readwise-readings.mjs --dry-run",
@@ -28,7 +28,8 @@
     "astro": "^6.4.3",
     "markdown-it": "^14.1.0",
     "sanitize-html": "^2.13.1",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260219.0",

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import YAML from 'yaml';
+import { fetchLocaleContext, withPreviousPostDistance } from './locale-context.mjs';
 
 const ALLOWED_SOURCES = new Set(['imessage', 'email', 'sms', 'cli', 'web', 'telegram']);
 const COMMANDS = [
@@ -299,15 +301,143 @@ function createSnippet({ timeLabel, body, media }) {
   return parts.join('\n\n').trim();
 }
 
+function createBaseFrontmatter({ date, source }) {
+  const title = getDateTitle(date);
+
+  return {
+    title,
+    pubDate: date.toISOString(),
+    description: `Daily stream - ${title}`,
+    tags: ['stream'],
+    source,
+  };
+}
+
 function createNewPost({ snippet, date, source }) {
   const title = getDateTitle(date);
   const frontmatter = `---\ntitle: "${title}"\npubDate: ${date.toISOString()}\ndescription: "Daily stream - ${title}"\ntags: ["stream"]\nsource: "${source}"\n---`;
-
   return `${frontmatter}\n\n${snippet}`;
 }
 
 function appendToPost(existingContent, snippet) {
   return `${existingContent.trim()}\n\n~\n\n${snippet}`;
+}
+
+function parseMarkdownDocument(content) {
+  const match = String(content).match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n)?([\s\S]*)$/);
+  if (!match) {
+    throw new Error('Existing post is missing YAML frontmatter.');
+  }
+
+  const frontmatter = YAML.parse(match[1]) || {};
+  if (!frontmatter || typeof frontmatter !== 'object' || Array.isArray(frontmatter)) {
+    throw new Error('Existing post frontmatter must be a YAML object.');
+  }
+
+  return {
+    frontmatter,
+    body: match[2] || '',
+  };
+}
+
+function normalizeFrontmatterForYaml(frontmatter) {
+  const normalized = { ...frontmatter };
+  if (normalized.pubDate instanceof Date) {
+    normalized.pubDate = normalized.pubDate.toISOString();
+  }
+  return normalized;
+}
+
+function serializeMarkdownDocument(frontmatter, body) {
+  const yaml = YAML.stringify(normalizeFrontmatterForYaml(frontmatter), {
+    lineWidth: 0,
+  }).trimEnd();
+
+  return `---\n${yaml}\n---\n\n${String(body).trim()}`;
+}
+
+function createNewPostWithLocale({ snippet, date, source, locale }) {
+  const frontmatter = createBaseFrontmatter({ date, source });
+  if (locale) frontmatter.locale = locale;
+  return serializeMarkdownDocument(frontmatter, snippet);
+}
+
+function appendToPostWithLocale(existingContent, snippet, locale) {
+  const document = parseMarkdownDocument(existingContent);
+  const frontmatter = { ...document.frontmatter };
+  if (locale) frontmatter.locale = locale;
+
+  return serializeMarkdownDocument(
+    frontmatter,
+    `${document.body.trim()}\n\n~\n\n${snippet}`,
+  );
+}
+
+function getPostPosition(frontmatter) {
+  const position = frontmatter?.locale?.position;
+  const latitude = position?.latitude;
+  const longitude = position?.longitude;
+
+  if (
+    typeof latitude !== 'number'
+    || !Number.isFinite(latitude)
+    || typeof longitude !== 'number'
+    || !Number.isFinite(longitude)
+  ) {
+    return null;
+  }
+
+  return { latitude, longitude };
+}
+
+async function findPreviousPostPosition({ root, beforeDate, currentOutputPath }) {
+  const writingDir = path.join(root, 'src', 'content', 'writing');
+  if (!existsSync(writingDir)) return null;
+
+  const entries = await readdir(writingDir, { withFileTypes: true });
+  let previous = null;
+
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+
+    const postPath = path.join(writingDir, entry.name);
+    if (path.resolve(postPath) === path.resolve(currentOutputPath)) continue;
+
+    let document;
+    try {
+      document = parseMarkdownDocument(await readFile(postPath, 'utf8'));
+    } catch {
+      continue;
+    }
+
+    const position = getPostPosition(document.frontmatter);
+    if (!position) continue;
+
+    const pubDate = document.frontmatter.pubDate instanceof Date
+      ? document.frontmatter.pubDate
+      : new Date(document.frontmatter.pubDate);
+    if (Number.isNaN(pubDate.getTime()) || pubDate >= beforeDate) continue;
+
+    if (!previous || pubDate > previous.pubDate) {
+      previous = { pubDate, position };
+    }
+  }
+
+  return previous?.position || null;
+}
+
+async function buildLocaleForPost({ root, collection, date, outputPath }) {
+  const locale = await fetchLocaleContext();
+  if (!locale) return null;
+  if (collection !== 'writing') return locale;
+
+  const previousPosition = await findPreviousPostPosition({
+    root,
+    beforeDate: date,
+    currentOutputPath: outputPath,
+  });
+
+  return withPreviousPostDistance(locale, previousPosition);
 }
 
 async function writePost({ root, collection, postId, content, dryRun }) {
@@ -353,9 +483,19 @@ async function main() {
   const existingContent = existsSync(outputPath)
     ? await readFile(outputPath, 'utf8')
     : null;
-  const content = existingContent
-    ? appendToPost(existingContent, snippet)
-    : createNewPost({ snippet, date, source: event.source });
+  const locale = await buildLocaleForPost({
+    root: args.root,
+    collection: command.collection,
+    date,
+    outputPath,
+  });
+  const content = locale
+    ? (existingContent
+        ? appendToPostWithLocale(existingContent, snippet, locale)
+        : createNewPostWithLocale({ snippet, date, source: event.source, locale }))
+    : (existingContent
+        ? appendToPost(existingContent, snippet)
+        : createNewPost({ snippet, date, source: event.source }));
 
   const result = await writePost({
     root: args.root,
@@ -381,6 +521,12 @@ async function main() {
       contentType,
       convertedFrom,
     })),
+    locale: locale
+      ? {
+          capturedAt: locale.capturedAt,
+          previousPost: locale.previousPost || null,
+        }
+      : null,
   }, null, 2));
 }
 

@@ -1,5 +1,6 @@
 ---
 import Base from "./Base.astro";
+import { buildLocaleFooterRows } from "../lib/locale-footer.mjs";
 const { frontmatter } = Astro.props;
 
 const pageTitle = frontmatter.title;
@@ -7,6 +8,7 @@ const txtColor = frontmatter.foregroundColor;
 const bgColor = frontmatter.backgroundColor;
 const txtColorDark = frontmatter.foregroundColorDark;
 const bgColorDark = frontmatter.backgroundColorDark;
+const localeRows = buildLocaleFooterRows(frontmatter.locale);
 
 // Format date for meta tags and JSON-LD
 const pubDateISO = frontmatter.pubDate instanceof Date
@@ -92,6 +94,9 @@ const jsonLd = {
       <p>Title: {frontmatter.title}</p>
       <p>Description: {frontmatter.description}</p>
       <p>Published: {frontmatter.pubDate}</p>
+      {localeRows.map((row) => (
+        <p>{row.label}: {row.value}</p>
+      ))}
       <p>~</p>
     </footer>
   </article>

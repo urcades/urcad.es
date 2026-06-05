@@ -20,6 +20,30 @@ const postSchema = z.object({
     alt: z.string().optional(),
   })).optional(),
   source: z.enum(['sms', 'web', 'cli', 'telegram', 'imessage', 'email']).optional(),
+  locale: z.object({
+    capturedAt: z.string().optional(),
+    localTime: z.string().optional(),
+    place: z.object({
+      neighborhood: z.string().optional(),
+      namedPlace: z.string().optional(),
+      category: z.string().optional(),
+      altitude: z.string().optional(),
+    }).optional(),
+    context: z.object({
+      motion: z.string().optional(),
+      posture: z.string().optional(),
+      freshness: z.string().optional(),
+    }).optional(),
+    dwell: z.string().optional(),
+    previousPost: z.object({
+      label: z.string().optional(),
+      distance: z.string().optional(),
+    }).optional(),
+    position: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+    }).optional(),
+  }).optional(),
 });
 
 // Define a `type` and `schema` for each collection
