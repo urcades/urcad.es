@@ -91,6 +91,8 @@ const {
         --page-gutter-mobile: 1.11em;
         --page-gutter-block: 2em;
         --page-gutter-inline: 2.55em;
+        --current-page-gutter-block: var(--page-gutter-mobile);
+        --current-page-gutter-inline: var(--page-gutter-mobile);
         --prose-width: 55ch;
         --title-measure: 22ch;
         --pre-radius: 0.33em;
@@ -119,6 +121,13 @@ const {
           --page-gutter-mobile: 0.95rlh;
           --page-gutter-block: 1.65rlh;
           --page-gutter-inline: 2.1rlh;
+        }
+      }
+
+      @media screen and (min-width: 555px) {
+        :root {
+          --current-page-gutter-block: var(--page-gutter-block);
+          --current-page-gutter-inline: var(--page-gutter-inline);
         }
       }
 
@@ -177,10 +186,9 @@ const {
       }
 
       html {
-        margin: var(--page-gutter-mobile);
+        margin: var(--current-page-gutter-block) var(--current-page-gutter-inline);
 
         @media screen and (min-width: 555px) {
-          margin: var(--page-gutter-block) var(--page-gutter-inline);
           padding-block-end: var(--page-gutter-block);
         }
       }

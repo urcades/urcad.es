@@ -68,6 +68,87 @@ const jsonLd = {
     color: #c00;
     font-style: italic;
   }
+
+  .writing-article img {
+    cursor: zoom-in;
+  }
+
+  .writing-lightbox {
+    --lightbox-scrim: rgba(255, 255, 255, 0.9);
+
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    padding-block: var(--current-page-gutter-block);
+    padding-inline: var(--current-page-gutter-inline);
+    background-color: var(--lightbox-scrim);
+  }
+
+  .writing-lightbox[hidden] {
+    display: none;
+  }
+
+  .writing-lightbox img {
+    display: block;
+    max-width: calc(100vw - (2 * var(--current-page-gutter-inline)));
+    max-height: calc(100vh - (2 * var(--current-page-gutter-block)));
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    cursor: default;
+  }
+
+  @supports (height: 100dvh) {
+    .writing-lightbox img {
+      max-height: calc(100dvh - (2 * var(--current-page-gutter-block)));
+    }
+  }
+
+  html.writing-lightbox-open,
+  html.writing-lightbox-open body {
+    overflow: hidden;
+  }
+
+  html.writing-lightbox-open body {
+    margin-block-start: 0;
+  }
+
+  @supports (background-color: color-mix(in srgb, white 90%, transparent)) {
+    .writing-lightbox {
+      --lightbox-scrim: color-mix(
+        in srgb,
+        var(--bgColor, var(--fallback-bg-color)) 90%,
+        transparent
+      );
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .writing-lightbox {
+        --lightbox-scrim: color-mix(
+          in srgb,
+          var(--bgColorDark, var(--fallback-bg-color-dark)) 90%,
+          transparent
+        );
+      }
+    }
+  }
+
+  @supports (color: light-dark(white, black)) and
+    (background-color: color-mix(in srgb, white 90%, transparent)) {
+    .writing-lightbox {
+      --lightbox-scrim: color-mix(
+        in srgb,
+        light-dark(
+          var(--bgColor, var(--fallback-bg-color)),
+          var(--bgColorDark, var(--fallback-bg-color-dark))
+        ) 90%,
+        transparent
+      );
+    }
+  }
 </style>
 
 <Base
@@ -105,4 +186,97 @@ const jsonLd = {
     <p><a href="https://urcades.substack.com/">Subscribe</a></p>
     <p><a href="/rss.xml">RSS</a></p>
   </nav>
+  <div
+    class="writing-lightbox"
+    data-writing-lightbox
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-label="Expanded post image"
+    tabindex="-1"
+  >
+    <img data-writing-lightbox-image alt="" decoding="async" />
+  </div>
+  <script>
+    const article = document.querySelector(".writing-article");
+    const lightbox = document.querySelector("[data-writing-lightbox]");
+    const lightboxImage = document.querySelector("[data-writing-lightbox-image]");
+
+    if (
+      article instanceof HTMLElement &&
+      lightbox instanceof HTMLElement &&
+      lightboxImage instanceof HTMLImageElement
+    ) {
+      let lastFocusedElement: Element | null = null;
+
+      const openLightbox = (image: HTMLImageElement) => {
+        lastFocusedElement = document.activeElement;
+        lightboxImage.src = image.currentSrc || image.src;
+        lightboxImage.alt = image.alt || "";
+
+        if (image.srcset) {
+          lightboxImage.srcset = image.srcset;
+        } else {
+          lightboxImage.removeAttribute("srcset");
+        }
+
+        if (image.sizes) {
+          lightboxImage.sizes = image.sizes;
+        } else {
+          lightboxImage.removeAttribute("sizes");
+        }
+
+        lightbox.hidden = false;
+        document.documentElement.classList.add("writing-lightbox-open");
+        lightbox.focus({ preventScroll: true });
+      };
+
+      const closeLightbox = () => {
+        lightbox.hidden = true;
+        lightboxImage.removeAttribute("src");
+        lightboxImage.removeAttribute("srcset");
+        lightboxImage.removeAttribute("sizes");
+        document.documentElement.classList.remove("writing-lightbox-open");
+
+        if (lastFocusedElement instanceof HTMLElement) {
+          lastFocusedElement.focus({ preventScroll: true });
+        }
+      };
+
+      article.querySelectorAll("img").forEach((image) => {
+        image.tabIndex = 0;
+        image.setAttribute("role", "button");
+        image.setAttribute(
+          "aria-label",
+          image.alt ? `Expand image: ${image.alt}` : "Expand image"
+        );
+
+        image.addEventListener("click", (event) => {
+          event.preventDefault();
+          openLightbox(image);
+        });
+
+        image.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") {
+            return;
+          }
+
+          event.preventDefault();
+          openLightbox(image);
+        });
+      });
+
+      lightbox.addEventListener("click", (event) => {
+        if (event.target !== lightboxImage) {
+          closeLightbox();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (!lightbox.hidden && event.key === "Escape") {
+          closeLightbox();
+        }
+      });
+    }
+  </script>
 </Base>
