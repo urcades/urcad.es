@@ -1,7 +1,22 @@
 ---
 import Base from "./Base.astro";
+import type { CollectionEntry } from "astro:content";
 import { buildLocaleFooterRows } from "../lib/locale-footer.mjs";
-const { frontmatter } = Astro.props;
+
+type WritingFrontmatter =
+  | CollectionEntry<"writing">["data"]
+  | CollectionEntry<"drafts">["data"];
+
+type AdjacentPostLink = {
+  href: string;
+  title: string;
+};
+
+const { frontmatter, nextPost, previousPost } = Astro.props as {
+  frontmatter: WritingFrontmatter;
+  nextPost?: AdjacentPostLink;
+  previousPost?: AdjacentPostLink;
+};
 
 const pageTitle = frontmatter.title;
 const txtColor = frontmatter.foregroundColor;
@@ -182,6 +197,26 @@ const jsonLd = {
     </footer>
   </article>
   <nav>
+    {
+      (nextPost || previousPost) && (
+        <div class="post-adjacency">
+          {nextPost && (
+            <p>
+              <a href={nextPost.href} data-astro-prefetch>
+                Next Post: {nextPost.title}
+              </a>
+            </p>
+          )}
+          {previousPost && (
+            <p>
+              <a href={previousPost.href} data-astro-prefetch>
+                Previous Post: {previousPost.title}
+              </a>
+            </p>
+          )}
+        </div>
+      )
+    }
     <p><a href="/writing/" data-astro-prefetch>Back to All Writing</a></p>
     <p><a href="https://urcades.substack.com/">Subscribe</a></p>
     <p><a href="/rss.xml">RSS</a></p>

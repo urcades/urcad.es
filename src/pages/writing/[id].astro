@@ -1,19 +1,49 @@
 ---
-import { getCollection, render } from "astro:content";
+import { getCollection, render, type CollectionEntry } from "astro:content";
 import MarkdownPostLayout from "../../layouts/Writing.astro";
 
+type WritingEntry = CollectionEntry<"writing">;
+
 export async function getStaticPaths() {
-  const blogEntries = await getCollection("writing");
-  return blogEntries.map((entry) => ({
+  const blogEntries = (await getCollection("writing")).sort((a, b) => {
+    const dateDifference = b.data.pubDate.getTime() - a.data.pubDate.getTime();
+
+    if (dateDifference !== 0) {
+      return dateDifference;
+    }
+
+    return b.id.localeCompare(a.id);
+  });
+
+  const toAdjacentPostLink = (post: WritingEntry | undefined) => {
+    if (!post) {
+      return undefined;
+    }
+
+    return {
+      href: `/writing/${post.id}/`,
+      title: post.data.title,
+    };
+  };
+
+  return blogEntries.map((entry, index) => ({
     params: { id: entry.id },
-    props: { entry },
+    props: {
+      entry,
+      nextPost: toAdjacentPostLink(blogEntries[index - 1]),
+      previousPost: toAdjacentPostLink(blogEntries[index + 1]),
+    },
   }));
 }
 
-const { entry } = Astro.props;
+const { entry, nextPost, previousPost } = Astro.props;
 const { Content } = await render(entry);
 ---
 
-<MarkdownPostLayout frontmatter={entry.data}>
+<MarkdownPostLayout
+  frontmatter={entry.data}
+  nextPost={nextPost}
+  previousPost={previousPost}
+>
   <Content />
 </MarkdownPostLayout>

@@ -39,35 +39,125 @@ function isDraft(post: PostEntry): boolean {
   return post.collection === "drafts";
 }
 
+function isStream(post: PostEntry): boolean {
+  return post.data.tags?.includes("stream") ?? false;
+}
+
 const groupedPosts = groupPostsByYear(allPosts);
 const sortedYears = Object.keys(groupedPosts).sort(
   (a, b) => Number(b) - Number(a)
 );
+
+const streamPostCount = allPosts.filter(isStream).length;
 ---
 
 <Base pageTitle={pageTitle}>
+  <p>
+    Ongoing records, ideas, thoughts,
+    {
+      streamPostCount > 0 && (
+        <>
+          <button
+            id="stream-toggle"
+            class="button-reset"
+            type="button"
+            aria-label="Hide stream posts"
+          >
+              streams
+          </button>
+        </>
+      )
+    }
+  </p>
   {
-    sortedYears.map((year) => (
-      <>
-        <em>{year}</em>
-        <ul class="list-circle">
-          {groupedPosts[year]?.map((post) => (
-            <li>
-              <a
-                href={`/${post.collection}/${post.id}/`}
-                title={post.data.pubDate.toISOString()}
-                data-astro-prefetch
-              >
-                {isDraft(post) && "[DRAFT] "}
-                {post.data.title}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </>
-    ))
+    sortedYears.map((year) => {
+      const yearPosts = groupedPosts[year] ?? [];
+
+      return (
+        <div
+          class="writing-year"
+          data-stream-only-year={yearPosts.every(isStream) ? "true" : undefined}
+        >
+          <em>{year}</em>
+          <ul class="list-circle">
+            {yearPosts.map((post) => (
+              <li data-stream-post={isStream(post) ? "true" : undefined}>
+                <a
+                  href={`/${post.collection}/${post.id}/`}
+                  title={post.data.pubDate.toISOString()}
+                  data-astro-prefetch
+                >
+                  {isDraft(post) && "[DRAFT] "}
+                  {post.data.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    })
   }
   <br />
   <p><a href="https://urcades.substack.com/">Subscribe</a></p>
   <p><a href="/rss.xml">RSS</a></p>
+
+  <script>
+    const streamToggle =
+      document.querySelector<HTMLButtonElement>("#stream-toggle");
+    const streamPosts = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-stream-post='true']")
+    );
+    const streamOnlyYears = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-stream-only-year='true']")
+    );
+    const storageKey = "urcades:writing:show-streams";
+
+    function readStoredVisibility() {
+      try {
+        const storedValue = window.localStorage.getItem(storageKey);
+        return storedValue === null ? true : storedValue === "true";
+      } catch {
+        return true;
+      }
+    }
+
+    function writeStoredVisibility(showStreams: boolean) {
+      try {
+        window.localStorage.setItem(storageKey, String(showStreams));
+      } catch {
+        // Storage can be unavailable in private or hardened browser contexts.
+      }
+    }
+
+    function setStreamVisibility(
+      toggle: HTMLButtonElement,
+      showStreams: boolean
+    ) {
+      for (const post of streamPosts) {
+        post.hidden = !showStreams;
+      }
+
+      for (const year of streamOnlyYears) {
+        year.hidden = !showStreams;
+      }
+
+      toggle.textContent = showStreams ? "streams (hide)" : "streams (show)";
+      toggle.setAttribute(
+        "aria-label",
+        showStreams ? "Hide stream posts" : "Show stream posts"
+      );
+    }
+
+    if (streamToggle && streamPosts.length > 0) {
+      let showStreams = readStoredVisibility();
+      setStreamVisibility(streamToggle, showStreams);
+
+      streamToggle.addEventListener("click", () => {
+        showStreams = !showStreams;
+        setStreamVisibility(streamToggle, showStreams);
+        writeStoredVisibility(showStreams);
+      });
+    }
+  </script>
+
 </Base>
