@@ -4,132 +4,396 @@ const pageTitle = "404 - Page Not Found";
 ---
 
 <Base pageTitle={pageTitle}>
-  <p>404 <button id="bgm-toggle" class="button-reset">Play BGM</button></p>
+  <p>404 ~ <button id="bgm-toggle" class="button-reset">BGM OFF</button></p>
 </Base>
 
 <script>
-  class WindSynth {
+  class OceanWaveSynth {
     private ctx: AudioContext | null = null;
     private masterGain: GainNode | null = null;
-    private noiseSource: AudioBufferSourceNode | null = null;
-    private filters: BiquadFilterNode[] = [];
-    private lfoGains: GainNode[] = [];
+    private whiteNoise: AudioBuffer | null = null;
+    private pinkNoise: AudioBuffer | null = null;
+    private brownNoise: AudioBuffer | null = null;
+    private ambientSources: AudioBufferSourceNode[] = [];
+    private activeSources = new Set<AudioScheduledSourceNode>();
+    private lfos: OscillatorNode[] = [];
+    private timers: number[] = [];
     private isPlaying = false;
+    private isStopping = false;
 
-    async start() {
-      if (this.isPlaying) return;
+    start() {
+      if (this.isPlaying || this.isStopping) return;
 
       this.ctx = new AudioContext();
       const ctx = this.ctx;
 
-      // Create noise buffer (2 seconds of white noise)
-      const bufferSize = ctx.sampleRate * 2;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
+      if (ctx.state === "suspended") {
+        void ctx.resume().catch((error) => {
+          console.warn("AudioContext could not resume yet.", error);
+        });
       }
 
-      // Noise source (looping)
-      this.noiseSource = ctx.createBufferSource();
-      this.noiseSource.buffer = noiseBuffer;
-      this.noiseSource.loop = true;
+      this.whiteNoise = this.createNoiseBuffer("white", 8);
+      this.pinkNoise = this.createNoiseBuffer("pink", 8);
+      this.brownNoise = this.createNoiseBuffer("brown", 8);
 
-      // Master gain for overall volume
       this.masterGain = ctx.createGain();
       this.masterGain.gain.value = 0;
       this.masterGain.connect(ctx.destination);
 
-      // Create multiple filtered layers for rich wind texture
-      const layers = [
-        { freq: 200, q: 0.5, gain: 0.3, lfoFreq: 0.07 },
-        { freq: 500, q: 0.8, gain: 0.2, lfoFreq: 0.13 },
-        { freq: 1200, q: 1.2, gain: 0.15, lfoFreq: 0.19 },
-        { freq: 3000, q: 1.5, gain: 0.08, lfoFreq: 0.11 },
-      ];
+      // Keep the surf bed weighted toward low, slowly moving water. The
+      // brighter breakers are deliberately occasional accents, not the main
+      // texture.
+      this.startAmbientBed();
+      this.scheduleNextBreaker(this.randomBetween(6, 11));
 
-      layers.forEach((layer) => {
-        // Bandpass filter
-        const filter = ctx.createBiquadFilter();
-        filter.type = "bandpass";
-        filter.frequency.value = layer.freq;
-        filter.Q.value = layer.q;
-        this.filters.push(filter);
-
-        // Layer gain (modulated by LFO)
-        const layerGain = ctx.createGain();
-        layerGain.gain.value = layer.gain;
-        this.lfoGains.push(layerGain);
-
-        // LFO for gentle gusting
-        const lfo = ctx.createOscillator();
-        lfo.type = "sine";
-        lfo.frequency.value = layer.lfoFreq;
-
-        const lfoDepth = ctx.createGain();
-        lfoDepth.gain.value = layer.gain * 0.5;
-
-        lfo.connect(lfoDepth);
-        lfoDepth.connect(layerGain.gain);
-        lfo.start();
-
-        // Also modulate filter frequency for movement
-        const filterLfo = ctx.createOscillator();
-        filterLfo.type = "sine";
-        filterLfo.frequency.value = layer.lfoFreq * 0.7;
-
-        const filterLfoDepth = ctx.createGain();
-        filterLfoDepth.gain.value = layer.freq * 0.3;
-
-        filterLfo.connect(filterLfoDepth);
-        filterLfoDepth.connect(filter.frequency);
-        filterLfo.start();
-
-        // Connect chain
-        this.noiseSource!.connect(filter);
-        filter.connect(layerGain);
-        layerGain.connect(this.masterGain!);
-      });
-
-      // Start and fade in
-      this.noiseSource.start();
-      this.masterGain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 2);
+      this.masterGain.gain.linearRampToValueAtTime(0.42, ctx.currentTime + 1.8);
       this.isPlaying = true;
     }
 
-    stop() {
+    async stop() {
+      if (this.isStopping) return;
       if (!this.isPlaying || !this.ctx || !this.masterGain) return;
 
       const ctx = this.ctx;
-      this.masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+      const releaseAt = ctx.currentTime + 1.1;
+      const ambientSources = [...this.ambientSources];
+      const lfos = [...this.lfos];
+      const activeSources = [...this.activeSources];
+      this.isStopping = true;
+      this.clearTimers();
 
-      setTimeout(() => {
-        this.noiseSource?.stop();
-        this.ctx?.close();
-        this.ctx = null;
-        this.noiseSource = null;
-        this.filters = [];
-        this.lfoGains = [];
-        this.isPlaying = false;
-      }, 1100);
+      this.masterGain.gain.cancelScheduledValues(ctx.currentTime);
+      this.masterGain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.32);
+
+      await new Promise<void>((resolve) => {
+        window.setTimeout(() => {
+          [...ambientSources, ...lfos, ...activeSources].forEach((source) =>
+            this.stopSource(source, releaseAt)
+          );
+
+          ctx.close();
+          this.ctx = null;
+          this.masterGain = null;
+          this.whiteNoise = null;
+          this.pinkNoise = null;
+          this.brownNoise = null;
+          this.ambientSources = [];
+          this.activeSources.clear();
+          this.lfos = [];
+          this.isPlaying = false;
+          this.isStopping = false;
+          resolve();
+        }, 1100);
+      });
     }
 
-    toggle() {
+    async toggle() {
       if (this.isPlaying) {
-        this.stop();
+        await this.stop();
         return false;
-      } else {
-        this.start();
-        return true;
       }
+
+      this.start();
+      return true;
+    }
+
+    private startAmbientBed() {
+      if (!this.ctx || !this.masterGain || !this.pinkNoise || !this.whiteNoise || !this.brownNoise) {
+        return;
+      }
+
+      const ctx = this.ctx;
+
+      const swell = this.createLoopingNoiseSource(this.pinkNoise);
+      const swellHighpass = this.createFilter("highpass", 42, 0.7);
+      const swellLowpass = this.createFilter("lowpass", 620, 0.6);
+      const swellGain = ctx.createGain();
+      swellGain.gain.value = 0.17;
+      this.addSineModulation(swellGain.gain, 0.026, 0.07, 0.08);
+      this.addSineModulation(swellLowpass.frequency, 0.018, 110, 0.4);
+      swell.connect(swellHighpass);
+      swellHighpass.connect(swellLowpass);
+      swellLowpass.connect(swellGain);
+      swellGain.connect(this.masterGain);
+      swell.start();
+      this.ambientSources.push(swell);
+
+      const foam = this.createLoopingNoiseSource(this.whiteNoise);
+      const foamHighpass = this.createFilter("highpass", 2400, 0.7);
+      const foamLowpass = this.createFilter("lowpass", 5200, 0.55);
+      const foamGain = ctx.createGain();
+      foamGain.gain.value = 0.012;
+      this.addSineModulation(foamGain.gain, 0.05, 0.005, 1.7);
+      foam.connect(foamHighpass);
+      foamHighpass.connect(foamLowpass);
+      foamLowpass.connect(foamGain);
+      foamGain.connect(this.masterGain);
+      foam.start();
+      this.ambientSources.push(foam);
+
+      const undertow = this.createLoopingNoiseSource(this.brownNoise);
+      const undertowLowpass = this.createFilter("lowpass", 105, 0.8);
+      const undertowGain = ctx.createGain();
+      undertowGain.gain.value = 0.14;
+      this.addSineModulation(undertowGain.gain, 0.018, 0.075, 2.2);
+      undertow.connect(undertowLowpass);
+      undertowLowpass.connect(undertowGain);
+      undertowGain.connect(this.masterGain);
+      undertow.start();
+      this.ambientSources.push(undertow);
+
+      const rumble = this.createLoopingNoiseSource(this.brownNoise);
+      const rumbleBand = this.createFilter("bandpass", 68, 0.9);
+      const rumbleGain = ctx.createGain();
+      rumbleGain.gain.value = 0.08;
+      this.addSineModulation(rumbleGain.gain, 0.012, 0.045, 3.1);
+      this.addSineModulation(rumbleBand.frequency, 0.01, 16, 0.9);
+      rumble.connect(rumbleBand);
+      rumbleBand.connect(rumbleGain);
+      rumbleGain.connect(this.masterGain);
+      rumble.start();
+      this.ambientSources.push(rumble);
+    }
+
+    private scheduleNextBreaker(delaySeconds = this.randomBetween(10, 18), forceLarge = false) {
+      let timer = 0;
+      timer = window.setTimeout(() => {
+        this.timers = this.timers.filter((id) => id !== timer);
+
+        if (!this.isPlaying || !this.ctx) return;
+
+        const size = forceLarge ? 0.75 : this.randomBetween(0.24, 0.62);
+        this.playBreaker(size);
+        this.scheduleNextBreaker(this.randomBetween(11, 22));
+      }, delaySeconds * 1000);
+
+      this.timers.push(timer);
+    }
+
+    private playBreaker(size: number) {
+      if (!this.ctx || !this.masterGain || !this.whiteNoise || !this.pinkNoise) return;
+
+      const ctx = this.ctx;
+      const start = ctx.currentTime + 0.04;
+      const crashDuration = this.randomBetween(1.8, 3.1) + size * 0.8;
+      const tailDuration = crashDuration + this.randomBetween(3.2, 5.6);
+      const pan = this.randomBetween(-0.22, 0.22);
+
+      this.playImpact(start, size, pan);
+      this.playCrashBody(start, crashDuration, size, pan);
+      this.playFoamHiss(start + this.randomBetween(0.12, 0.32), crashDuration * 0.42, size, -pan * 0.55);
+      this.playRetreatingWash(start + 0.35, tailDuration, size, pan * 0.3);
+    }
+
+    private playImpact(start: number, size: number, pan: number) {
+      if (!this.ctx || !this.masterGain) return;
+
+      const ctx = this.ctx;
+      const thump = ctx.createOscillator();
+      const thumpGain = ctx.createGain();
+      const thumpPan = ctx.createStereoPanner();
+
+      thump.type = "sine";
+      thump.frequency.setValueAtTime(92 + size * 18, start);
+      thump.frequency.exponentialRampToValueAtTime(38, start + 0.85);
+      thumpGain.gain.setValueAtTime(0.0001, start);
+      thumpGain.gain.linearRampToValueAtTime(0.1 * size, start + 0.045);
+      thumpGain.gain.exponentialRampToValueAtTime(0.0001, start + 1.25);
+      thumpPan.pan.value = pan * 0.5;
+
+      thump.connect(thumpGain);
+      thumpGain.connect(thumpPan);
+      thumpPan.connect(this.masterGain);
+      this.startTrackedSource(thump, start, start + 1.3);
+    }
+
+    private playCrashBody(start: number, duration: number, size: number, pan: number) {
+      if (!this.ctx || !this.masterGain || !this.whiteNoise) return;
+
+      const ctx = this.ctx;
+      const source = this.createLoopingNoiseSource(this.whiteNoise);
+      const highpass = this.createFilter("highpass", 65, 0.7);
+      const lowpass = this.createFilter("lowpass", 1700 + size * 850, 0.8);
+      const gain = ctx.createGain();
+      const stereo = ctx.createStereoPanner();
+
+      lowpass.frequency.setValueAtTime(1700 + size * 850, start);
+      lowpass.frequency.exponentialRampToValueAtTime(260 + size * 80, start + duration);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.07 * size, start + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      stereo.pan.setValueAtTime(pan, start);
+      stereo.pan.linearRampToValueAtTime(pan * -0.35, start + duration);
+
+      source.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(gain);
+      gain.connect(stereo);
+      stereo.connect(this.masterGain);
+      this.startTrackedSource(source, start, start + duration + 0.1);
+    }
+
+    private playFoamHiss(start: number, duration: number, size: number, pan: number) {
+      if (!this.ctx || !this.masterGain || !this.whiteNoise) return;
+
+      const ctx = this.ctx;
+      const source = this.createLoopingNoiseSource(this.whiteNoise);
+      const highpass = this.createFilter("highpass", 2600 + size * 800, 0.65);
+      const lowpass = this.createFilter("lowpass", 5400, 0.55);
+      const gain = ctx.createGain();
+      const stereo = ctx.createStereoPanner();
+
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.024 * size, start + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      stereo.pan.value = pan;
+
+      source.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(gain);
+      gain.connect(stereo);
+      stereo.connect(this.masterGain);
+      this.startTrackedSource(source, start, start + duration + 0.1);
+    }
+
+    private playRetreatingWash(start: number, duration: number, size: number, pan: number) {
+      if (!this.ctx || !this.masterGain || !this.pinkNoise) return;
+
+      const ctx = this.ctx;
+      const source = this.createLoopingNoiseSource(this.pinkNoise);
+      const highpass = this.createFilter("highpass", 95, 0.7);
+      const lowpass = this.createFilter("lowpass", 780, 0.6);
+      const gain = ctx.createGain();
+      const stereo = ctx.createStereoPanner();
+
+      lowpass.frequency.setValueAtTime(780, start);
+      lowpass.frequency.exponentialRampToValueAtTime(180, start + duration);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.085 * size, start + 0.7);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      stereo.pan.value = pan;
+
+      source.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(gain);
+      gain.connect(stereo);
+      stereo.connect(this.masterGain);
+      this.startTrackedSource(source, start, start + duration + 0.1);
+    }
+
+    private createLoopingNoiseSource(buffer: AudioBuffer) {
+      if (!this.ctx) throw new Error("Audio context is not available");
+
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      return source;
+    }
+
+    private createFilter(type: BiquadFilterType, frequency: number, q: number) {
+      if (!this.ctx) throw new Error("Audio context is not available");
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = type;
+      filter.frequency.value = frequency;
+      filter.Q.value = q;
+      return filter;
+    }
+
+    private createNoiseBuffer(kind: "white" | "pink" | "brown", seconds: number) {
+      if (!this.ctx) throw new Error("Audio context is not available");
+
+      const sampleCount = Math.floor(this.ctx.sampleRate * seconds);
+      const buffer = this.ctx.createBuffer(1, sampleCount, this.ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      let pink0 = 0;
+      let pink1 = 0;
+      let pink2 = 0;
+      let pink3 = 0;
+      let pink4 = 0;
+      let pink5 = 0;
+      let pink6 = 0;
+      let brown = 0;
+
+      for (let i = 0; i < sampleCount; i++) {
+        const white = Math.random() * 2 - 1;
+
+        if (kind === "white") {
+          output[i] = white;
+          continue;
+        }
+
+        if (kind === "pink") {
+          pink0 = 0.99886 * pink0 + white * 0.0555179;
+          pink1 = 0.99332 * pink1 + white * 0.0750759;
+          pink2 = 0.969 * pink2 + white * 0.153852;
+          pink3 = 0.8665 * pink3 + white * 0.3104856;
+          pink4 = 0.55 * pink4 + white * 0.5329522;
+          pink5 = -0.7616 * pink5 - white * 0.016898;
+          output[i] =
+            (pink0 + pink1 + pink2 + pink3 + pink4 + pink5 + pink6 + white * 0.5362) *
+            0.11;
+          pink6 = white * 0.115926;
+          continue;
+        }
+
+        brown = (brown + white * 0.021) / 1.021;
+        output[i] = brown * 3.5;
+      }
+
+      return buffer;
+    }
+
+    private addSineModulation(param: AudioParam, frequency: number, depth: number, phaseDelay = 0) {
+      if (!this.ctx) return;
+
+      const lfo = this.ctx.createOscillator();
+      const lfoGain = this.ctx.createGain();
+      lfo.type = "sine";
+      lfo.frequency.value = frequency;
+      lfoGain.gain.value = depth;
+      lfo.connect(lfoGain);
+      lfoGain.connect(param);
+      lfo.start(this.ctx.currentTime + phaseDelay);
+      this.lfos.push(lfo);
+    }
+
+    private startTrackedSource(source: AudioScheduledSourceNode, start: number, stop: number) {
+      this.activeSources.add(source);
+      source.onended = () => this.activeSources.delete(source);
+      source.start(start);
+      source.stop(stop);
+    }
+
+    private stopSource(source: AudioScheduledSourceNode, when: number) {
+      try {
+        source.stop(when);
+      } catch {
+        // Already stopped or already scheduled; teardown is intentionally best-effort.
+      }
+    }
+
+    private clearTimers() {
+      this.timers.forEach((timer) => window.clearTimeout(timer));
+      this.timers = [];
+    }
+
+    private randomBetween(min: number, max: number) {
+      return min + Math.random() * (max - min);
     }
   }
 
-  const wind = new WindSynth();
-  const button = document.getElementById("bgm-toggle")!;
+  const ocean = new OceanWaveSynth();
+  const button = document.getElementById("bgm-toggle") as HTMLButtonElement | null;
 
-  button.addEventListener("click", () => {
-    const playing = wind.toggle();
-    button.textContent = playing ? "Pause BGM" : "Play BGM";
+  button?.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      const playing = await ocean.toggle();
+      button.textContent = playing ? "BGM ON" : "BGM OFF";
+    } finally {
+      button.disabled = false;
+    }
   });
 </script>
