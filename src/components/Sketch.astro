@@ -145,12 +145,22 @@ const imageProfile = imageProfiles[size] ?? {
   <div class="sketch-info">
     <p>{title}</p>
     <em>{category}</em>
-    {caseStudyUrl && <a href={caseStudyUrl} data-astro-prefetch>⌘</a>}
+    {
+      caseStudyUrl && (
+        <>
+          {" "}
+          <a href={caseStudyUrl} data-astro-prefetch>⌘</a>
+        </>
+      )
+    }
     {
       url && (
-        <a href={url} target="_blank" rel="noopener">
-          ♨︎
-        </a>
+        <>
+          {" "}
+          <a href={url} target="_blank" rel="noopener">
+            ♨︎
+          </a>
+        </>
       )
     }
   </div>
