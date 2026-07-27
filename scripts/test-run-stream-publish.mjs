@@ -171,11 +171,57 @@ async function testRunCrosspostPhaseIsNonFatal() {
   assert.match(crossposts.error, /failure/);
 }
 
+async function testVerifyPublicPostRetriesTransientFailures() {
+  const requests = [];
+  const delays = [];
+  const responses = [
+    new Error('temporary network failure'),
+    { ok: false, status: 404 },
+    { ok: true, status: 200 },
+  ];
+
+  const url = await runner.verifyPublicPost('260725', {
+    fetchImpl: async (requestUrl, options) => {
+      requests.push({ requestUrl, options });
+      const response = responses.shift();
+      if (response instanceof Error) throw response;
+      return response;
+    },
+    sleep: async delay => {
+      delays.push(delay);
+    },
+    attempts: 3,
+    initialDelayMs: 100,
+    maxDelayMs: 150,
+  });
+
+  assert.equal(url, 'https://www.urcad.es/writing/260725/');
+  assert.deepEqual(delays, [100, 150]);
+  assert.equal(requests.length, 3);
+  assert.equal(requests[0].options.cache, 'no-store');
+  assert.equal(requests[0].options.redirect, 'follow');
+  assert.notEqual(requests[0].requestUrl.href, requests[1].requestUrl.href);
+  assert.equal(requests[0].requestUrl.pathname, '/writing/260725/');
+}
+
+async function testVerifyPublicPostReportsRecentFailures() {
+  await assert.rejects(
+    runner.verifyPublicPost('260725', {
+      fetchImpl: async () => ({ ok: false, status: 503 }),
+      sleep: async () => {},
+      attempts: 2,
+    }),
+    /after 2 attempts:[\s\S]*attempt 2: HTTP 503/
+  );
+}
+
 await testInjectsTokenOnlyIntoCloudflareChildren();
 await testRejectsReadableTokenFile();
 testDependencyManifestChangeDetection();
 await testCrosspostSkipReasons();
 await testRunCrosspostPhaseAddsStructuredResult();
 await testRunCrosspostPhaseIsNonFatal();
+await testVerifyPublicPostRetriesTransientFailures();
+await testVerifyPublicPostReportsRecentFailures();
 
 console.log('run-stream-publish tests passed');

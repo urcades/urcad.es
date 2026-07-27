@@ -324,19 +324,41 @@ async function pushBranch(branch) {
   await git(['push', 'origin', branch]);
 }
 
-async function verifyPublicPost(postId) {
+export async function verifyPublicPost(postId, {
+  fetchImpl = fetch,
+  sleep = delay => new Promise(resolve => setTimeout(resolve, delay)),
+  attempts = 12,
+  initialDelayMs = 1000,
+  maxDelayMs = 5000,
+} = {}) {
   const url = `https://www.urcad.es/writing/${postId}/`;
+  const failures = [];
 
-  for (let attempt = 1; attempt <= 6; attempt++) {
-    const response = await fetch(url, { redirect: 'follow' });
-    if (response.ok) {
-      return url;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const verificationUrl = new URL(url);
+    verificationUrl.searchParams.set('verify', `${Date.now()}-${attempt}`);
+
+    try {
+      const response = await fetchImpl(verificationUrl, {
+        redirect: 'follow',
+        cache: 'no-store',
+      });
+      if (response.ok) {
+        return url;
+      }
+      failures.push(`attempt ${attempt}: HTTP ${response.status}`);
+    } catch (error) {
+      failures.push(`attempt ${attempt}: ${error.message}`);
     }
 
-    await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+    if (attempt < attempts) {
+      await sleep(Math.min(initialDelayMs * attempt, maxDelayMs));
+    }
   }
 
-  throw new Error(`Public URL did not return 200 after deploy: ${url}`);
+  throw new Error(
+    `Public URL did not return 200 after ${attempts} attempts: ${url}\n${tailLines(failures.join('\n'), 6)}`
+  );
 }
 
 export function getCrosspostSkipReason({ args, publishResult, publicUrl }) {
