@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-08-18T01:49:11.418Z",
+  "exported_at": "2026-08-18T07:02:29.279Z",
   "books": [
     {
       "id": "5cba26dcefc7d4a0",
@@ -4735,6 +4735,73 @@
             "position": "location: 317"
           },
           "created_at": "2023-06-25T04:56:00.000Z",
+          "source": "kindle"
+        }
+      ],
+      "finished": null,
+      "finished_at": null
+    },
+    {
+      "id": "20ebfc9dccb92d1f",
+      "title": "Database Internals",
+      "author": "Alex Petrov",
+      "sources": [
+        "kindle"
+      ],
+      "highlights": [
+        {
+          "id": "readwise-1045268790",
+          "text": "Around 2010, a new class of eventually consistent databases started appearing, and terms such as NoSQL, and later, big data grew in popularity. Over the last 15 years, the open source community, large internet companies, and database vendors have created so many databases and tools that it’s easy to get lost trying to understand use cases, details, and specifics. The Dynamo paper [DECANDIA07], published by the team at Amazon in 2007, had so much impact on the database community that within a short period it inspired many variants and implementations. The most prominent of them were Apache Cassandra, created at Facebook; Project Voldemort, created at LinkedIn; and Riak, created by former Akamai engineers.",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 36"
+          },
+          "created_at": "2026-08-06T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1045268791",
+          "text": "Databases are modular systems and consist of multiple parts: a transport layer accepting requests, a query processor determining the most efficient way to run queries, an execution engine carrying out the operations, and a storage engine (see “DBMS Architecture”). The storage engine (or database engine) is a software component of a database management system responsible for storing, retrieving, and managing data in memory and on disk, designed to capture a persistent, long-term memory of each node [REED78]. While databases can respond to complex queries, storage engines look at the data more granularly and offer a simple data manipulation API, allowing users to create, update, delete, and retrieve records. One way to look at this is that database management systems are applications built on top of storage engines, offering a schema, a query language, indexing, transactions, and many other useful features.",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 156"
+          },
+          "created_at": "2026-08-06T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1045268792",
+          "text": "To compare databases, it’s helpful to understand the use case in great detail and define the current and anticipated variables, such as: Schema and record sizes Number of clients Types of queries and access patterns Rates of the read and write queries Expected changes in any of these variables Knowing these variables can help to answer the following questions: Does the database support the required queries? Is this database able to handle the amount of data we’re planning to store? How many read and write operations can a single node handle? How many nodes should the system have? How do we expand the cluster given the expected growth rate? What is the maintenance process?",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 201"
+          },
+          "created_at": "2026-08-06T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1045268793",
+          "text": "One of the popular tools used for benchmarking, performance evaluation, and comparison is Yahoo! Cloud Serving Benchmark (YCSB). YCSB offers a framework and a common set of workloads that can be applied to different data stores. Just like anything generic, this tool should be used with caution, since it’s easy to make wrong conclusions. To make a fair comparison and make an educated decision, it is necessary to invest enough time to understand the real-world conditions under which the database has to perform, and tailor benchmarks accordingly.",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 215"
+          },
+          "created_at": "2026-08-06T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1045268794",
+          "text": "Designing a storage engine is definitely more complicated than just implementing a textbook data structure: there are many details and edge cases that are hard to get right from the start. We need to design the physical data layout and organize pointers, decide on the serialization format, understand how data is going to be garbage-collected, how the storage engine fits into the semantics of the database system as a whole, figure out how to make it work in a concurrent environment, and, finally, make sure we never lose any data, under any circumstances. Not only there are many things to decide upon, but most of these decisions involve trade-offs. For example, if we save records in the order they were inserted into the database, we can store them quicker, but if we retrieve them in their lexicographical order, we have to re-sort them before returning results to the client. As you will see throughout this book, there are many different approaches to storage engine design, and every implementation has its own upsides and downsides. When looking at different storage engines, we discuss their benefits and shortcomings. If there was an absolutely optimal storage engine for every conceivable use case, everyone would just use it. But since it does not exist, we need to choose wisely, based on the workloads and use cases we’re trying to facilitate.",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 242"
+          },
+          "created_at": "2026-08-06T04:56:00.000Z",
           "source": "kindle"
         }
       ],
