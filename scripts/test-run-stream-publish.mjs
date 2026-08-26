@@ -1,15 +1,50 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { chmodSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mkdtemp } from 'node:fs/promises';
+import { promisify } from 'node:util';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const runner = await import(path.join(repoRoot, 'scripts', 'run-stream-publish.mjs'));
+const execFileAsync = promisify(execFile);
+
+async function runGit(cwd, args) {
+  return await execFileAsync('git', args, { cwd, encoding: 'utf8' });
+}
+
+async function configureGitIdentity(cwd) {
+  await runGit(cwd, ['config', 'user.name', 'Stream Publisher Test']);
+  await runGit(cwd, ['config', 'user.email', 'stream-publisher-test@example.com']);
+}
+
+async function commitFile(cwd, file, contents, message) {
+  await writeFile(path.join(cwd, file), contents);
+  await runGit(cwd, ['add', '--', file]);
+  await runGit(cwd, ['commit', '-m', message]);
+}
+
+async function makeGitFixture() {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'urcades-runner-git-'));
+  const origin = path.join(root, 'origin.git');
+  const local = path.join(root, 'local');
+  const peer = path.join(root, 'peer');
+
+  await runGit(root, ['init', '--bare', '--initial-branch=main', origin]);
+  await runGit(root, ['clone', origin, local]);
+  await configureGitIdentity(local);
+  await commitFile(local, 'initial.txt', 'initial\n', 'Initial commit');
+  await runGit(local, ['push', '--set-upstream', 'origin', 'main']);
+
+  await runGit(root, ['clone', origin, peer]);
+  await configureGitIdentity(peer);
+
+  return { root, origin, local, peer };
+}
 
 async function makeHomeWithToken(token, mode = 0o600) {
   const homeDir = await mkdtemp(path.join(os.tmpdir(), 'urcades-runner-home-'));
@@ -215,6 +250,95 @@ async function testVerifyPublicPostReportsRecentFailures() {
   );
 }
 
+async function testSyncCurrentBranchRebasesLocalUnpublishedCommitOntoOrigin() {
+  const fixture = await makeGitFixture();
+
+  try {
+    await commitFile(fixture.local, 'local-post.md', 'local unpublished post\n', 'Local unpublished post');
+    const oldLocalHead = (await runGit(fixture.local, ['rev-parse', 'HEAD'])).stdout.trim();
+
+    await commitFile(fixture.peer, 'remote-reading.md', 'incoming reading\n', 'Remote reading sync');
+    await runGit(fixture.peer, ['push', 'origin', 'main']);
+
+    const syncResult = await runner.syncCurrentBranch('main', { cwd: fixture.local });
+    const newLocalHead = (await runGit(fixture.local, ['rev-parse', 'HEAD'])).stdout.trim();
+    const subjects = (await runGit(fixture.local, ['log', '--format=%s', '-2'])).stdout.trim().split('\n');
+
+    assert.notEqual(newLocalHead, oldLocalHead);
+    assert.deepEqual(subjects, ['Local unpublished post', 'Remote reading sync']);
+    await runGit(fixture.local, ['merge-base', '--is-ancestor', 'origin/main', 'HEAD']);
+    assert.equal(syncResult.oldHead, oldLocalHead);
+    assert.equal(syncResult.newHead, newLocalHead);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
+async function testPushPreflightAuthenticatesWithoutUpdatingOrigin() {
+  const fixture = await makeGitFixture();
+
+  try {
+    await commitFile(fixture.local, 'local-post.md', 'local unpublished post\n', 'Local unpublished post');
+    const remoteBefore = (await runGit(fixture.origin, ['rev-parse', 'main'])).stdout.trim();
+
+    await runner.preflightPushBranch('main', { cwd: fixture.local });
+
+    const remoteAfter = (await runGit(fixture.origin, ['rev-parse', 'main'])).stdout.trim();
+    assert.equal(remoteAfter, remoteBefore);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
+async function testSyncCurrentBranchAbortsConflictingRebase() {
+  const fixture = await makeGitFixture();
+
+  try {
+    await commitFile(fixture.local, 'initial.txt', 'local version\n', 'Local unpublished edit');
+    const oldLocalHead = (await runGit(fixture.local, ['rev-parse', 'HEAD'])).stdout.trim();
+
+    await commitFile(fixture.peer, 'initial.txt', 'remote version\n', 'Remote edit');
+    await runGit(fixture.peer, ['push', 'origin', 'main']);
+
+    await assert.rejects(
+      runner.syncCurrentBranch('main', { cwd: fixture.local }),
+      error => {
+        assert.match(error.stderr, /could not apply/);
+        return true;
+      }
+    );
+
+    const currentHead = (await runGit(fixture.local, ['rev-parse', 'HEAD'])).stdout.trim();
+    const status = (await runGit(fixture.local, ['status', '--porcelain'])).stdout;
+    assert.equal(currentHead, oldLocalHead);
+    assert.equal(status, '');
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
+async function testPushBranchPreservesGitRejectionStderr() {
+  const fixture = await makeGitFixture();
+
+  try {
+    await commitFile(fixture.local, 'local-post.md', 'local unpublished post\n', 'Local unpublished post');
+    await commitFile(fixture.peer, 'remote-reading.md', 'incoming reading\n', 'Remote reading sync');
+    await runGit(fixture.peer, ['push', 'origin', 'main']);
+
+    await assert.rejects(
+      runner.pushBranch('main', { cwd: fixture.local }),
+      error => {
+        const details = runner.createErrorDetails(error);
+        assert.match(details.message, /rejected|fetch first|non-fast-forward/i);
+        assert.match(details.stderrTail, /rejected|fetch first|non-fast-forward/i);
+        return true;
+      }
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
 await testInjectsTokenOnlyIntoCloudflareChildren();
 await testRejectsReadableTokenFile();
 testDependencyManifestChangeDetection();
@@ -223,5 +347,24 @@ await testRunCrosspostPhaseAddsStructuredResult();
 await testRunCrosspostPhaseIsNonFatal();
 await testVerifyPublicPostRetriesTransientFailures();
 await testVerifyPublicPostReportsRecentFailures();
+
+const gitBehaviorFailures = [];
+for (const test of [
+  testSyncCurrentBranchRebasesLocalUnpublishedCommitOntoOrigin,
+  testSyncCurrentBranchAbortsConflictingRebase,
+  testPushPreflightAuthenticatesWithoutUpdatingOrigin,
+  testPushBranchPreservesGitRejectionStderr,
+]) {
+  try {
+    await test();
+  } catch (error) {
+    gitBehaviorFailures.push(error);
+    console.error(`${test.name}: ${error.message}`);
+  }
+}
+
+if (gitBehaviorFailures.length > 0) {
+  throw new AggregateError(gitBehaviorFailures, 'Git publishing behavior tests failed');
+}
 
 console.log('run-stream-publish tests passed');

@@ -93,7 +93,7 @@ npm run publish:stream:run -- --event /path/to/event.json --result-json /path/to
 npm run publish:stream -- --event /path/to/event.json
 ```
 
-Use `publish:stream:run` for the host-agent flow. It publishes the event, fast-forwards the current branch from `origin`, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, cross-posts to configured social targets, writes a machine-readable result JSON file, and prints JSON for human/manual use. Use `publish:stream` for lower-level debugging.
+Use `publish:stream:run` for the host-agent flow. Before generating content, it requires a clean tracked worktree, fetches the current branch from `origin`, rebases any unpublished local commits onto that branch, and performs a dry-run push to verify noninteractive GitHub authentication without changing the remote. It then publishes the event, runs tests/build, commits only the generated content file, pushes the current branch, deploys the already-built Worker assets, verifies the public URL, cross-posts to configured social targets, writes a machine-readable result JSON file, and prints JSON for human/manual use. A conflicting rebase is aborted and reported without discarding the local commits. Use `publish:stream` for lower-level debugging.
 
 Event JSON:
 

@@ -106,6 +106,22 @@ function tailLines(value, count = 20) {
     .join('\n');
 }
 
+export function createErrorDetails(error) {
+  const details = {
+    message: error.message,
+  };
+  if (error.exitCode !== undefined) {
+    details.exitCode = error.exitCode;
+  }
+  if (error.stdout) {
+    details.stdoutTail = tailLines(error.stdout);
+  }
+  if (error.stderr) {
+    details.stderrTail = tailLines(error.stderr);
+  }
+  return details;
+}
+
 export function getCloudflareApiTokenFilePath(homeDir = process.env.HOME) {
   if (!homeDir) {
     throw new Error('Cannot resolve Cloudflare token file without HOME.');
@@ -168,7 +184,7 @@ async function run(command, args, options = {}) {
 
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
-      cwd: repoRoot,
+      cwd: options.cwd || repoRoot,
       stdio: options.capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
       encoding: 'utf8',
       env,
@@ -207,8 +223,11 @@ async function git(args, options = {}) {
   return await run('git', args, options);
 }
 
-async function ensureNoTrackedChanges() {
-  const { stdout } = await git(['status', '--porcelain', '--untracked-files=no'], { capture: true });
+async function ensureNoTrackedChanges({ cwd = repoRoot } = {}) {
+  const { stdout } = await git(['status', '--porcelain', '--untracked-files=no'], {
+    capture: true,
+    cwd,
+  });
   if (stdout.trim()) {
     throw new Error(`Tracked worktree changes exist before publishing:\n${stdout}`);
   }
@@ -223,8 +242,8 @@ async function getCurrentBranch() {
   return branch;
 }
 
-async function getHead(ref = 'HEAD') {
-  const { stdout } = await git(['rev-parse', ref], { capture: true });
+async function getHead(ref = 'HEAD', { cwd = repoRoot } = {}) {
+  const { stdout } = await git(['rev-parse', ref], { capture: true, cwd });
   return stdout.trim();
 }
 
@@ -239,7 +258,7 @@ export function hasDependencyManifestChanges(stdout) {
   return dependencyManifestFilesFromDiff(stdout).length > 0;
 }
 
-async function getChangedDependencyManifestFiles(oldHead, newHead) {
+async function getChangedDependencyManifestFiles(oldHead, newHead, { cwd = repoRoot } = {}) {
   if (oldHead === newHead) {
     return [];
   }
@@ -252,23 +271,29 @@ async function getChangedDependencyManifestFiles(oldHead, newHead) {
     '--',
     'package.json',
     'package-lock.json',
-  ], { capture: true });
+  ], { capture: true, cwd });
 
   return dependencyManifestFilesFromDiff(stdout);
 }
 
-async function syncCurrentBranch(branch) {
-  await git(['fetch', 'origin', branch]);
+export async function syncCurrentBranch(branch, { cwd = repoRoot } = {}) {
+  await ensureNoTrackedChanges({ cwd });
 
-  const oldHead = await getHead('HEAD');
-  const remoteHead = await getHead('FETCH_HEAD');
+  const oldHead = await getHead('HEAD', { cwd });
+  await git(['fetch', 'origin', branch], { cwd });
+  const remoteHead = await getHead('FETCH_HEAD', { cwd });
 
   if (oldHead !== remoteHead) {
-    await git(['merge', '--ff-only', 'FETCH_HEAD']);
+    try {
+      await git(['rebase', 'FETCH_HEAD'], { capture: true, cwd });
+    } catch (error) {
+      await git(['rebase', '--abort'], { capture: true, cwd }).catch(() => {});
+      throw error;
+    }
   }
 
-  const newHead = await getHead('HEAD');
-  const dependencyFiles = await getChangedDependencyManifestFiles(oldHead, newHead);
+  const newHead = await getHead('HEAD', { cwd });
+  const dependencyFiles = await getChangedDependencyManifestFiles(oldHead, newHead, { cwd });
 
   return {
     oldHead,
@@ -320,8 +345,18 @@ async function commitPost(relativePath, postId, collection) {
   return stdout.trim();
 }
 
-async function pushBranch(branch) {
-  await git(['push', 'origin', branch]);
+export async function preflightPushBranch(branch, { cwd = repoRoot } = {}) {
+  await git(['push', '--dry-run', 'origin', `HEAD:refs/heads/${branch}`], {
+    capture: true,
+    cwd,
+  });
+}
+
+export async function pushBranch(branch, { cwd = repoRoot } = {}) {
+  await git(['push', 'origin', `HEAD:refs/heads/${branch}`], {
+    capture: true,
+    cwd,
+  });
 }
 
 export async function verifyPublicPost(postId, {
@@ -464,6 +499,9 @@ async function main() {
     const syncResult = await syncCurrentBranch(branch);
     result.dependencyRefreshFiles = syncResult.dependencyFiles;
 
+    result.phase = 'preflight_push';
+    await preflightPushBranch(branch);
+
     result.phase = 'refresh_dependencies';
     result.dependenciesRefreshed = await refreshDependenciesIfNeeded(syncResult);
 
@@ -520,18 +558,7 @@ async function main() {
     await finish(resultJsonPath, result);
   } catch (error) {
     result.message = error.message;
-    result.error = {
-      message: error.message,
-    };
-    if (error.exitCode !== undefined) {
-      result.error.exitCode = error.exitCode;
-    }
-    if (error.stdout) {
-      result.error.stdoutTail = tailLines(error.stdout);
-    }
-    if (error.stderr) {
-      result.error.stderrTail = tailLines(error.stderr);
-    }
+    result.error = createErrorDetails(error);
     await tryWriteResultJson(resultJsonPath, result);
     console.error(`run-stream-publish: ${error.message}`);
     process.exitCode = 1;
