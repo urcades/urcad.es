@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-09-04T16:19:24.265Z",
+  "exported_at": "2026-09-04T20:44:19.507Z",
   "books": [
     {
       "id": "5cba26dcefc7d4a0",
@@ -28626,6 +28626,50 @@
             "position": "location: 4525"
           },
           "created_at": "2026-05-30T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1051165381",
+          "text": "The idea that John Lasseter pitched was called “Toy Story.” It sprang from a belief, which he and Jobs shared, that products have an essence to them, a purpose for which they were made. If the object were to have feelings, these would be based on its desire to fulfill its essence. The purpose of a glass, for example, is to hold water; if it had feelings, it would be happy when full and sad when empty. The essence of a computer screen is to interface with a human. The essence of a unicycle is to be ridden in a circus. As for toys, their purpose is to be played with by kids, and thus their existential fear is of being discarded or upstaged by newer toys. So a buddy movie pairing an old favorite toy with a shiny new one would have an essential drama to it, especially when the action revolved around the toys’ being separated from their kid. The original treatment began, “Everyone has had the traumatic childhood experience of losing a toy. Our story takes the toy’s point of view as he loses and tries to regain the single thing most important to him: to be played with by children. This is the reason for the existence of all toys. It is the emotional foundation of their existence.”",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 4668"
+          },
+          "created_at": "2026-09-03T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1051165382",
+          "text": "Feeling like a genius back in 1987, John Sculley had made a series of proclamations that nowadays sound embarrassing. Jobs wanted Apple “to become a wonderful consumer products company,” Sculley wrote. “This was a lunatic plan…. Apple would never be a consumer products company…. We couldn’t bend reality to all our dreams of changing the world…. High tech could not be designed and sold as a consumer product.”",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 4822"
+          },
+          "created_at": "2026-09-03T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1051165383",
+          "text": "By 1996 Apple’s share of the market had fallen to 4% from a high of 16% in the late 1980s. Michael Spindler, the German-born chief of Apple’s European operations who had replaced Sculley as CEO in 1993, tried to sell the company to Sun, IBM, and Hewlett-Packard. That failed, and he was ousted in February 1996 and replaced by Gil Amelio, a research engineer who was CEO of National Semiconductor. During his first year the company lost $1 billion, and the stock price, which had been $70 in 1991, fell to $14, even as the tech bubble was pushing other stocks into the stratosphere.",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 4842"
+          },
+          "created_at": "2026-09-03T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1051165384",
+          "text": "So Apple needed a partner, one that could make a stable operating system, preferably one that was UNIX-like and had an object-oriented application layer. There was one company that could obviously supply such software—NeXT—but it would take a while for Apple to focus on it. Apple first homed in on a company that had been started by Jean-Louis Gassée, called Be. Gassée began negotiating the sale of Be to Apple, but in August 1996 he overplayed his hand at a meeting with Amelio in Hawaii. He said he wanted to bring his fifty-person team to Apple, and he asked for 15% of the company, worth about $500 million. Amelio was stunned. Apple calculated that Be was worth about $50 million. After a few offers and counteroffers, Gassée refused to budge from demanding at least $275 million. He thought that Apple had no alternatives. It got back to Amelio that Gassée said, “I’ve got them by the balls, and I’m going to squeeze until it hurts.” This did not please Amelio.",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 4858"
+          },
+          "created_at": "2026-09-03T04:56:00.000Z",
           "source": "kindle"
         }
       ],
