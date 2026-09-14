@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-09-13T20:47:22.842Z",
+  "exported_at": "2026-09-14T04:51:52.249Z",
   "books": [
     {
       "id": "5cba26dcefc7d4a0",
@@ -28670,6 +28670,28 @@
             "position": "location: 4858"
           },
           "created_at": "2026-09-03T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1054159131",
+          "text": "A few weeks later Jobs and his family went to Hawaii for Christmas vacation. Larry Ellison was also there, as he had been the year before. “You know, Larry, I think I’ve found a way for me to get back into Apple and get control of it without you having to buy it,” Jobs said as they walked along the shore. Ellison recalled, “He explained his strategy, which was getting Apple to buy NeXT, then he would go on the board and be one step away from being CEO.” Ellison thought that Jobs was missing a key point. “But Steve, there’s one thing I don’t understand,” he said. “If we don’t buy the company, how can we make any money?” It was a reminder of how different their desires were. Jobs put his hand on Ellison’s left shoulder, pulled him so close that their noses almost touched, and said, “Larry, this is why it’s really important that I’m your friend. You don’t need any more money.” Ellison recalled that his own answer was almost a whine: “Well, I may not need the money, but why should some fund manager at Fidelity get the money? Why should someone else get it? Why shouldn’t it be us?” “I think if I went back to Apple, and I didn’t own any of Apple, and you didn’t own any of Apple, I’d have the moral high ground,” Jobs replied. “Steve, that’s really expensive real estate, this moral high ground,” said Ellison. “Look, Steve, you’re my best friend, and Apple is your company. I’ll do whatever you want.” Although Jobs later said that he was not plotting to take over Apple at the time, Ellison thought it was inevitable. “Anyone who spent more than a half hour with Amelio would realize that he couldn’t do anything but self-destruct,” he later said.",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 4894"
+          },
+          "created_at": "2026-09-13T04:56:00.000Z",
+          "source": "kindle"
+        },
+        {
+          "id": "readwise-1054159132",
+          "text": "“Oh no, Louise,” he said. “There are a lot of other things going on in my life now. I have a family. I am involved at Pixar. My time is limited, but I hope I can share some ideas.”",
+          "note": null,
+          "location": {
+            "chapter": null,
+            "position": "location: 4967"
+          },
+          "created_at": "2026-09-13T04:56:00.000Z",
           "source": "kindle"
         }
       ],
